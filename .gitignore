@@ -11,3 +11,4 @@ Questro.lnk
 src-tauri/target/
 src-tauri/gen/schemas/
 releases/
+.internal/

@@ -779,6 +779,9 @@ impl Backend {
                 if self.queue.active() || self.quest_queue.active() || self.session.is_some() {
                     return Err("A game is already running".into());
                 }
+                self.queue.items.retain(|item| {
+                    !["completed", "cancelled"].contains(&text(item, "state").as_str())
+                });
                 if self.queue.items.is_empty() {
                     return Err("Queue is empty".into());
                 }
@@ -1169,6 +1172,20 @@ mod tests {
         f.0.tick();
         assert_eq!(f.0.session.as_ref().unwrap()["appId"], "234567");
         assert_eq!(f.0.session.as_ref().unwrap()["targetDurationSeconds"], 5700);
+    }
+    #[test]
+    fn restarting_a_queue_never_replays_hidden_finished_games() {
+        let mut f = Fixture::new();
+        let mut finished = validated_item(item("123456", 15., false)).unwrap();
+        finished["state"] = json!("completed");
+        let mut cancelled = validated_item(item("234567", 15., false)).unwrap();
+        cancelled["state"] = json!("cancelled");
+        let upcoming = validated_item(item("345678", 30., false)).unwrap();
+        f.0.queue.items = vec![finished, cancelled, upcoming];
+        f.0.queue.phase = "error".into();
+        f.0.route("/api/queue/start", json!({})).unwrap();
+        assert_eq!(f.0.queue.items.len(), 1);
+        assert_eq!(f.0.session.as_ref().unwrap()["appId"], "345678");
     }
     #[test]
     fn stop_removes_current_and_preserves_next() {

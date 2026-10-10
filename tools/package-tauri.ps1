@@ -1,4 +1,4 @@
-param([string]$OutputName='Questro-3.1.0',[switch]$UpdateExisting)
+param([string]$OutputName='Questro-3.1.1',[switch]$UpdateExisting)
 $ErrorActionPreference='Stop'
 if ($OutputName -notmatch '^Questro-\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?$') { throw 'Invalid package name.' }
 $projectRoot=Split-Path -Parent $PSScriptRoot
@@ -14,17 +14,7 @@ Copy-Item -LiteralPath $sourceExe -Destination (Join-Path $output 'Questro.exe')
 foreach($license in @('LUCIDE-LICENSE.txt','DISCORD-QUEST-HELPER-LICENSE.txt','TAURI-LICENSE-MIT.txt')) {
   Copy-Item -LiteralPath (Join-Path $projectRoot "public/assets/$license") -Destination $output
 }
-@'
-# Questro 3.1
-
-Open Questro.exe to start. Keep this folder together in a writable location.
-
-This is the clean Tauri/Rust portable application, without source code, old versions, cached games, artwork, browser profiles or personal data. It uses the Microsoft Edge WebView2 runtime installed on Windows.
-
-On first launch, Questro creates its data folder beside Questro.exe. The catalog, artwork, preferences and game helpers will increase the folder's size as you use the application. These files are separate from the approximately 3.85 MiB executable.
-
-No old installation folder is required. WebView2: https://developer.microsoft.com/microsoft-edge/webview2/
-'@ | Set-Content -LiteralPath (Join-Path $output 'README.md') -Encoding utf8
+Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination (Join-Path $output 'README.md')
 $sourceHash=(Get-FileHash -LiteralPath $sourceExe -Algorithm SHA256).Hash
 $packageHash=(Get-FileHash -LiteralPath (Join-Path $output 'Questro.exe') -Algorithm SHA256).Hash
 if ($sourceHash -ne $packageHash) { throw 'Packaged executable does not match the tested build.' }
