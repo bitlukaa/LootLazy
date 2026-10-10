@@ -4,6 +4,7 @@ mod backend;
 mod feed;
 mod presence;
 mod storage;
+mod updates;
 use serde_json::Value;
 use std::{
     path::PathBuf,
@@ -25,6 +26,15 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
     tauri::async_runtime::spawn_blocking(move || {
         let url =
             url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
+        match url.path() {
+            "/api/updates" => return Ok(updates::info()),
+            "/api/updates/check" => return Ok(updates::check()),
+            "/api/updates/open" => {
+                updates::open_releases()?;
+                return Ok(serde_json::json!({"success":true}));
+            }
+            _ => {}
+        }
         if ["/api/refresh-catalog", "/api/games", "/api/catalog-stats"].contains(&url.path()) {
             let _refresh = CATALOG_REFRESH.lock().map_err(|_| "Catalog unavailable")?;
             let missing = state

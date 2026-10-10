@@ -1,6 +1,6 @@
 [package]
 name = "questro"
-version = "3.1.2"
+version = "3.2.0"
 edition = "2021"
 description = "Questro portable desktop application"
 
@@ -15,13 +15,14 @@ tauri-build = { version = "2.7", features = [] }
 tauri = { version = "2.12", features = ["tray-icon"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+semver = "1"
 reqwest = { version = "0.13", default-features = false, features = ["blocking", "json", "native-tls", "system-proxy"] }
 chrono = "0.4"
 rand = "0.9"
 sha2 = "0.10"
 url = "2"
 tokio = { version = "1", features = ["net", "io-util", "time", "rt"] }
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_Security", "Win32_UI_WindowsAndMessaging"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_Security", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell"] }
 
 [profile.release]
 opt-level = "s"
