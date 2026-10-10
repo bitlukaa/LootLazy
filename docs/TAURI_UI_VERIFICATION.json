@@ -1,7 +1,8 @@
 {
-  "testedAt": "2026-10-10T07:21:26.226Z",
+  "testedAt": "2026-10-10T07:38:03.619Z",
   "runtime": "Tauri/WebView2",
   "checks": [
+    "Scrolling to the end loads the next game page without a Load more button",
     "Real Tauri IPC loads the public catalog and initial empty configuration",
     "Reference executable dropdown works in WebView2",
     "Native helper window remains minimized without a separate taskbar entry",

@@ -110,7 +110,18 @@ fn main() {
         storage::save(&root.join("data/tauri-verification.json"), &result).unwrap();
         return;
     }
-    if !single_instance() {
+    let isolated_ui_test = std::env::args().any(|a| a == "--verify-ui")
+        && std::env::var_os("QUESTRO_DATA_ROOT").is_some()
+        && root
+            .file_name()
+            .and_then(|n| n.to_str())
+            .is_some_and(|n| n.starts_with("questro-tauri-ui-"))
+        && root
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            == Some(".test-temp");
+    if !isolated_ui_test && !single_instance() {
         return;
     }
     let state = Arc::new(Mutex::new(

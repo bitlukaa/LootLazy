@@ -10,7 +10,16 @@ New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Tauri build failed.' }
 $output = Join-Path $projectRoot 'dist/Questro-Tauri'
 New-Item -ItemType Directory -Force -Path $output | Out-Null
-Copy-Item -LiteralPath (Join-Path $env:CARGO_TARGET_DIR 'release/questro.exe') -Destination (Join-Path $output 'Questro.exe')
+$builtBinary = Join-Path $env:CARGO_TARGET_DIR 'release/questro.exe'
+try {
+  Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $output 'Questro.exe')
+  $staged=Join-Path $output 'Questro.exe.pending'
+  if (Test-Path -LiteralPath $staged) { Remove-Item -LiteralPath $staged -Force }
+}
+catch {
+  Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $output 'Questro.exe.pending')
+  Write-Output 'Application is open. Update staged for the next launcher start.'
+}
 foreach ($license in @('LUCIDE-LICENSE.txt','DISCORD-QUEST-HELPER-LICENSE.txt','TAURI-LICENSE-MIT.txt')) { Copy-Item -LiteralPath (Join-Path $projectRoot "public/assets/$license") -Destination $output }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $output
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
@@ -21,5 +30,5 @@ if (Test-Path -LiteralPath $compiler) {
 # Portable user data is never replaced by a rebuild.
 $dataFolder = Join-Path $output 'data'
 New-Item -ItemType Directory -Force -Path $dataFolder | Out-Null
-$binary = Get-Item -LiteralPath (Join-Path $output 'Questro.exe')
+$binary = Get-Item -LiteralPath $builtBinary
 Write-Output "Built $($binary.FullName) ($([math]::Round($binary.Length / 1MB,2)) MiB)"
