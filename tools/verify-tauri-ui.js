@@ -3,9 +3,14 @@ const fs=require('fs'),path=require('path'),assert=require('node:assert/strict')
 const {spawn,execFileSync}=require('child_process');
 const {chromium}=require(process.env.QUESTRA_PLAYWRIGHT||'playwright');
 const root=path.resolve(__dirname,'..'),exe=path.join(root,'dist/Questro-Tauri/Questro.exe');
+fs.mkdirSync(path.join(root,'data/.test-temp'),{recursive:true});
 const fixture=fs.mkdtempSync(path.join(root,'data/.test-temp/questro-tauri-ui-'));
 fs.mkdirSync(path.join(fixture,'data'),{recursive:true});
-for(const name of ['detectable_cache.json','catalog_meta.json','questra_catalog.json'])fs.copyFileSync(path.join(root,'data',name),path.join(fixture,'data',name));
+for(const name of ['detectable_cache.json','catalog_meta.json','questra_catalog.json']){
+ const source=path.join(root,'dist/Questro-Tauri/data',name),target=path.join(fixture,'data',name);
+ if(fs.existsSync(source))fs.copyFileSync(source,target);
+ else fs.writeFileSync(target,JSON.stringify(name==='detectable_cache.json'?[{id:'356875221078245376',name:'Overwatch',executables:[{os:'win32',name:'overwatch.exe'}]},{id:'363445589247131668',name:'ROBLOX',executables:[{os:'win32',name:'RobloxPlayerBeta.exe'}]}]:name==='questra_catalog.json'?{games:{}}:{lastUpdated:new Date().toISOString()}));
+}
 const now=Date.now(),start=new Date(now-3600000).toISOString(),end=new Date(now+86400000).toISOString();
 fs.writeFileSync(path.join(fixture,'data/active_quests.json'),JSON.stringify({source:'community_feed',last_synced:new Date().toISOString(),quests:[{id:'123456789',appId:'123456789',gameName:'Test game',questName:'Test quest',kind:'play',durationSeconds:900,durationMinutes:15,startsAt:start,expiresAt:end,variantIds:['123456789'],rewards:[]}]}));
 fs.writeFileSync(path.join(fixture,'data/questra_overrides.json'),JSON.stringify({settings:{scan_local_steam:false},custom_executables:{},saved_games:[]}));

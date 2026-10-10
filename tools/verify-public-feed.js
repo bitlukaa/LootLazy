@@ -1,3 +1,0 @@
-const fs=require('fs');const path=require('path');
-const {QuestFeed}=require('../src/questFeed');
-(async()=>{const file=path.resolve('docs/feed-check.json');const feed=new QuestFeed(file);const result=await feed.refresh();console.log(JSON.stringify({count:result.quests.length,types:[...new Set(result.quests.map(q=>q.kind))],first:result.quests[0]?.questName,source:result.sourceUrl,lastSynced:result.last_synced},null,2));fs.writeFileSync('docs/PUBLIC_FEED_VERIFICATION.json',JSON.stringify({passed:true,count:result.quests.length,source:result.sourceUrl,lastSynced:result.last_synced},null,2));fs.unlinkSync(file);})().catch(error=>{console.error(error);process.exitCode=1});

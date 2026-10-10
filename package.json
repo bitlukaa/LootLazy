@@ -8,8 +8,7 @@
     "build": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/build-tauri.ps1",
     "test": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-tauri.ps1",
     "test:ui": "node tools/verify-tauri-ui.js",
-    "test:legacy": "node --test tests/*.test.js",
-    "build:legacy": "node tools/build.js"
+    "test:localization": "node --test tests/localization.test.js"
   },
   "keywords": [
     "game-simulator",

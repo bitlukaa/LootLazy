@@ -1,5 +1,5 @@
 {
-  "testedAt": "2026-10-10T07:08:00.251Z",
+  "testedAt": "2026-10-10T07:21:26.226Z",
   "runtime": "Tauri/WebView2",
   "checks": [
     "Real Tauri IPC loads the public catalog and initial empty configuration",

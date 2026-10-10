@@ -8,7 +8,7 @@ Close the previous Questro instance completely and open Questro.exe in the proje
 
 The native runtime is Tauri and Rust with the installed Microsoft Edge WebView2 runtime. Electron, Chromium and Node are not bundled. WebView2 must be available on the destination machine: https://developer.microsoft.com/microsoft-edge/webview2/
 
-Games, JSON data, artwork, WebView2 profile/cache and temporary files stay inside the writable application folder. Builds import existing 2.x JSON data only when the corresponding 3.x file is missing. The WebView2 profile is new; Electron browser preferences are not imported. New language and theme choices persist inside the portable profile.
+Games, JSON data, artwork, WebView2 profile/cache and temporary files stay inside the writable application folder. Saved JSON data and artwork have been consolidated into the Tauri portable folder. Rebuilds never replace user data. New language and theme choices persist inside the portable profile.
 
 ## Simulator and quests
 
@@ -41,7 +41,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/build-tauri.ps1
 
 npm run build, npm start and npm test wrap the native scripts. npm is optional for ordinary use and native builds. npm run test:ui requires Playwright; set QUESTRA_PLAYWRIGHT to its module directory if needed. The UI test uses an isolated hidden WebView2 profile and does not access the user's Discord account.
 
-src-tauri contains the maintained native backend. The 2.x Node modules/tests remain as migration contract references and are not bundled. The previous Electron executable remains locally in dist/Questro during migration validation. GitHub main preserves the 2.3.1 baseline; tauri-migration contains 3.x.
+src-tauri contains the maintained native backend. Only the Tauri portable build is kept locally. Retired Electron code, binaries and build caches have been removed. The 2.3.1 baseline remains recoverable from GitHub history; tauri-migration contains 3.x.
 
 The public catalog https://discord.com/api/applications/detectable contains game metadata, not installed or downloaded games. Catalog refresh is manual; startup fetches missing/invalid caches. Failed public API requests preserve saved data.
 
