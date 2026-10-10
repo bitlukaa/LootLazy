@@ -15,6 +15,10 @@ use std::{
 };
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 type Shared = Arc<Mutex<backend::Backend>>;
+#[tauri::command]
+fn quit(app: tauri::AppHandle) {
+    app.exit(0);
+}
 static CATALOG_REFRESH: Mutex<()> = Mutex::new(());
 static EXECUTABLE_LOOKUP: Mutex<Option<std::time::Instant>> = Mutex::new(None);
 #[tauri::command]
@@ -202,7 +206,12 @@ fn main() {
     let quit_state = state.clone();
     let app = tauri::Builder::default()
         .manage(state)
-        .invoke_handler(tauri::generate_handler![api])
+        .invoke_handler(tauri::generate_handler![api, quit])
+        .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
+                window.app_handle().exit(0);
+            }
+        })
         .register_asynchronous_uri_scheme_protocol(
             "artwork",
             move |_context, request, responder| {

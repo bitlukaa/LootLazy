@@ -4,7 +4,7 @@ if (window.__TAURI__) {
   const win = window.__TAURI__.window.getCurrentWindow();
   window.questroRequest = (url, body) => invoke('api', { route: url, body: body ?? null });
   window.desktopAPI = {
-    minimize: () => win.minimize(), maximize: () => win.toggleMaximize(), close: () => win.close(),
+    minimize: () => win.minimize(), maximize: () => win.toggleMaximize(), close: () => invoke('quit'),
     onMaximized: callback => { win.onResized(async () => callback(await win.isMaximized())); }
   };
   document.addEventListener('mousedown', event => {
