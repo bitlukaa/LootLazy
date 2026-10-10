@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "firstDurationSeconds": 60,
+  "scheduledGapMilliseconds": 6001,
+  "observedGapMilliseconds": 6039,
+  "secondStartedAfterFirstStopped": true,
+  "cancellationStoppedSecond": true
+}

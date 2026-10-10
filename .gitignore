@@ -1,0 +1,10 @@
+# Generated runtime and personal application data
+node_modules/
+dist/
+data/
+games/
+discord-quest-helper/
+Questro.exe
+Questro.lnk
+*.log
+*.tmp

@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "checks": [
+    "removed Discord status/login links, home libraries and shortcut form",
+    "activity acknowledgement message removed and scrolling belongs to the application edge",
+    "custom hours and minutes produce the correct total",
+    "single Start, Play next, chosen times and editable upcoming games in Selected Games",
+    "Custom Process validates filenames, preserves mode input and starts without invented application RPC",
+    "loaded thumbnail has one image and no text layer",
+    "failed thumbnail shows only a neutral icon, never initials",
+    "missing executable enables explicit Discord activity mode without guessing names",
+    "circular light/dark theme transition executes",
+    "active quest stays first, has a red countdown button and per-card Stop",
+    "reopen closed quest restores its position and enables a new session",
+    "new arrivals are marked and the marker survives later refreshes",
+    "single-line navigation, opposite utilities and explanatory captions removed",
+    "catalog refresh spinner, green number and update beneath button",
+    "picker has a dedicated refresh icon without busy mouse cursor",
+    "both languages across all three sections",
+    "app header remains stationary during quest scrolling"
+  ],
+  "pageErrors": []
+}

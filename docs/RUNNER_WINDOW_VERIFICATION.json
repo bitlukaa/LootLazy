@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "pid": 18776,
+  "name": "window-check",
+  "windows": 5,
+  "nativeWindows": 1,
+  "minimizedWindows": 1,
+  "taskbarEligibleWindows": 0
+}

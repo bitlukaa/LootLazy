@@ -1,0 +1,33 @@
+{
+  "testedAt": "2026-10-10T04:15:16.195Z",
+  "cases": [
+    {
+      "game": "Counter-Strike 2",
+      "appId": "1158877933042143272",
+      "executable": "win64/cs2.exe",
+      "mode": "process_and_rpc",
+      "helperProcessStarted": true,
+      "presence": {
+        "state": "ready",
+        "activityConfirmed": true,
+        "errorCode": null
+      },
+      "discordActivityAcknowledged": true
+    },
+    {
+      "game": "Deadzone Rogue 2",
+      "appId": "1557866763339960340",
+      "executable": null,
+      "mode": "rpc_only",
+      "helperProcessStarted": false,
+      "presence": {
+        "state": "ready",
+        "activityConfirmed": true,
+        "errorCode": null
+      },
+      "discordActivityAcknowledged": true
+    }
+  ],
+  "allActivitiesAcknowledged": true,
+  "questProgressVerified": false
+}

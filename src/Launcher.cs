@@ -1,0 +1,2 @@
+using System;using System.Diagnostics;using System.IO;using System.Windows.Forms;
+namespace Questro {static class Program {[STAThread]static void Main(){string exe=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"dist","Questro","Questro.exe");if(!File.Exists(exe)){MessageBox.Show("Build not found. Run npm run build from the project folder.","Questro");return;}try{Process.Start(new ProcessStartInfo{FileName=exe,WorkingDirectory=Path.GetDirectoryName(exe),UseShellExecute=false,CreateNoWindow=true});}catch(Exception e){MessageBox.Show(e.Message,"Questro");}}}}

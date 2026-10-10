@@ -1,0 +1,17 @@
+{
+  "referenceVersion": "0.10.9",
+  "game": "Overwatch",
+  "launchMethod": "Run Game in the already-running reference application",
+  "processName": "overwatch.exe",
+  "launchArguments": [],
+  "runnerWindowTitle": "overwatch",
+  "runnerWindowMinimized": true,
+  "referenceExecutableBytes": 400384,
+  "questroExecutableBytes": 4608,
+  "discordRegisteredGamesObserved": "Overwatch - Now playing!",
+  "discordNativeDetectionVerified": true,
+  "testStopped": true,
+  "gameWindowRemovedAfterStop": true,
+  "questroNativeDetectionVerified": false,
+  "note": "Reference retains a minimized native window. Questro currently suppresses window visibility. This observed difference needs a controlled Questro comparison before asserting causation."
+}

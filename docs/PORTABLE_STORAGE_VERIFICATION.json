@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "allPathsInsideApplication": true,
+  "pathKinds": [
+    "userData",
+    "sessionData",
+    "temp",
+    "logs",
+    "crashDumps"
+  ]
+}
