@@ -302,3 +302,9 @@ function number(value){return Number(value).toLocaleString(currentLang==='ar'?'a
 
 Object.assign(I18N.en,{selected_games:'Queue',queue_title:'Queue',queue_start:'Start queue',pick_game:'Select a game from the list to start'});
 Object.assign(I18N.ar,{selected_games:'الطابور',queue_title:'الطابور',queue_start:'بدء الطابور',pick_game:'اختر لعبة من القائمة للبدء'});
+
+Object.assign(I18N.en,{tab_simulator:'Game Simulator'});
+Object.assign(I18N.ar,{tab_simulator:'محاكي الألعاب'});
+
+Object.assign(I18N.en,{missing_executable:'No Windows executable is available for this game. Refresh the catalog or enter its executable name.'});
+Object.assign(I18N.ar,{missing_executable:'لا يوجد اسم ملف تشغيل ويندوز لهذه اللعبة. حدّث القائمة أو أدخل اسم ملف التشغيل.'});

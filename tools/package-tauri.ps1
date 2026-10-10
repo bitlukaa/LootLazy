@@ -1,4 +1,4 @@
-param([string]$OutputName='Questro-3.0.0',[switch]$UpdateExisting)
+param([string]$OutputName='Questro-3.1.0',[switch]$UpdateExisting)
 $ErrorActionPreference='Stop'
 if ($OutputName -notmatch '^Questro-\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?$') { throw 'Invalid package name.' }
 $projectRoot=Split-Path -Parent $PSScriptRoot
@@ -15,7 +15,7 @@ foreach($license in @('LUCIDE-LICENSE.txt','DISCORD-QUEST-HELPER-LICENSE.txt','T
   Copy-Item -LiteralPath (Join-Path $projectRoot "public/assets/$license") -Destination $output
 }
 @'
-# Questro 3.0
+# Questro 3.1
 
 Open Questro.exe to start. Keep this folder together in a writable location.
 

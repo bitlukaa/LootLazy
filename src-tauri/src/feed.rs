@@ -49,7 +49,7 @@ pub fn normalize(payload: &Value, now: i64) -> Result<Vec<Value>, String> {
     for raw in list {
         let c = raw.get("config").unwrap_or(raw);
         let id = raw["id"].as_str().or(c["id"].as_str()).unwrap_or("");
-        if crate::storage::id(id).is_err() || !seen.insert(id.to_string()) {
+        if crate::storage::id(id).is_err() || seen.contains(id) {
             continue;
         }
         let (Some(start), Some(end)) = (timestamp(&c["starts_at"]), timestamp(&c["expires_at"]))
@@ -61,8 +61,9 @@ pub fn normalize(payload: &Value, now: i64) -> Result<Vec<Value>, String> {
         }
         let tasks = c
             .pointer("/task_config_v2/tasks")
-            .or_else(|| c.pointer("/task_config/tasks"));
-        let Some(tasks) = tasks.and_then(Value::as_object) else {
+            .and_then(Value::as_object)
+            .or_else(|| c.pointer("/task_config/tasks").and_then(Value::as_object));
+        let Some(tasks) = tasks else {
             continue;
         };
         if tasks
@@ -74,7 +75,11 @@ pub fn normalize(payload: &Value, now: i64) -> Result<Vec<Value>, String> {
         let Some(task) = tasks.get("PLAY_ON_DESKTOP") else {
             continue;
         };
-        if task["target"].as_f64() != Some(900.0) {
+        if task["target"]
+            .as_f64()
+            .or_else(|| task["target"].as_str().and_then(|s| s.parse::<f64>().ok()))
+            != Some(900.0)
+        {
             continue;
         }
         let app = task
@@ -110,6 +115,7 @@ pub fn normalize(payload: &Value, now: i64) -> Result<Vec<Value>, String> {
             .unwrap()
             .to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
         let key = json!([title, app, start, end, rewards]).to_string();
+        seen.insert(id.to_string());
         if let Some(index) = grouped.get(&key) {
             result[*index]["variantIds"]
                 .as_array_mut()
@@ -144,5 +150,18 @@ mod tests {
         let mut long = q;
         long["config"]["task_config_v2"]["tasks"]["PLAY_ON_DESKTOP"]["target"] = json!(1800);
         assert!(normalize(&json!([long]), now).unwrap().is_empty());
+    }
+    #[test]
+    fn an_invalid_duplicate_cannot_hide_a_valid_campaign() {
+        let now = Utc::now();
+        let valid = json!({"id":"123456","starts_at":(now-chrono::Duration::hours(1)).to_rfc3339(),"expires_at":(now+chrono::Duration::hours(1)).to_rfc3339(),"application":{"id":"234567","name":"Game"},"task_config":{"tasks":{"PLAY_ON_DESKTOP":{"target":"900"}}},"task_config_v2":{"tasks":null}});
+        let mut invalid = valid.clone();
+        invalid["expires_at"] = json!((now - chrono::Duration::hours(2)).to_rfc3339());
+        assert_eq!(
+            normalize(&json!([invalid, valid]), now.timestamp_millis())
+                .unwrap()
+                .len(),
+            1
+        );
     }
 }

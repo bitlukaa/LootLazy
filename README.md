@@ -1,4 +1,4 @@
-# Questro 3.0 — Tauri
+# Questro 3.1 — Tauri
 
 Portable Windows desktop application with a public game catalog, owned game-process helpers, local timing and public desktop-play quest cards.
 
@@ -16,7 +16,7 @@ Select a catalog game before configuring it. Known Windows executable names are 
 
 Start begins a timed game. Choosing another game changes the action to Play next and preserves each game's duration. Queue becomes available for at least two unfinished games. Upcoming entries can be reordered, removed and edited in hours/minutes. Following games start after a random 5–10 second gap. Stop on the current game removes it while retaining following entries. Stop in Queue cancels the sequence. Continuous sessions cannot have a timed successor.
 
-Custom Process accepts a relative Windows executable filename and starts Questro's helper without inventing a Discord RPC application ID. Missing executable metadata can use activity-only RPC, which differs from native process detection. The helper is Questro's code, not the real game's code.
+Custom Process accepts a relative Windows executable filename and starts Questro's helper without inventing a Discord RPC application ID. Missing executable metadata triggers a public catalog lookup; if no Windows executable is available, starting is rejected rather than reporting a game as running. The helper is Questro's code, not the real game's code.
 
 Only 900-second PLAY_ON_DESKTOP quests appear. Video, Activity and mixed Watch/Activity tasks are excluded. The anonymous community feed https://api.discordquest.com/api/quests refreshes every five minutes while open. It provides neither account eligibility nor account progress.
 
@@ -51,4 +51,4 @@ The UI adapts layout, palette and theme transitions from Discord Quest Helper 0.
 
 ## Clean distribution
 
-Run npm run package after building. It creates releases/Questro-3.0.0 and its ZIP, containing only the tested executable, a short README and license notices. Source code, game catalog, artwork, profiles and personal data are excluded. Use a new -OutputName when packaging the same version again; existing folders are preserved. The executable SHA256 is checked against the tested build.
+Run npm run package after building. It creates releases/Questro-3.1.0 and its ZIP, containing only the tested executable, a short README and license notices. Source code, game catalog, artwork, profiles and personal data are excluded. Use a new -OutputName when packaging the same version again; existing folders are preserved. The executable SHA256 is checked against the tested build.

@@ -1,3 +1,11 @@
+# Questro 3.1.0
+
+- Separate Custom Process and Library selection; preserve real executable choices across tabs.
+- Match Discord Quest Helper 0.10.9 shared component tokens and measurements.
+- Harden portable persistence, monotonic timing, feed variants and running-quest controls.
+- Bound artwork downloads and reject unavailable native executable metadata.
+- Verify the real WebView2 renderer and package a standalone native executable.
+
 # Questro 2.3.0
 
 - Verified native Counter-Strike 2 detection in Discord Registered Games, with RPC disabled.

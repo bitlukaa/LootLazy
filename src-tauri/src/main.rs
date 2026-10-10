@@ -15,6 +15,7 @@ use std::{
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 type Shared = Arc<Mutex<backend::Backend>>;
 static CATALOG_REFRESH: Mutex<()> = Mutex::new(());
+static EXECUTABLE_LOOKUP: Mutex<Option<std::time::Instant>> = Mutex::new(None);
 #[tauri::command]
 async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Result<Value, String> {
     if !route.starts_with("/api/") || route.len() > 2000 {
@@ -50,6 +51,45 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
                 .map_err(|_| "Backend unavailable")?
                 .install_quests(data)?;
         }
+        if ["/api/play", "/api/quests/start"].contains(&url.path())
+            && body["customProcess"] != true
+            && body["executableName"]
+                .as_str()
+                .is_none_or(|name| name.is_empty())
+        {
+            let app_id = {
+                let backend = state.lock().map_err(|_| "Backend unavailable")?;
+                if url.path() == "/api/play" {
+                    body["appId"].as_str().map(str::to_string)
+                } else {
+                    backend.quest_application(body["questId"].as_str().unwrap_or(""))
+                }
+            };
+            if let Some(id) = app_id {
+                let needs = state
+                    .lock()
+                    .map_err(|_| "Backend unavailable")?
+                    .missing_game_executable(&id);
+                if needs {
+                    let _catalog = CATALOG_REFRESH.lock().map_err(|_| "Catalog unavailable")?;
+                    let mut last = EXECUTABLE_LOOKUP
+                        .lock()
+                        .map_err(|_| "Catalog unavailable")?;
+                    if last.is_none_or(|time| time.elapsed() >= std::time::Duration::from_secs(60))
+                    {
+                        *last = Some(std::time::Instant::now());
+                        if let Ok(data) =
+                            backend::fetch_json("https://discord.com/api/applications/detectable")
+                        {
+                            let _ = state
+                                .lock()
+                                .map_err(|_| "Backend unavailable")?
+                                .install_catalog(data);
+                        }
+                    }
+                }
+            }
+        }
         state
             .lock()
             .map_err(|_| "Backend unavailable")?
@@ -59,15 +99,20 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
     .map_err(|e| e.to_string())?
 }
 fn root() -> PathBuf {
-    std::env::var_os("QUESTRO_DATA_ROOT")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            std::env::current_exe()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .to_path_buf()
-        })
+    let diagnostic = std::env::args().any(|a| a == "--verify-ui" || a == "--verify-backend");
+    if diagnostic {
+        std::env::var_os("QUESTRO_DATA_ROOT")
+    } else {
+        None
+    }
+    .map(PathBuf::from)
+    .unwrap_or_else(|| {
+        std::env::current_exe()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf()
+    })
 }
 fn single_instance() -> bool {
     #[cfg(windows)]
@@ -106,7 +151,7 @@ fn main() {
     }
     if std::env::args().any(|a| a == "--verify-backend") {
         let state = backend::Backend::new(root.clone()).unwrap();
-        let result = serde_json::json!({"version":"3.0.0","root":root,"catalogCount":state.catalog.len(),"runtime":"Tauri + Rust","nodeBundled":false,"storage":root.join("data"),"profile":root.join("data/webview"),"status":state.status()});
+        let result = serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"root":root,"catalogCount":state.catalog.len(),"runtime":"Tauri + Rust","nodeBundled":false,"storage":root.join("data"),"profile":root.join("data/webview"),"status":state.status()});
         storage::save(&root.join("data/tauri-verification.json"), &result).unwrap();
         return;
     }
@@ -124,9 +169,11 @@ fn main() {
     if !isolated_ui_test && !single_instance() {
         return;
     }
-    let state = Arc::new(Mutex::new(
-        backend::Backend::new(root.clone()).expect("Cannot load Questro data"),
-    ));
+    let mut backend = backend::Backend::new(root.clone()).expect("Cannot load Questro data");
+    if isolated_ui_test {
+        backend.disable_presence_for_diagnostics();
+    }
+    let state = Arc::new(Mutex::new(backend));
     let running = Arc::new(AtomicBool::new(true));
     let ticker = state.clone();
     let tick_running = running.clone();
@@ -140,6 +187,7 @@ fn main() {
         }
     });
     let art_root = root.clone();
+    let art_workers = artwork::DownloadPool::new(4);
     let setup_root = root.clone();
     let quit_state = state.clone();
     let app = tauri::Builder::default()
@@ -149,7 +197,7 @@ fn main() {
             "artwork",
             move |_context, request, responder| {
                 let root = art_root.clone();
-                std::thread::spawn(move || {
+                art_workers.dispatch(move || {
                     let value = url::Url::parse(&request.uri().to_string())
                         .ok()
                         .and_then(|u| {
@@ -195,9 +243,10 @@ fn main() {
                     .decorations(false)
                     .data_directory(setup_root.join("data/webview"))
                     .on_navigation(|url| {
-                        url.host_str()
-                            .is_some_and(|h| h == "tauri.localhost" || h == "localhost")
-                            || url.scheme() == "tauri"
+                        url.port().is_none()
+                            && ((url.scheme() == "http"
+                                && url.host_str() == Some("tauri.localhost"))
+                                || (url.scheme() == "tauri" && url.host_str() == Some("localhost")))
                     });
             if verify_ui {
                 builder = builder

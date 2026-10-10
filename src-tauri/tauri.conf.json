@@ -1,13 +1,22 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Questro",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "identifier": "com.questro.desktop",
-  "build": { "frontendDist": "../public" },
+  "build": {
+    "frontendDist": "../public"
+  },
   "app": {
     "withGlobalTauri": true,
     "windows": [],
-    "security": { "csp": null }
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' http://artwork.localhost data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'"
+    }
   },
-  "bundle": { "active": false, "icon": ["../Questro.ico"] }
+  "bundle": {
+    "active": false,
+    "icon": [
+      "../Questro.ico"
+    ]
+  }
 }

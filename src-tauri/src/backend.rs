@@ -5,7 +5,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::{Child, Command},
-    time::Duration,
+    time::{Duration, Instant},
 };
 fn text(v: &Value, key: &str) -> String {
     v[key].as_str().unwrap_or("").to_string()
@@ -24,6 +24,7 @@ pub struct Queue {
     pub phase: String,
     pub index: usize,
     pub waiting: Option<i64>,
+    wait_deadline: Option<Instant>,
     pub error: Option<String>,
 }
 impl Queue {
@@ -33,6 +34,7 @@ impl Queue {
             phase: "idle".into(),
             index: 0,
             waiting: None,
+            wait_deadline: None,
             error: None,
         }
     }
@@ -40,7 +42,7 @@ impl Queue {
         ["starting", "running", "waiting", "ready_next"].contains(&self.phase.as_str())
     }
     pub fn status(&self) -> Value {
-        json!({"items":self.items,"phase":self.phase,"active":self.active(),"index":if self.items.is_empty(){-1}else{self.index as i64},"automatic":true,"error":self.error,"waitUntil":self.waiting,"waitSecondsRemaining":self.waiting.map(|t|((t-Utc::now().timestamp_millis()+999)/1000).max(0))})
+        json!({"items":self.items,"phase":self.phase,"active":self.active(),"index":if self.items.is_empty(){-1}else{self.index as i64},"automatic":true,"error":self.error,"waitUntil":self.waiting,"waitSecondsRemaining":self.wait_deadline.map(|d|((d.saturating_duration_since(Instant::now()).as_millis()+999)/1000) as u64)})
     }
 }
 pub struct Backend {
@@ -58,12 +60,31 @@ pub struct Backend {
     child: Option<Child>,
     presence: Presence,
     allow_rpc: bool,
+    started_at: Option<Instant>,
 }
 impl Backend {
     pub fn new(root: PathBuf) -> Result<Self, String> {
         fs::create_dir_all(root.join("data")).map_err(|e| e.to_string())?;
         let read =
             |name: &str, fallback: Value| storage::read(&root.join("data").join(name), fallback);
+        let mut overrides = read("questra_overrides.json", storage::defaults());
+        if !overrides.is_object() {
+            overrides = storage::defaults();
+        }
+        for key in ["custom_executables", "settings"] {
+            if !overrides[key].is_object() {
+                overrides[key] = json!({});
+            }
+        }
+        if !overrides["saved_games"].is_array() {
+            overrides["saved_games"] = json!([]);
+        }
+        let closed = read("active_quests.json.states.json", json!({}));
+        let closed = if closed.is_object() {
+            closed
+        } else {
+            json!({})
+        };
         let mut queue = Queue::new();
         queue.items = read("queue.json", json!({}))["items"]
             .as_array()
@@ -76,19 +97,26 @@ impl Backend {
             catalog: read("detectable_cache.json", json!([]))
                 .as_array()
                 .cloned()
-                .unwrap_or_default(),
+                .unwrap_or_default()
+                .into_iter()
+                .filter(valid_game)
+                .collect(),
             meta: read("catalog_meta.json", json!({})),
-            overrides: read("questra_overrides.json", storage::defaults()),
+            overrides,
             curated: read("questra_catalog.json", json!({"games":{}})),
             quests: read(
                 "active_quests.json",
                 json!({"quests":[],"last_synced":null}),
             ),
-            closed: read("active_quests.json.states.json", json!({})),
+            closed,
             history: read("history.json", json!({}))["sessions"]
                 .as_array()
                 .cloned()
-                .unwrap_or_default(),
+                .unwrap_or_default()
+                .into_iter()
+                .filter(Value::is_object)
+                .take(50)
+                .collect(),
             root,
             queue,
             quest_queue: Queue::new(),
@@ -96,13 +124,14 @@ impl Backend {
             child: None,
             presence: Presence::new(),
             allow_rpc: true,
+            started_at: None,
         })
     }
     fn save(&self, name: &str, data: &Value) -> Result<(), String> {
         storage::save(&self.root.join("data").join(name), data)
     }
     fn save_queue(&self) -> Result<(), String> {
-        self.save("queue.json",&json!({"items":self.queue.items.iter().map(|v|{let mut v=v.clone();v.as_object_mut().unwrap().remove("state");v}).collect::<Vec<_>>(),"automatic":true}))
+        self.save("queue.json",&json!({"items":self.queue.items.iter().filter(|v|!["completed","cancelled"].contains(&text(v,"state").as_str())).map(|v|{let mut v=v.clone();v.as_object_mut().unwrap().remove("state");v}).collect::<Vec<_>>(),"automatic":true}))
     }
     pub fn resolve(&self, game: &Value) -> Value {
         let app = text(game, "id");
@@ -171,8 +200,7 @@ impl Backend {
     pub fn status(&self) -> Value {
         let mut session = self.session.clone();
         if let Some(s) = session.as_mut() {
-            let elapsed =
-                (Utc::now().timestamp_millis() - s["startTime"].as_i64().unwrap_or(0)) / 1000;
+            let elapsed = self.elapsed_seconds(s);
             let target = s["targetDurationSeconds"].as_i64();
             let remaining = target.map(|t| (t - elapsed).max(0));
             s["elapsedSeconds"] = json!(elapsed);
@@ -185,9 +213,57 @@ impl Backend {
         }
         json!({"simulation":{"active":session.is_some(),"session":session},"queue":self.queue.status(),"questQueue":self.quest_queue.status()})
     }
+    fn elapsed_seconds(&self, session: &Value) -> i64 {
+        self.started_at
+            .map(|t| t.elapsed().as_secs() as i64)
+            .unwrap_or_else(|| {
+                ((Utc::now().timestamp_millis() - session["startTime"].as_i64().unwrap_or(0))
+                    / 1000)
+                    .max(0)
+            })
+    }
     fn close_quest(&mut self, id: &str, reason: &str) -> Result<(), String> {
         self.closed[id] = json!({"reason":reason,"closedAt":stamp()});
         self.save("active_quests.json.states.json", &self.closed)
+    }
+    pub fn disable_presence_for_diagnostics(&mut self) {
+        self.allow_rpc = false;
+    }
+    pub fn missing_game_executable(&self, id: &str) -> bool {
+        storage::id(id).is_ok()
+            && self.resolve(&self.game(id).unwrap_or(json!({"id":id,"name":"Game"})))
+                ["primaryExecutable"]
+                .as_str()
+                .is_none()
+    }
+    pub fn quest_application(&self, id: &str) -> Option<String> {
+        self.available_quest(id)
+            .and_then(|q| q["appId"].as_str().and_then(|id| storage::id(id).ok()))
+    }
+    fn available_quest(&self, id: &str) -> Option<Value> {
+        self.quests["quests"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|q| quest_ids(q).iter().any(|v| v == id) && feed::current(q))
+            .cloned()
+    }
+    fn closed_reason(&self, quest: &Value) -> Option<&str> {
+        quest_ids(quest)
+            .iter()
+            .filter_map(|id| self.closed.get(id))
+            .filter(|v| v["reason"].as_str().is_some())
+            .max_by_key(|v| v["closedAt"].as_str())
+            .and_then(|v| v["reason"].as_str())
+    }
+    fn quest_finished(&self, quest: &Value) -> bool {
+        if let Some(reason) = self.closed_reason(quest) {
+            return reason != "open";
+        }
+        let ids = quest_ids(quest);
+        self.history
+            .iter()
+            .any(|s| ids.iter().any(|id| s["questId"] == *id) && s["reason"] == "idle_timeout")
     }
     fn start_process(&mut self, item: &Value) -> Result<(), String> {
         if self.session.is_some() {
@@ -199,14 +275,16 @@ impl Backend {
             return Err("Invalid duration".into());
         }
         let exe = item["executableName"].as_str().filter(|s| !s.is_empty());
+        if exe.is_none() && item["activityEnabled"] != false {
+            return Err("missing_executable".into());
+        }
         let mut child = None;
         let mut destination = None;
         if let Some(exe) = exe {
             let target = storage::target(&self.root.join("games"), &id, exe)?;
             ensure_owned_path(&self.root.join("games"), &target)?;
             fs::create_dir_all(target.parent().unwrap()).map_err(|e| e.to_string())?;
-            fs::write(&target, include_bytes!("../../runner/src-win.exe"))
-                .map_err(|e| e.to_string())?;
+            write_helper(&target)?;
             let mut command = Command::new(&target);
             command.args([
                 "--title",
@@ -224,6 +302,7 @@ impl Backend {
         let s = json!({"appId":id,"questId":item["questId"],"gameName":item["gameName"],"executableName":exe,"executablePath":destination,"iconHash":item["iconHash"],"pid":child.as_ref().map(Child::id).unwrap_or(std::process::id()),"startTime":Utc::now().timestamp_millis(),"targetDurationSeconds":if duration>0.0{Some((duration*60.0).round() as i64)}else{None},"mode":if child.is_some(){if activity{"process_and_rpc"}else{"process_only"}}else{"rpc_only"}});
         self.child = child;
         self.session = Some(s.clone());
+        self.started_at = Some(Instant::now());
         if activity && self.allow_rpc {
             self.presence.start(s);
         }
@@ -239,8 +318,8 @@ impl Backend {
         self.child = None;
         self.presence.stop();
         if let Some(mut session) = self.session.take() {
-            let duration =
-                (Utc::now().timestamp_millis() - session["startTime"].as_i64().unwrap_or(0)) / 1000;
+            let duration = self.elapsed_seconds(&session);
+            self.started_at = None;
             session["durationSeconds"] = json!(duration);
             session["durationFormatted"] = json!(clock(duration));
             session["playedAt"] = json!(stamp());
@@ -248,21 +327,45 @@ impl Backend {
             let quest = text(&session, "questId");
             self.history.insert(0, session);
             self.history.truncate(50);
-            self.save("history.json", &json!({"sessions":self.history}))?;
+            let history_result = self.save("history.json", &json!({"sessions":self.history}));
             if !quest.is_empty() && ["idle_timeout", "quest_cancelled"].contains(&reason) {
-                self.close_quest(
+                let quest_result = self.close_quest(
                     &quest,
                     if reason == "idle_timeout" {
                         "finished"
                     } else {
                         "cancelled"
                     },
-                )?;
+                );
+                history_result?;
+                quest_result?;
+            } else {
+                history_result?;
             }
         }
         Ok(())
     }
     fn launch(&mut self, quest: bool) -> Result<(), String> {
+        if quest {
+            loop {
+                let Some(item) = self.quest_queue.items.get(self.quest_queue.index) else {
+                    return Err("Queue is empty".into());
+                };
+                let id = text(item, "questId");
+                if self.available_quest(&id).is_some() {
+                    break;
+                }
+                self.quest_queue.items[self.quest_queue.index]["state"] = json!("cancelled");
+                let _ = self.close_quest(&id, "cancelled");
+                self.quest_queue.index += 1;
+                if self.quest_queue.index >= self.quest_queue.items.len() {
+                    self.quest_queue.phase = "completed".into();
+                    self.quest_queue.waiting = None;
+                    self.quest_queue.wait_deadline = None;
+                    return Ok(());
+                }
+            }
+        }
         let q = if quest {
             &self.quest_queue
         } else {
@@ -276,6 +379,7 @@ impl Backend {
             &mut self.queue
         };
         q.waiting = None;
+        q.wait_deadline = None;
         match result {
             Ok(()) => {
                 q.phase = "running".into();
@@ -303,17 +407,23 @@ impl Backend {
         if next >= q.items.len() {
             q.phase = "completed".into();
             q.waiting = None;
+            q.wait_deadline = None;
             return;
         }
         q.index = next;
         q.phase = "waiting".into();
         q.items[next]["state"] = json!("waiting");
-        q.waiting = Some(Utc::now().timestamp_millis() + rand::random_range(5..=10) * 1000);
+        let seconds = rand::random_range(5..=10);
+        q.waiting = Some(Utc::now().timestamp_millis() + seconds * 1000);
+        q.wait_deadline = Some(Instant::now() + Duration::from_secs(seconds as u64));
     }
     fn finish_current(&mut self, reason: &str) -> Result<(), String> {
         let quest = self.quest_queue.phase == "running";
         let queued = quest || self.queue.phase == "running";
-        self.stop_process(reason)?;
+        let stopped = self.stop_process(reason);
+        if self.session.is_some() {
+            return stopped;
+        }
         if queued {
             if reason == "item_cancelled" && !quest {
                 self.queue.items.remove(self.queue.index);
@@ -322,7 +432,6 @@ impl Backend {
                 } else {
                     self.queue.index -= 1;
                 }
-                self.save_queue()?;
             } else {
                 let q = if quest {
                     &mut self.quest_queue
@@ -336,8 +445,14 @@ impl Backend {
                 });
             }
             self.advance_safe(quest);
+            if !quest {
+                let saved = self.save_queue();
+                stopped?;
+                saved?;
+                return Ok(());
+            }
         }
-        Ok(())
+        stopped
     }
     fn advance_safe(&mut self, quest: bool) {
         let q = if quest {
@@ -350,10 +465,13 @@ impl Backend {
             if q.items.is_empty() {
                 q.phase = "completed".into();
                 q.waiting = None;
+                q.wait_deadline = None;
             } else {
                 q.phase = "waiting".into();
                 q.items[0]["state"] = json!("waiting");
-                q.waiting = Some(Utc::now().timestamp_millis() + rand::random_range(5..=10) * 1000);
+                let seconds = rand::random_range(5..=10);
+                q.waiting = Some(Utc::now().timestamp_millis() + seconds * 1000);
+                q.wait_deadline = Some(Instant::now() + Duration::from_secs(seconds as u64));
             }
             return;
         }
@@ -363,10 +481,7 @@ impl Backend {
         if let Some(session) = &self.session {
             let timed = session["targetDurationSeconds"]
                 .as_i64()
-                .is_some_and(|duration| {
-                    Utc::now().timestamp_millis() - session["startTime"].as_i64().unwrap_or(0)
-                        >= duration * 1000
-                });
+                .is_some_and(|duration| self.elapsed_seconds(session) >= duration);
             let exited = self
                 .child
                 .as_mut()
@@ -395,10 +510,7 @@ impl Backend {
             } else {
                 &self.queue
             };
-            if q.phase == "waiting"
-                && q.waiting
-                    .is_some_and(|t| t <= Utc::now().timestamp_millis())
-            {
+            if q.phase == "waiting" && q.wait_deadline.is_some_and(|t| t <= Instant::now()) {
                 let _ = self.launch(quest);
             }
         }
@@ -419,7 +531,8 @@ impl Backend {
             }
             if !q.items.iter().skip(q.index).any(|v| {
                 v["appId"] == item["appId"]
-                    && v["executableName"] == item["executableName"]
+                    && executable_key(&v["executableName"])
+                        == executable_key(&item["executableName"])
                     && v["questId"] == item["questId"]
                     && alive(&text(v, "state"))
             }) {
@@ -456,8 +569,19 @@ impl Backend {
             .map(|i| text(i, "questId"))
             .filter(|id| !id.is_empty())
             .collect();
-        if q.phase == "running" {
-            self.stop_process("queue_cancelled")?;
+        let stopped = if q.phase == "running" {
+            self.stop_process("queue_cancelled")
+        } else {
+            Ok(())
+        };
+        if self.session.is_some()
+            && if quest {
+                self.quest_queue.phase == "running"
+            } else {
+                self.queue.phase == "running"
+            }
+        {
+            return stopped;
         }
         let q = if quest {
             &mut self.quest_queue
@@ -466,30 +590,36 @@ impl Backend {
         };
         q.phase = "cancelled".into();
         q.waiting = None;
+        q.wait_deadline = None;
         for i in &mut q.items {
             if alive(&text(i, "state")) {
                 i["state"] = json!("cancelled");
             }
         }
+        let mut saved = Ok(());
         if quest {
             for id in ids {
-                self.close_quest(&id, "cancelled")?;
+                let result = self.close_quest(&id, "cancelled");
+                if saved.is_ok() {
+                    saved = result;
+                }
             }
+        } else {
+            saved = self.save_queue();
         }
-        Ok(())
+        stopped?;
+        saved
     }
     pub fn shutdown(&mut self) {
         self.queue.waiting = None;
+        self.queue.wait_deadline = None;
         self.quest_queue.waiting = None;
+        self.quest_queue.wait_deadline = None;
         let _ = self.stop_process("app_closed");
     }
     pub fn install_catalog(&mut self, data: Value) -> Result<(), String> {
         let list = data.as_array().ok_or("Invalid catalog")?;
-        if list.is_empty()
-            || list
-                .iter()
-                .any(|g| storage::id(&text(g, "id")).is_err() || g["name"].as_str().is_none())
-        {
+        if list.is_empty() || list.iter().any(|g| !valid_game(g)) {
             return Err("Invalid catalog metadata".into());
         }
         self.save("detectable_cache.json", &data)?;
@@ -567,8 +697,9 @@ impl Backend {
                 if !post {
                     return Ok(self.overrides["settings"].clone());
                 }
+                let mut proposed = self.overrides.clone();
                 if let Some(b) = body["scan_local_steam"].as_bool() {
-                    self.overrides["settings"]["scan_local_steam"] = json!(b);
+                    proposed["settings"]["scan_local_steam"] = json!(b);
                 }
                 if let Some(paths) = body.get("steam_paths") {
                     let list = paths.as_array().ok_or("Invalid Steam folders")?;
@@ -581,20 +712,23 @@ impl Backend {
                             return Err("Choose a Steam folder containing steamapps".into());
                         }
                     }
-                    self.overrides["settings"]["steam_paths"] = paths.clone();
+                    proposed["settings"]["steam_paths"] = paths.clone();
                 }
-                self.save("questra_overrides.json", &self.overrides)?;
+                self.save("questra_overrides.json", &proposed)?;
+                self.overrides = proposed;
                 Ok(json!({"success":true}))
             }
             "/api/override" => {
+                let mut proposed = self.overrides.clone();
                 if body["resetAll"] == true {
-                    self.overrides["custom_executables"] = json!({});
+                    proposed["custom_executables"] = json!({});
                 } else {
                     let app = storage::id(&text(&body, "appId"))?;
                     let exe = storage::executable(&text(&body, "executableName"))?;
-                    self.overrides["custom_executables"][&app] = json!(exe);
+                    proposed["custom_executables"][&app] = json!(exe);
                 }
-                self.save("questra_overrides.json", &self.overrides)?;
+                self.save("questra_overrides.json", &proposed)?;
+                self.overrides = proposed;
                 let game = self
                     .game(&text(&body, "appId"))
                     .unwrap_or(json!({"id":body["appId"]}));
@@ -708,41 +842,45 @@ impl Backend {
                 Ok(self.action_status())
             }
             "/api/quests" => {
-                let mut quests:Vec<Value>=self.quests["quests"].as_array().into_iter().flatten().filter(|q|feed::current(q)).map(|q|{let mut q=q.clone();let app=text(&q,"appId");let game=self.game(&app).unwrap_or(json!({"id":app,"name":q["gameName"],"executables":[],"catalogMissing":true}));q["game"]=self.enriched(game);let id=text(&q,"id");let reason=self.closed[&id]["reason"].as_str();q["localClosedReason"]=json!(reason.filter(|r|*r!="open"));q["localFinished"]=json!(if let Some(reason)=reason{reason!="open"}else{self.history.iter().any(|s|s["questId"]==id&&s["reason"]=="idle_timeout")});q}).collect();
+                let mut quests:Vec<Value>=self.quests["quests"].as_array().into_iter().flatten().filter(|q|feed::current(q)).map(|q|{let mut q=q.clone();let app=text(&q,"appId");let game=self.game(&app).unwrap_or(json!({"id":app,"name":q["gameName"],"executables":[],"catalogMissing":true}));q["game"]=self.enriched(game);q["localClosedReason"]=json!(self.closed_reason(&q).filter(|r|*r!="open"));q["localFinished"]=json!(self.quest_finished(&q));q}).collect();
                 quests.sort_by_key(|q| q["localFinished"].as_bool().unwrap_or(false));
                 Ok(
                     json!({"quests":quests,"last_synced":self.quests["last_synced"],"source":self.quests["source"],"sourceUrl":feed::SOURCE}),
                 )
             }
             "/api/quests/start" => {
-                let id = text(&body, "questId");
-                let quest = self.quests["quests"]
-                    .as_array()
-                    .into_iter()
-                    .flatten()
-                    .find(|q| q["id"] == id && feed::current(q))
-                    .ok_or("Quest is no longer available")?
-                    .clone();
-                if self.closed[&id]["reason"]
-                    .as_str()
-                    .is_some_and(|r| r != "open")
-                {
+                let id = storage::id(&text(&body, "questId"))?;
+                let quest = self
+                    .available_quest(&id)
+                    .ok_or("Quest is no longer available")?;
+                if self.quest_finished(&quest) {
                     return Err("Quest is locally closed".into());
                 }
                 let game = self.game(&text(&quest, "appId")).unwrap_or(
                     json!({"id":quest["appId"],"name":quest["gameName"],"executables":[]}),
                 );
                 let resolution = self.resolve(&game);
+                if resolution["primaryExecutable"].as_str().is_none() {
+                    return Err("missing_executable".into());
+                }
                 self.append(json!({"appId":game["id"],"gameName":game["name"],"executableName":resolution["primaryExecutable"],"durationMinutes":15.5,"iconHash":game["icon_hash"],"questId":id}),true)
             }
             "/api/quests/cancel" => {
-                let id = text(&body, "questId");
-                if let Some(index) = self
-                    .quest_queue
-                    .items
-                    .iter()
-                    .position(|i| i["questId"] == id && alive(&text(i, "state")))
+                let id = storage::id(&text(&body, "questId"))?;
+                let ids = self
+                    .available_quest(&id)
+                    .map(|q| quest_ids(&q))
+                    .unwrap_or_else(|| vec![id.clone()]);
+                if self.available_quest(&id).is_none()
+                    && !self.quest_queue.items.iter().any(|i| {
+                        ids.iter().any(|id| i["questId"] == *id) && alive(&text(i, "state"))
+                    })
                 {
+                    return Err("Quest is no longer available".into());
+                }
+                if let Some(index) = self.quest_queue.items.iter().position(|i| {
+                    ids.iter().any(|id| i["questId"] == *id) && alive(&text(i, "state"))
+                }) {
                     if self.quest_queue.active() && index == self.quest_queue.index {
                         if self.quest_queue.phase == "running" {
                             self.finish_current("quest_cancelled")?;
@@ -758,21 +896,15 @@ impl Backend {
                 Ok(self.action_status())
             }
             "/api/quests/reopen" => {
-                let id = text(&body, "questId");
-                if !self.quests["quests"]
-                    .as_array()
-                    .into_iter()
-                    .flatten()
-                    .any(|q| q["id"] == id && feed::current(q))
-                {
-                    return Err("Quest is no longer available".into());
-                }
+                let id = storage::id(&text(&body, "questId"))?;
+                let quest = self
+                    .available_quest(&id)
+                    .ok_or("Quest is no longer available")?;
+                let ids = quest_ids(&quest);
                 if self.quest_queue.active()
-                    && self
-                        .quest_queue
-                        .items
-                        .iter()
-                        .any(|i| i["questId"] == id && alive(&text(i, "state")))
+                    && self.quest_queue.items.iter().any(|i| {
+                        ids.iter().any(|id| i["questId"] == *id) && alive(&text(i, "state"))
+                    })
                 {
                     return Err("Quest is already running".into());
                 }
@@ -783,8 +915,35 @@ impl Backend {
         }
     }
 }
+fn executable_key(value: &Value) -> String {
+    value
+        .as_str()
+        .unwrap_or("")
+        .replace('\\', "/")
+        .to_ascii_lowercase()
+}
+fn quest_ids(quest: &Value) -> Vec<String> {
+    let mut ids = quest["variantIds"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|v| v.as_str())
+        .chain(quest["id"].as_str())
+        .filter_map(|id| storage::id(id).ok())
+        .collect::<Vec<_>>();
+    ids.sort();
+    ids.dedup();
+    ids
+}
 fn json_value(s: &str) -> Value {
     json!(s)
+}
+fn valid_game(game: &Value) -> bool {
+    game.is_object()
+        && storage::id(&text(game, "id")).is_ok()
+        && game["name"]
+            .as_str()
+            .is_some_and(|name| !name.trim().is_empty())
 }
 fn validate_duration(duration: f64) -> Result<(), String> {
     if duration.is_finite() && (1.0..=1440.0).contains(&duration) {
@@ -828,6 +987,25 @@ fn ensure_owned_path(root: &Path, target: &Path) -> Result<(), String> {
         path = p.parent();
     }
     Ok(())
+}
+fn write_helper(target: &Path) -> Result<(), String> {
+    use std::io::Write;
+    let temporary = target.with_extension(format!("{}.tmp", rand::random::<u64>()));
+    let result = (|| {
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)
+            .map_err(|e| e.to_string())?;
+        file.write_all(include_bytes!("../../runner/src-win.exe"))
+            .map_err(|e| e.to_string())?;
+        drop(file);
+        fs::rename(&temporary, target).map_err(|e| e.to_string())
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(temporary);
+    }
+    result
 }
 fn steam_executables(game: &Value, overrides: &Value) -> Option<Vec<String>> {
     let sku = game["third_party_skus"]
@@ -987,6 +1165,7 @@ mod tests {
         assert!((4900..=10000).contains(&wait));
         assert!(f.0.session.is_none());
         f.0.queue.waiting = Some(0);
+        f.0.queue.wait_deadline = Some(Instant::now());
         f.0.tick();
         assert_eq!(f.0.session.as_ref().unwrap()["appId"], "234567");
         assert_eq!(f.0.session.as_ref().unwrap()["targetDurationSeconds"], 5700);
@@ -1003,6 +1182,7 @@ mod tests {
         let persisted = storage::read(&f.0.root.join("data/queue.json"), Value::Null);
         assert_eq!(persisted["items"].as_array().unwrap().len(), 1);
         f.0.queue.waiting = Some(0);
+        f.0.queue.wait_deadline = Some(Instant::now());
         f.0.tick();
         f.0.route("/api/stop-current", json!({})).unwrap();
         assert!(f.0.queue.items.is_empty());
@@ -1039,6 +1219,10 @@ mod tests {
     #[test]
     fn quest_cancel_is_individual_and_reopen_is_persistent() {
         let mut f = Fixture::new();
+        f.0.catalog = vec![
+            json!({"id":"123456","name":"Test","executables":[{"os":"win32","name":"audit-first.exe"}]}),
+            json!({"id":"234567","name":"Test2","executables":[{"os":"win32","name":"audit-second.exe"}]}),
+        ];
         let expiry = (Utc::now() + chrono::Duration::hours(1)).to_rfc3339();
         f.0.quests = json!({"quests":[{"id":"123456","appId":"123456","gameName":"Test","kind":"play","durationSeconds":900,"expiresAt":expiry},{"id":"234567","appId":"234567","gameName":"Test2","kind":"play","durationSeconds":900,"expiresAt":expiry}]});
         f.0.save("active_quests.json", &f.0.quests).unwrap();
@@ -1061,6 +1245,7 @@ mod tests {
         let mut f = Fixture::new();
         f.0.append(item("123456", 1., false), false).unwrap();
         f.0.session.as_mut().unwrap()["startTime"] = json!(Utc::now().timestamp_millis() - 61000);
+        f.0.started_at = Some(Instant::now() - Duration::from_secs(61));
         f.0.tick();
         assert!(f.0.session.is_none());
         assert_eq!(f.0.history[0]["reason"], "idle_timeout");
@@ -1075,5 +1260,133 @@ mod tests {
         f.0.tick();
         assert!(f.0.session.is_none());
         assert_eq!(f.0.queue.phase, "cancelled");
+    }
+    #[test]
+    fn corrupt_saved_shapes_are_safe() {
+        let f = Fixture::new();
+        storage::save(&f.0.root.join("data/questra_overrides.json"), &json!(12)).unwrap();
+        storage::save(
+            &f.0.root.join("data/active_quests.json.states.json"),
+            &json!([]),
+        )
+        .unwrap();
+        storage::save(
+            &f.0.root.join("data/detectable_cache.json"),
+            &json!([{},"bad",{"id":"123456","name":"Game"}]),
+        )
+        .unwrap();
+        let mut state = Backend::new(f.0.root.clone()).unwrap();
+        assert_eq!(state.catalog.len(), 1);
+        state
+            .route(
+                "/api/override",
+                json!({"appId":"123456","executableName":"game.exe"}),
+            )
+            .unwrap();
+        assert_eq!(state.overrides["custom_executables"]["123456"], "game.exe");
+    }
+    #[test]
+    fn completed_games_do_not_reappear_in_saved_queue() {
+        let mut f = Fixture::new();
+        f.0.append(item("123456", 1., false), false).unwrap();
+        f.0.append(item("234567", 1., false), false).unwrap();
+        f.0.finish_current("idle_timeout").unwrap();
+        let restarted = Backend::new(f.0.root.clone()).unwrap();
+        assert_eq!(restarted.queue.items.len(), 1);
+        assert_eq!(restarted.queue.items[0]["appId"], "234567");
+    }
+    #[test]
+    fn failed_history_save_cannot_leave_a_stopped_queue_running() {
+        let mut f = Fixture::new();
+        f.0.append(item("123456", 1., false), false).unwrap();
+        f.0.append(item("234567", 1., false), false).unwrap();
+        fs::create_dir(f.0.root.join("data/history.json")).unwrap();
+        assert!(f.0.finish_current("idle_timeout").is_err());
+        assert!(f.0.session.is_none());
+        assert_eq!(f.0.queue.phase, "waiting");
+    }
+    #[test]
+    fn stop_all_remains_stopped_after_a_write_error() {
+        let mut f = Fixture::new();
+        f.0.append(item("123456", 1., false), false).unwrap();
+        fs::create_dir(f.0.root.join("data/history.json")).unwrap();
+        assert!(f.0.cancel_queue(false).is_err());
+        assert!(f.0.session.is_none());
+        assert!(!f.0.queue.active());
+        assert!(f.0.queue.wait_deadline.is_none());
+    }
+    #[test]
+    fn settings_and_names_roll_back_when_saving_fails() {
+        let mut f = Fixture::new();
+        let before = f.0.overrides.clone();
+        fs::create_dir(f.0.root.join("data/questra_overrides.json")).unwrap();
+        assert!(f
+            .0
+            .route(
+                "/api/override",
+                json!({"appId":"123456","executableName":"game.exe"})
+            )
+            .is_err());
+        assert_eq!(f.0.overrides, before);
+        assert!(f
+            .0
+            .route("/api/settings", json!({"scan_local_steam":false}))
+            .is_err());
+        assert_eq!(f.0.overrides, before);
+    }
+    #[test]
+    fn system_clock_changes_do_not_end_or_start_games_early() {
+        let mut f = Fixture::new();
+        f.0.append(item("123456", 1., false), false).unwrap();
+        f.0.append(item("234567", 1., false), false).unwrap();
+        f.0.session.as_mut().unwrap()["startTime"] = json!(0);
+        f.0.tick();
+        assert!(f.0.session.is_some());
+        f.0.finish_current("idle_timeout").unwrap();
+        f.0.queue.waiting = Some(0);
+        f.0.tick();
+        assert!(f.0.session.is_none());
+        assert!(f.0.queue.status()["waitSecondsRemaining"].as_u64().unwrap() <= 10);
+    }
+    #[test]
+    fn finished_history_requires_reopen_and_invalid_quests_are_rejected() {
+        let mut f = Fixture::new();
+        f.0.catalog = vec![
+            json!({"id":"123456","name":"Test","executables":[{"os":"win32","name":"audit-first.exe"}]}),
+        ];
+        let expiry = (Utc::now() + chrono::Duration::hours(1)).to_rfc3339();
+        f.0.quests = json!({"quests":[{"id":"123456","appId":"123456","gameName":"Test","kind":"play","durationSeconds":900,"expiresAt":expiry}]});
+        f.0.history = vec![json!({"questId":"123456","reason":"idle_timeout"})];
+        assert!(f
+            .0
+            .route("/api/quests/start", json!({"questId":"123456"}))
+            .is_err());
+        f.0.route("/api/quests/reopen", json!({"questId":"123456"}))
+            .unwrap();
+        f.0.route("/api/quests/start", json!({"questId":"123456"}))
+            .unwrap();
+        assert!(f
+            .0
+            .route("/api/quests/cancel", json!({"questId":"999999"}))
+            .is_err());
+        assert!(f
+            .0
+            .route("/api/quests/cancel", json!({"questId":"invalid"}))
+            .is_err());
+    }
+    #[test]
+    fn replacing_a_helper_does_not_modify_an_external_hardlink() {
+        let f = Fixture::new();
+        let outside = f.0.root.join("data/original.bin");
+        fs::write(&outside, b"original user file").unwrap();
+        let target = f.0.root.join("games/123456/hardlink-test.exe");
+        fs::create_dir_all(target.parent().unwrap()).unwrap();
+        fs::hard_link(&outside, &target).unwrap();
+        write_helper(&target).unwrap();
+        assert_eq!(fs::read(outside).unwrap(), b"original user file");
+        assert_eq!(
+            fs::read(target).unwrap(),
+            include_bytes!("../../runner/src-win.exe")
+        );
     }
 }
