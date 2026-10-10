@@ -1,5 +1,5 @@
 {
-  "testedAt": "2026-10-10T11:28:45.186Z",
+  "testedAt": "2026-10-10T11:31:12.075Z",
   "runtime": "Tauri/WebView2",
   "checks": [
     "Scrolling to the end loads the next game page without a Load more button",

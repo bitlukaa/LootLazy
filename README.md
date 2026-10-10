@@ -4,7 +4,7 @@ Portable Windows desktop application with a public game catalog, owned game-proc
 
 ## Run
 
-Close the previous Questro instance completely and open Questro.exe in the project root. The launcher opens dist/Questro-Tauri/Questro.exe. Copy the Questro-Tauri folder to distribute the application. The optimized executable is approximately 3.81 MiB; catalog, artwork and profile caches are additional user data.
+Close the previous Questro instance completely and open Questro.exe in the project root. The launcher opens dist/Questro-Tauri/Questro.exe. Copy the Questro-Tauri folder to distribute the application. The optimized executable is approximately 3.85 MiB; catalog, artwork and profile caches are additional user data.
 
 The native runtime is Tauri and Rust with the installed Microsoft Edge WebView2 runtime. Electron, Chromium and Node are not bundled. WebView2 must be available on the destination machine: https://developer.microsoft.com/microsoft-edge/webview2/
 
