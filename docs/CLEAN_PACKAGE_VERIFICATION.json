@@ -1,0 +1,36 @@
+{
+  "version": "3.0.0",
+  "packagedAt": "2026-10-10T07:30:53.158Z",
+  "folder": "releases/Questro-3.0.0",
+  "zip": "releases/Questro-3.0.0.zip",
+  "folderBytes": 3997581,
+  "zipBytes": 1732099,
+  "files": [
+    {
+      "name": "DISCORD-QUEST-HELPER-LICENSE.txt",
+      "bytes": 1066
+    },
+    {
+      "name": "LUCIDE-LICENSE.txt",
+      "bytes": 3208
+    },
+    {
+      "name": "Questro.exe",
+      "bytes": 3991552
+    },
+    {
+      "name": "README.md",
+      "bytes": 665
+    },
+    {
+      "name": "TAURI-LICENSE-MIT.txt",
+      "bytes": 1090
+    }
+  ],
+  "executableSHA256": "133b70bad76cc1605335ff3b98cbcb9436fa89ee5e848ec5765986884c97cfb8",
+  "matchesTestedBuild": true,
+  "zipVerified": true,
+  "containsUserData": false,
+  "containsSourceCode": false,
+  "firstLaunchCreatesData": true
+}

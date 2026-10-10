@@ -10,3 +10,4 @@ Questro.lnk
 *.tmp
 src-tauri/target/
 src-tauri/gen/schemas/
+releases/

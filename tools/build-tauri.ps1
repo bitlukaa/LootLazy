@@ -11,7 +11,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Tauri build failed.' }
 $output = Join-Path $projectRoot 'dist/Questro-Tauri'
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 Copy-Item -LiteralPath (Join-Path $env:CARGO_TARGET_DIR 'release/questro.exe') -Destination (Join-Path $output 'Questro.exe')
-foreach ($license in @('LUCIDE-LICENSE.txt','DISCORD-QUEST-HELPER-LICENSE.txt')) { Copy-Item -LiteralPath (Join-Path $projectRoot "public/assets/$license") -Destination $output }
+foreach ($license in @('LUCIDE-LICENSE.txt','DISCORD-QUEST-HELPER-LICENSE.txt','TAURI-LICENSE-MIT.txt')) { Copy-Item -LiteralPath (Join-Path $projectRoot "public/assets/$license") -Destination $output }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $output
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
 if (Test-Path -LiteralPath $compiler) {

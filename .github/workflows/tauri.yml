@@ -25,4 +25,4 @@ jobs:
           path: |
             dist/Questro-Tauri/Questro.exe
             dist/Questro-Tauri/README.md
-            dist/Questro-Tauri/*LICENSE.txt
+            dist/Questro-Tauri/*LICENSE*.txt

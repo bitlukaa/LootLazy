@@ -48,3 +48,7 @@ The public catalog https://discord.com/api/applications/detectable contains game
 ## Attribution
 
 The UI adapts layout, palette and theme transitions from Discord Quest Helper 0.10.9 under MIT. Its license and the Lucide icon license are bundled in the portable folder and public/assets. See docs/THIRD_PARTY_NOTICES.md.
+
+## Clean distribution
+
+Run npm run package after building. It creates releases/Questro-3.0.0 and its ZIP, containing only the tested executable, a short README and license notices. Source code, game catalog, artwork, profiles and personal data are excluded. Use a new -OutputName when packaging the same version again; existing folders are preserved. The executable SHA256 is checked against the tested build.
