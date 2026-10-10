@@ -9,3 +9,4 @@ Questro.lnk
 *.log
 *.tmp
 src-tauri/target/
+src-tauri/gen/schemas/
