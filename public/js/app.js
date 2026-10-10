@@ -53,7 +53,7 @@ let questsBusy=false,questSignature='',questActionBusy=false,lastQuestRefresh=0;
 async function loadQuests(refresh=false,silent=false){
  if(questsBusy)return;questsBusy=true;const button=$('btn-refresh-quests');busy(button,true);
  try{const data=await request('/api/quests'+(refresh?'?refresh=true':''));const running=state.quests.find(q=>questMatches(q,state.session?.questId));state.quests=(data.quests||[]).filter(q=>q.kind==='play'&&q.durationSeconds===900);if(running&&!state.quests.some(q=>questMatches(q,state.session?.questId)))state.quests.unshift({...running,unavailable:true});trackQuestUpdates(state.quests);lastQuestRefresh=refresh?Date.now():Date.parse(data.last_synced)||0;renderQuests();$('quests-error').hidden=true;if(refresh&&!silent)toast(t('quests_refreshed',{count:number(state.quests.length)}),'success');}
- catch{if(refresh){$('quests-error').textContent=t('quests_refresh_error');$('quests-error').hidden=false;}}
+ catch{if(refresh){state.quests=state.quests.filter(q=>questMatches(q,state.session?.questId)||Date.parse(q.expiresAt)>Date.now());renderQuests();$('quests-error').textContent=t('quests_refresh_error');$('quests-error').hidden=false;}}
  finally{questsBusy=false;busy(button,false);}
 }
 async function playQuest(quest){

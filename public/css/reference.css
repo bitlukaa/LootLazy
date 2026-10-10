@@ -47,7 +47,7 @@ button:disabled {opacity:.5;cursor:not-allowed}
 .sim-modes {display:flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);border-radius:8px;background:hsl(var(--reference-secondary)/.5)}
 .sim-mode {display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 12px;gap:6px;font-size:12px;font-weight:500;border:0;border-radius:6px;color:var(--text);background:transparent;white-space:nowrap;transition:background-color .15s,color .15s}
 .sim-mode svg {width:14px;height:14px}.sim-mode:hover {background:var(--surface-2)}.sim-mode.active {background:var(--accent);color:hsl(210 40% 98%)}
-.count-badge {min-width:20px;height:20px;padding:0 5px;border-radius:6px;font-size:10px;background:var(--surface-2);color:var(--muted)}
+.count-badge {display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-width:28px;height:24px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;background:hsl(var(--reference-primary)/.12);color:var(--text)}
 .workspace-grid {grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:stretch}.workspace-grid.custom-workspace {grid-template-columns:1fr}
 .panel {padding:24px;border:1px solid var(--line);border-radius:8px;background:var(--bg);box-shadow:var(--shadow)}
 .games-panel {height:600px;min-height:0;padding:24px;display:flex;flex-direction:column;gap:0}
@@ -57,6 +57,8 @@ button:disabled {opacity:.5;cursor:not-allowed}
 .picker-heading-actions .quiet-count {display:none}.picker-heading-actions .icon-button {width:32px;height:32px}
 .search-field {margin-top:8px;min-height:40px;height:40px;border-radius:6px;background:var(--bg);border:1px solid var(--line);padding:0 8px;gap:8px}
 .search-field svg {width:16px;height:16px}.search-field input {height:38px;padding:8px 0;background:transparent;border:0;font-size:14px}
+.search-field input:focus,.search-field input:focus-visible {outline:none;box-shadow:none}
+.search-field:focus-within {box-shadow:none}
 input,select {height:40px;border:1px solid var(--line);border-radius:6px;padding:8px 12px;background:var(--bg);font-size:14px}
 .game-list {margin-top:24px;min-height:0;max-height:none;flex:1;overflow-y:auto;gap:8px;padding-inline-end:8px}
 .game-item {min-height:64px;height:auto;display:flex;align-items:center;gap:12px;padding:12px 16px;border:0;border-radius:6px;background:var(--surface-2);color:var(--text);text-align:start;flex-shrink:0;transition:background-color .15s}

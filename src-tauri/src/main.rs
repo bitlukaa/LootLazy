@@ -221,7 +221,7 @@ fn main() {
                                     "image/png"
                                 },
                             )
-                            .header("Cache-Control", "public, max-age=86400")
+                            .header("Cache-Control", "no-store")
                             .body(bytes)
                             .unwrap(),
                         Err(_) => tauri::http::Response::builder()

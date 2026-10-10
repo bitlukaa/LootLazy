@@ -1,4 +1,4 @@
-use crate::{feed, presence::Presence, storage};
+use crate::{artwork, feed, presence::Presence, storage};
 use chrono::Utc;
 use serde_json::{json, Value};
 use std::{
@@ -61,6 +61,7 @@ pub struct Backend {
     presence: Presence,
     allow_rpc: bool,
     started_at: Option<Instant>,
+    cache_cleanup_at: Instant,
 }
 impl Backend {
     pub fn new(root: PathBuf) -> Result<Self, String> {
@@ -93,7 +94,7 @@ impl Backend {
             .filter_map(|item| validated_item(item.clone()).ok())
             .take(30)
             .collect();
-        Ok(Self {
+        let backend = Self {
             catalog: read("detectable_cache.json", json!([]))
                 .as_array()
                 .cloned()
@@ -125,7 +126,32 @@ impl Backend {
             presence: Presence::new(),
             allow_rpc: true,
             started_at: None,
-        })
+            cache_cleanup_at: Instant::now(),
+        };
+        backend.prune_quest_cache(&[]);
+        Ok(backend)
+    }
+    fn prune_quest_cache(&self, extra: &[String]) {
+        let quests: Vec<&Value> = self.quests["quests"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .collect();
+        let mut previous: Vec<String> = quests
+            .iter()
+            .filter_map(|q| q["image"].as_str().map(str::to_string))
+            .collect();
+        previous.extend_from_slice(extra);
+        let mut keep: Vec<String> = quests
+            .iter()
+            .filter(|q| feed::current(q))
+            .filter_map(|q| q["image"].as_str().map(str::to_string))
+            .collect();
+        if let Some(image) = self.session.as_ref().and_then(|s| s["questImage"].as_str()) {
+            previous.push(image.to_string());
+            keep.push(image.to_string());
+        }
+        let _ = artwork::prune_quests(&self.root, &previous, &keep);
     }
     fn save(&self, name: &str, data: &Value) -> Result<(), String> {
         storage::save(&self.root.join("data").join(name), data)
@@ -299,7 +325,7 @@ impl Backend {
             destination = Some(target.to_string_lossy().to_string());
         }
         let activity = item["activityEnabled"] != false;
-        let s = json!({"appId":id,"questId":item["questId"],"gameName":item["gameName"],"executableName":exe,"executablePath":destination,"iconHash":item["iconHash"],"pid":child.as_ref().map(Child::id).unwrap_or(std::process::id()),"startTime":Utc::now().timestamp_millis(),"targetDurationSeconds":if duration>0.0{Some((duration*60.0).round() as i64)}else{None},"mode":if child.is_some(){if activity{"process_and_rpc"}else{"process_only"}}else{"rpc_only"}});
+        let s = json!({"appId":id,"questId":item["questId"],"questImage":item["questImage"],"gameName":item["gameName"],"executableName":exe,"executablePath":destination,"iconHash":item["iconHash"],"pid":child.as_ref().map(Child::id).unwrap_or(std::process::id()),"startTime":Utc::now().timestamp_millis(),"targetDurationSeconds":if duration>0.0{Some((duration*60.0).round() as i64)}else{None},"mode":if child.is_some(){if activity{"process_and_rpc"}else{"process_only"}}else{"rpc_only"}});
         self.child = child;
         self.session = Some(s.clone());
         self.started_at = Some(Instant::now());
@@ -318,6 +344,8 @@ impl Backend {
         self.child = None;
         self.presence.stop();
         if let Some(mut session) = self.session.take() {
+            let image = session["questImage"].as_str().map(str::to_string);
+            self.prune_quest_cache(&image.into_iter().collect::<Vec<_>>());
             let duration = self.elapsed_seconds(&session);
             self.started_at = None;
             session["durationSeconds"] = json!(duration);
@@ -478,6 +506,10 @@ impl Backend {
         self.advance(quest);
     }
     pub fn tick(&mut self) {
+        if self.cache_cleanup_at.elapsed() >= Duration::from_secs(60) {
+            self.prune_quest_cache(&[]);
+            self.cache_cleanup_at = Instant::now();
+        }
         if let Some(session) = &self.session {
             let timed = session["targetDurationSeconds"]
                 .as_i64()
@@ -629,9 +661,16 @@ impl Backend {
     }
     pub fn install_quests(&mut self, data: Value) -> Result<(), String> {
         let quests = feed::normalize(&data, Utc::now().timestamp_millis())?;
+        let previous: Vec<String> = self.quests["quests"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|q| q["image"].as_str().map(str::to_string))
+            .collect();
         let value = json!({"source":"community_feed","sourceUrl":feed::SOURCE,"last_synced":stamp(),"quests":quests});
         self.save("active_quests.json", &value)?;
         self.quests = value;
+        self.prune_quest_cache(&previous);
         Ok(())
     }
     pub fn route(&mut self, route: &str, body: Value) -> Result<Value, String> {
@@ -866,7 +905,7 @@ impl Backend {
                 if resolution["primaryExecutable"].as_str().is_none() {
                     return Err("missing_executable".into());
                 }
-                self.append(json!({"appId":game["id"],"gameName":game["name"],"executableName":resolution["primaryExecutable"],"durationMinutes":15.5,"iconHash":game["icon_hash"],"questId":id}),true)
+                self.append(json!({"appId":game["id"],"gameName":game["name"],"executableName":resolution["primaryExecutable"],"durationMinutes":15.5,"iconHash":game["icon_hash"],"questId":id,"questImage":quest["image"]}),true)
             }
             "/api/quests/cancel" => {
                 let id = storage::id(&text(&body, "questId"))?;
@@ -1100,32 +1139,68 @@ fn scan_exes(root: &Path, prefix: &str, depth: u8, out: &mut Vec<String>) {
         }
     }
 }
+const MAX_JSON_BYTES: u64 = 32 * 1024 * 1024;
+fn read_json(reader: impl std::io::Read, limit: u64) -> Result<Value, String> {
+    use std::io::Read;
+    let mut bytes = Vec::new();
+    reader
+        .take(limit + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|e| e.to_string())?;
+    if bytes.len() as u64 > limit {
+        return Err("Response too large".into());
+    }
+    serde_json::from_slice(&bytes).map_err(|e| e.to_string())
+}
 pub fn fetch_json(url: &str) -> Result<Value, String> {
     let client = reqwest::blocking::Client::builder()
         .timeout(Duration::from_secs(15))
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| e.to_string())?;
-    let mut response = client
+    let response = client
         .get(url)
         .header("Accept", "application/json")
         .send()
         .and_then(|r| r.error_for_status())
         .map_err(|e| e.to_string())?;
-    let mut bytes = Vec::new();
-    use std::io::Read;
-    (&mut response)
-        .take(12 * 1024 * 1024 + 1)
-        .read_to_end(&mut bytes)
-        .map_err(|e| e.to_string())?;
-    if bytes.len() > 12 * 1024 * 1024 {
-        return Err("Response too large".into());
-    }
-    serde_json::from_slice(&bytes).map_err(|e| e.to_string())
+    read_json(response, MAX_JSON_BYTES)
 }
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn catalog_response_above_the_old_limit_is_accepted_but_still_bounded() {
+        let mut body = vec![b' '; 13 * 1024 * 1024];
+        body[..2].copy_from_slice(b"[]");
+        assert_eq!(
+            read_json(body.as_slice(), MAX_JSON_BYTES).unwrap(),
+            json!([])
+        );
+        assert_eq!(
+            read_json(std::io::repeat(b' '), 16).unwrap_err(),
+            "Response too large"
+        );
+    }
+    #[test]
+    fn expired_quest_artwork_is_cleaned_offline_but_a_running_card_is_preserved() {
+        use sha2::{Digest, Sha256};
+        let mut f = Fixture::new();
+        let image = "https://cdn.discordapp.com/quests/123456/expired.png";
+        let path = f.0.root.join(format!(
+            "data/artwork/{:x}.png",
+            Sha256::digest(image.as_bytes())
+        ));
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, b"cached image").unwrap();
+        f.0.quests = json!({"quests":[{"id":"123456","kind":"play","durationSeconds":900,"expiresAt":(Utc::now()-chrono::Duration::hours(1)).to_rfc3339(),"image":image}]});
+        f.0.session = Some(json!({"questId":"123456","questImage":image}));
+        f.0.prune_quest_cache(&[]);
+        assert!(path.exists());
+        f.0.session = None;
+        f.0.prune_quest_cache(&[]);
+        assert!(!path.exists());
+    }
     struct Fixture(Backend);
     impl Fixture {
         fn new() -> Self {

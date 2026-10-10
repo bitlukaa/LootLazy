@@ -1,6 +1,6 @@
 use sha2::{Digest, Sha256};
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     io::Read,
     path::Path,
@@ -114,7 +114,7 @@ pub fn get(root: &Path, value: &str) -> Result<(Vec<u8>, &'static str), String> 
         .as_ref()
         .map_err(Clone::clone)?;
     let mut response = client
-        .get(url)
+        .get(url.clone())
         .send()
         .and_then(|r| r.error_for_status())
         .map_err(|e| e.to_string())?;
@@ -127,14 +127,61 @@ pub fn get(root: &Path, value: &str) -> Result<(Vec<u8>, &'static str), String> 
         return Err("Artwork too large".into());
     }
     let kind = image_type(&bytes)?;
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let temporary = dir.join(format!("{key}.{kind}.tmp"));
-    fs::write(&temporary, &bytes).map_err(|e| e.to_string())?;
-    fs::rename(temporary, dir.join(format!("{key}.{kind}"))).map_err(|e| e.to_string())?;
-    let _ = trim(&dir);
+    {
+        let _cache = TRIM_LOCK.lock().map_err(|_| "Artwork cache unavailable")?;
+        if url.path().starts_with("/quests/") && !current_quest_images(root).contains(url.as_str())
+        {
+            return Ok((bytes, kind));
+        }
+        fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+        let temporary = dir.join(format!("{key}.{kind}.tmp"));
+        fs::write(&temporary, &bytes).map_err(|e| e.to_string())?;
+        fs::rename(temporary, dir.join(format!("{key}.{kind}"))).map_err(|e| e.to_string())?;
+    }
+    let _ = trim(
+        &dir,
+        &image_keys(current_quest_images(root).iter().map(String::as_str)),
+    );
     Ok((bytes, kind))
 }
-fn trim(dir: &Path) -> Result<(), String> {
+fn current_quest_images(root: &Path) -> HashSet<String> {
+    let feed = crate::storage::read(&root.join("data/active_quests.json"), serde_json::json!({}));
+    feed["quests"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|q| crate::feed::current(q))
+        .filter_map(|q| q["image"].as_str().map(str::to_string))
+        .collect()
+}
+fn image_keys<'a>(urls: impl Iterator<Item = &'a str>) -> HashSet<String> {
+    urls.filter_map(|value| validated(value).ok())
+        .filter(|url| url.path().starts_with("/quests/"))
+        .map(|url| format!("{:x}", Sha256::digest(url.as_str().as_bytes())))
+        .collect()
+}
+pub fn prune_quests(root: &Path, previous: &[String], keep: &[String]) -> Result<(), String> {
+    let dir = root.join("data/artwork");
+    if !dir.is_dir() {
+        return Ok(());
+    }
+    let preserved = image_keys(keep.iter().map(String::as_str));
+    {
+        let _cache = TRIM_LOCK.lock().map_err(|_| "Artwork cache unavailable")?;
+        for key in image_keys(previous.iter().map(String::as_str)).difference(&preserved) {
+            for ext in ["png", "jpg", "webp"] {
+                let file = dir.join(format!("{key}.{ext}"));
+                match fs::remove_file(file) {
+                    Ok(()) => {}
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(error) => return Err(error.to_string()),
+                }
+            }
+        }
+    }
+    trim(&dir, &preserved)
+}
+fn trim(dir: &Path, preserved: &HashSet<String>) -> Result<(), String> {
     let _trim = TRIM_LOCK.lock().map_err(|_| "Artwork cache unavailable")?;
     let mut entries: Vec<_> = fs::read_dir(dir)
         .map_err(|e| e.to_string())?
@@ -155,8 +202,15 @@ fn trim(dir: &Path) -> Result<(), String> {
     entries.sort_by_key(|e| e.2);
     let mut total: u64 = entries.iter().map(|e| e.1).sum();
     for (path, size, _) in entries {
-        if total <= 64 * 1024 * 1024 {
-            break;
+        let key = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+        let expired = fs::metadata(&path)
+            .ok()
+            .and_then(|m| m.modified().ok())
+            .and_then(|t| t.elapsed().ok())
+            .is_some_and(|age| age > Duration::from_secs(7 * 86400))
+            && !preserved.contains(key);
+        if total <= 64 * 1024 * 1024 && !expired {
+            continue;
         }
         fs::remove_file(path).map_err(|e| e.to_string())?;
         total -= size;
@@ -166,6 +220,35 @@ fn trim(dir: &Path) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn removed_quest_images_are_deleted_without_touching_shared_images_or_user_files() {
+        let root = std::env::temp_dir().join(format!("questro-art-{}", rand::random::<u64>()));
+        let dir = root.join("data/artwork");
+        fs::create_dir_all(&dir).unwrap();
+        let removed = "https://cdn.discordapp.com/quests/123456/old.png".to_string();
+        let shared = "https://cdn.discordapp.com/quests/234567/shared.png".to_string();
+        let file = |url: &str| dir.join(format!("{:x}.png", Sha256::digest(url.as_bytes())));
+        fs::write(file(&removed), b"old").unwrap();
+        fs::write(file(&shared), b"shared").unwrap();
+        fs::write(dir.join("user-notes.txt"), b"keep").unwrap();
+        let orphan = dir.join(format!("{}.jpg", "a".repeat(64)));
+        fs::write(&orphan, b"orphan").unwrap();
+        fs::OpenOptions::new()
+            .write(true)
+            .open(&orphan)
+            .unwrap()
+            .set_times(
+                fs::FileTimes::new()
+                    .set_modified(std::time::SystemTime::now() - Duration::from_secs(8 * 86400)),
+            )
+            .unwrap();
+        prune_quests(&root, &[removed.clone(), shared.clone()], &[shared.clone()]).unwrap();
+        assert!(!file(&removed).exists());
+        assert!(file(&shared).exists());
+        assert!(dir.join("user-notes.txt").exists());
+        assert!(!orphan.exists());
+        fs::remove_dir_all(root).unwrap();
+    }
     #[test]
     fn downloads_have_bounded_concurrency() {
         use std::sync::atomic::{AtomicUsize, Ordering};
