@@ -1,6 +1,6 @@
 {
   "name": "questro",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "description": "Questro",
   "scripts": {
     "start": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/start-tauri.ps1",

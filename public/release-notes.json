@@ -1,13 +1,13 @@
 {
-  "version": "3.2.2",
+  "version": "3.2.3",
   "en": [
-    "Appearance and language choices now have a home in Settings.",
-    "Check for new releases and see what's new without leaving the app.",
-    "A simpler game catalog setup, with clearer download and refresh controls."
+    "The game list stays up to date automatically.",
+    "A more compact simulator with clearer game details and search.",
+    "Improved executable controls and quest action buttons."
   ],
   "ar": [
-    "اختيارات المظهر واللغة أصبحت داخل الإعدادات.",
-    "فحص الإصدارات الجديدة وعرض الجديد من داخل التطبيق.",
-    "إعداد أبسط لقائمة الألعاب وأزرار أوضح للتنزيل والتحديث."
+    "قائمة الألعاب تتحدث تلقائيًا.",
+    "واجهة تشغيل أكثر ترتيبًا مع معلومات أوضح للعبة والبحث.",
+    "تحسين اختيار ملف التشغيل وأزرار المهام."
   ]
 }

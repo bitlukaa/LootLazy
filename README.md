@@ -7,6 +7,7 @@ Downloading a huge game just for a short quest is a bit much. Questro runs a lig
 ## What you can do
 
 - Find a game and start it with its available executable name already selected.
+- Keep the game list up to date automatically.
 - Run a timed session, or leave it running until you stop it.
 - Pick a few games and let your queue run them in order.
 - Start a session straight from a desktop-play quest card.
