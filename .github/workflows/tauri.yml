@@ -1,0 +1,28 @@
+name: Tauri Windows
+on:
+  push:
+    branches: [main, tauri-migration]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Format
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+      - name: Rust regressions
+        run: ./tools/test-tauri.ps1
+      - name: Build portable application
+        run: ./tools/build-tauri.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Questro-Tauri-Windows
+          path: |
+            dist/Questro-Tauri/Questro.exe
+            dist/Questro-Tauri/README.md
+            dist/Questro-Tauri/*LICENSE.txt

@@ -1,0 +1,234 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod artwork;
+mod backend;
+mod feed;
+mod presence;
+mod storage;
+use serde_json::Value;
+use std::{
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
+};
+use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+type Shared = Arc<Mutex<backend::Backend>>;
+static CATALOG_REFRESH: Mutex<()> = Mutex::new(());
+#[tauri::command]
+async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Result<Value, String> {
+    if !route.starts_with("/api/") || route.len() > 2000 {
+        return Err("Invalid application route".into());
+    }
+    let state = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let url =
+            url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
+        if ["/api/refresh-catalog", "/api/games", "/api/catalog-stats"].contains(&url.path()) {
+            let _refresh = CATALOG_REFRESH.lock().map_err(|_| "Catalog unavailable")?;
+            let missing = state
+                .lock()
+                .map_err(|_| "Backend unavailable")?
+                .catalog
+                .is_empty();
+            if missing || url.path() == "/api/refresh-catalog" {
+                let data = backend::fetch_json("https://discord.com/api/applications/detectable")?;
+                state
+                    .lock()
+                    .map_err(|_| "Backend unavailable")?
+                    .install_catalog(data)?;
+            }
+        }
+        if url.path() == "/api/quests"
+            && url
+                .query_pairs()
+                .any(|(k, v)| k == "refresh" && v == "true")
+        {
+            let data = backend::fetch_json(feed::SOURCE)?;
+            state
+                .lock()
+                .map_err(|_| "Backend unavailable")?
+                .install_quests(data)?;
+        }
+        state
+            .lock()
+            .map_err(|_| "Backend unavailable")?
+            .route(&route, body)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+fn root() -> PathBuf {
+    std::env::var_os("QUESTRO_DATA_ROOT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            std::env::current_exe()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .to_path_buf()
+        })
+}
+fn single_instance() -> bool {
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::{
+            Foundation::{GetLastError, ERROR_ALREADY_EXISTS},
+            System::Threading::CreateMutexW,
+            UI::WindowsAndMessaging::{FindWindowW, SetForegroundWindow, ShowWindow, SW_RESTORE},
+        };
+        let name: Vec<u16> = "Local\\QuestroTauriPortable"
+            .encode_utf16()
+            .chain(Some(0))
+            .collect();
+        let handle = CreateMutexW(std::ptr::null(), 0, name.as_ptr());
+        if handle.is_null() {
+            return false;
+        }
+        if GetLastError() == ERROR_ALREADY_EXISTS {
+            let title: Vec<u16> = "Questro".encode_utf16().chain(Some(0)).collect();
+            let win = FindWindowW(std::ptr::null(), title.as_ptr());
+            if !win.is_null() {
+                ShowWindow(win, SW_RESTORE);
+                SetForegroundWindow(win);
+            }
+            return false;
+        }
+    }
+    true
+}
+fn main() {
+    let root = root();
+    let temp = root.join("data/temp");
+    std::fs::create_dir_all(&temp).expect("Questro folder must be writable");
+    for key in ["TEMP", "TMP", "TMPDIR"] {
+        std::env::set_var(key, &temp);
+    }
+    if std::env::args().any(|a| a == "--verify-backend") {
+        let state = backend::Backend::new(root.clone()).unwrap();
+        let result = serde_json::json!({"version":"3.0.0","root":root,"catalogCount":state.catalog.len(),"runtime":"Tauri + Rust","nodeBundled":false,"storage":root.join("data"),"profile":root.join("data/webview"),"status":state.status()});
+        storage::save(&root.join("data/tauri-verification.json"), &result).unwrap();
+        return;
+    }
+    if !single_instance() {
+        return;
+    }
+    let state = Arc::new(Mutex::new(
+        backend::Backend::new(root.clone()).expect("Cannot load Questro data"),
+    ));
+    let running = Arc::new(AtomicBool::new(true));
+    let ticker = state.clone();
+    let tick_running = running.clone();
+    std::thread::spawn(move || {
+        while tick_running.load(Ordering::SeqCst) {
+            std::thread::sleep(std::time::Duration::from_millis(250));
+            if !tick_running.load(Ordering::SeqCst) {
+                break;
+            }
+            ticker.lock().unwrap().tick();
+        }
+    });
+    let art_root = root.clone();
+    let setup_root = root.clone();
+    let quit_state = state.clone();
+    let app = tauri::Builder::default()
+        .manage(state)
+        .invoke_handler(tauri::generate_handler![api])
+        .register_asynchronous_uri_scheme_protocol(
+            "artwork",
+            move |_context, request, responder| {
+                let root = art_root.clone();
+                std::thread::spawn(move || {
+                    let value = url::Url::parse(&request.uri().to_string())
+                        .ok()
+                        .and_then(|u| {
+                            u.query_pairs()
+                                .find(|(k, _)| k == "url")
+                                .map(|(_, v)| v.into_owned())
+                        });
+                    let result = value
+                        .ok_or("Missing artwork".to_string())
+                        .and_then(|v| artwork::get(&root, &v));
+                    let response = match result {
+                        Ok((bytes, kind)) => tauri::http::Response::builder()
+                            .status(200)
+                            .header(
+                                "Content-Type",
+                                if kind == "jpg" {
+                                    "image/jpeg"
+                                } else if kind == "webp" {
+                                    "image/webp"
+                                } else {
+                                    "image/png"
+                                },
+                            )
+                            .header("Cache-Control", "public, max-age=86400")
+                            .body(bytes)
+                            .unwrap(),
+                        Err(_) => tauri::http::Response::builder()
+                            .status(404)
+                            .body(vec![])
+                            .unwrap(),
+                    };
+                    responder.respond(response);
+                });
+            },
+        )
+        .setup(move |app| {
+            let verify_ui = std::env::args().any(|a| a == "--verify-ui");
+            let mut builder =
+                WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+                    .title("Questro")
+                    .inner_size(1100., 750.)
+                    .min_inner_size(800., 600.)
+                    .decorations(false)
+                    .data_directory(setup_root.join("data/webview"))
+                    .on_navigation(|url| {
+                        url.host_str()
+                            .is_some_and(|h| h == "tauri.localhost" || h == "localhost")
+                            || url.scheme() == "tauri"
+                    });
+            if verify_ui {
+                builder = builder
+                    .visible(false)
+                    .additional_browser_args("--remote-debugging-port=9387");
+            }
+            let window = builder.build()?;
+            window.set_icon(tauri::image::Image::from_app_icon_resource(32)?)?;
+            use tauri::{
+                menu::{Menu, MenuItem},
+                tray::TrayIconBuilder,
+            };
+            let show = MenuItem::with_id(app, "show", "Show Questro", true, None::<&str>)?;
+            let exit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&show, &exit])?;
+            TrayIconBuilder::new()
+                .icon(tauri::image::Image::from_app_icon_resource(32)?)
+                .menu(&menu)
+                .tooltip("Questro")
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => app.exit(0),
+                    "show" => {
+                        if let Some(w) = app.get_webview_window("main") {
+                            let _ = w.unminimize();
+                            let _ = w.show();
+                            let _ = w.set_focus();
+                        }
+                    }
+                    _ => {}
+                })
+                .build(app)?;
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("Questro startup failed");
+    app.run(move |_app, event| {
+        if matches!(
+            event,
+            tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit
+        ) {
+            running.store(false, Ordering::SeqCst);
+            quit_state.lock().unwrap().shutdown();
+        }
+    });
+}

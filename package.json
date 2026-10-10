@@ -1,15 +1,15 @@
 {
   "name": "questro",
-  "version": "2.3.1",
+  "version": "3.0.0",
   "description": "Questro",
-  "main": "src/electronMain.js",
   "scripts": {
-    "start": "node tools/start.js",
-    "app": "node tools/start.js",
-    "server": "node src/server.js",
-    "test": "node --test tests/*.test.js",
-    "test:ui": "node tools/verify-ui-v2.js",
-    "build": "node tools/build.js"
+    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/start-tauri.ps1",
+    "app": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/start-tauri.ps1",
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/build-tauri.ps1",
+    "test": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-tauri.ps1",
+    "test:ui": "node tools/verify-tauri-ui.js",
+    "test:legacy": "node --test tests/*.test.js",
+    "build:legacy": "node tools/build.js"
   },
   "keywords": [
     "game-simulator",
@@ -18,9 +18,5 @@
     "questro"
   ],
   "author": "Questro",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^44.7.0",
-    "electron-packager": "^17.1.2"
-  }
+  "license": "MIT"
 }

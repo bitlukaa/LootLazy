@@ -8,3 +8,4 @@ Questro.exe
 Questro.lnk
 *.log
 *.tmp
+src-tauri/target/

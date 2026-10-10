@@ -1,0 +1,15 @@
+{
+  "testedAt": "2026-10-10T07:08:00.251Z",
+  "runtime": "Tauri/WebView2",
+  "checks": [
+    "Real Tauri IPC loads the public catalog and initial empty configuration",
+    "Reference executable dropdown works in WebView2",
+    "Native helper window remains minimized without a separate taskbar entry",
+    "Native owned helper starts; Play next preserves PID and enables Queue",
+    "Stop removes the current entry and retains the following game",
+    "Quest cancellation and reopen persist through Rust commands",
+    "Language, theme and layout render in native WebView2",
+    "WebView2 profile stays inside the application; detached artwork events are safe"
+  ],
+  "errors": []
+}
