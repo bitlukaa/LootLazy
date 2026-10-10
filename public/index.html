@@ -14,9 +14,9 @@
  </div>
 </header>
 <div class="app-shell"><header class="reference-navbar"><nav class="navigation" data-i18n-aria-label="navigation">
- <button class="nav-tab active" data-tab="simulator"><span id="tab-icon-sim"></span><span data-i18n="tab_simulator">المحاكي</span></button>
- <button class="nav-tab" data-tab="quests"><span id="tab-icon-quests"></span><span data-i18n="tab_quests">المهام</span></button>
- <button class="nav-tab" data-tab="settings"><span id="tab-icon-settings"></span><span data-i18n="tab_settings">الإعدادات</span></button>
+ <button class="nav-tab active" data-tab="simulator"><span data-i18n="tab_simulator">المحاكي</span></button>
+ <button class="nav-tab" data-tab="quests"><span data-i18n="tab_quests">المهام</span></button>
+ <button class="nav-tab" data-tab="settings"><span data-i18n="tab_settings">الإعدادات</span></button>
 </nav></header>
 <div class="app-scroll"><main class="app-content">
 <section id="view-simulator" class="view-panel active">
@@ -56,9 +56,9 @@
   <div class="settings-row"><h2 data-i18n="appearance">Appearance</h2><div class="settings-choices" role="group" data-i18n-aria-label="appearance"><button class="button button-secondary" data-theme-choice="light" aria-pressed="false"><span id="settings-light-icon"></span><span data-i18n="theme_light">Light</span></button><button class="button button-secondary" data-theme-choice="dark" aria-pressed="false"><span id="settings-dark-icon"></span><span data-i18n="theme_dark">Dark</span></button></div></div>
   <div class="settings-row"><h2 data-i18n="language">Language</h2><div class="settings-choices" role="group" data-i18n-aria-label="language"><button class="button button-secondary" data-lang="en" aria-pressed="false" data-i18n="language_en">English</button><button class="button button-secondary" data-lang="ar" aria-pressed="false" data-i18n="language_ar">Arabic</button></div></div>
  </section>
- <section class="panel catalog-settings"><div class="catalog-stat"><span class="setting-icon" id="catalog-setting-icon"></span><div><span class="muted" data-i18n="catalog_total">عدد الألعاب</span><strong id="settings-catalog-count">—</strong></div></div><div class="catalog-refresh"><button id="btn-refresh-catalog" class="button button-primary"><span id="refresh-icon-slot" class="refresh-icon"></span><span data-i18n="refresh_catalog">تحديث القائمة</span></button><p><span data-i18n="last_updated">آخر تحديث</span><span id="stat-last-updated">—</span></p></div></section>
+ <section class="panel catalog-settings"><div class="catalog-stat"><span class="setting-icon" id="catalog-setting-icon"></span><div><strong id="settings-catalog-count">—</strong> <span class="muted" data-i18n="catalog_total">Games</span></div></div><div class="catalog-refresh"><button id="btn-refresh-catalog" class="button button-primary"><span id="refresh-icon-slot" class="refresh-icon"></span><span data-i18n="refresh_catalog">تحديث القائمة</span></button><p><span data-i18n="last_updated">آخر تحديث</span><span id="stat-last-updated">—</span></p></div></section>
  <section class="panel updates-settings">
-  <div class="settings-row"><div><h2 data-i18n="updates_title">Updates</h2><p id="app-version" class="muted"></p></div><button id="btn-check-updates" class="button button-secondary"><span id="updates-refresh-icon" class="refresh-icon"></span><span data-i18n="check_updates">Check for updates</span></button></div>
+  <div class="settings-row"><div><h2 data-i18n="updates_title">Updates</h2><p id="app-version" class="muted"></p></div><div class="update-check"><button id="btn-check-updates" class="button button-secondary"><span id="updates-refresh-icon" class="refresh-icon"></span><span data-i18n="check_updates">Check updates</span></button><p><span data-i18n="last_checked">Last checked</span><span id="updates-last-checked">—</span></p></div></div>
   <div class="update-summary"><span id="update-available-badge" class="count-badge" hidden data-i18n="update_available">Update available</span><p id="update-status" role="status" class="muted"></p><button id="btn-open-releases" class="button button-primary" data-i18n="open_releases">Open releases</button></div>
   <details class="release-notes"><summary><span data-i18n="whats_new">What's new</span><span id="notes-version" class="muted"></span></summary><div id="release-notes-body"></div></details>
  </section>
