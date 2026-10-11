@@ -13,7 +13,7 @@ impl Presence {
         Self {
             cancel: Arc::new(AtomicBool::new(false)),
             result: Arc::new(Mutex::new(
-                json!({"state":"idle","activityConfirmed":false,"errorCode":null}),
+                json!({"state":"idle","activityConfirmed":false,"desktopReady":false,"errorCode":null}),
             )),
         }
     }
@@ -23,7 +23,7 @@ impl Presence {
     pub fn stop(&mut self) {
         self.cancel.store(true, Ordering::SeqCst);
         self.result = Arc::new(Mutex::new(
-            json!({"state":"idle","activityConfirmed":false,"errorCode":null}),
+            json!({"state":"idle","activityConfirmed":false,"desktopReady":false,"errorCode":null}),
         ));
     }
     pub fn start(&mut self, session: Value) {
@@ -36,7 +36,7 @@ impl Presence {
                 .enable_all()
                 .build()
                 .unwrap();
-            rt.block_on(async move{while !cancel.load(Ordering::SeqCst){*result.lock().unwrap()=json!({"state":"connecting","activityConfirmed":false,"errorCode":null});let success=connect(&session,&cancel,&result).await;if cancel.load(Ordering::SeqCst){return;}if !success{*result.lock().unwrap()=json!({"state":"unavailable","activityConfirmed":false,"errorCode":null});}for _ in 0..40{if cancel.load(Ordering::SeqCst){return;}tokio::time::sleep(std::time::Duration::from_millis(250)).await;}}});
+            rt.block_on(async move{while !cancel.load(Ordering::SeqCst){*result.lock().unwrap()=json!({"state":"connecting","activityConfirmed":false,"desktopReady":false,"errorCode":null});let success=connect(&session,&cancel,&result).await;if cancel.load(Ordering::SeqCst){return;}if !success{*result.lock().unwrap()=json!({"state":"unavailable","activityConfirmed":false,"desktopReady":false,"errorCode":null});}for _ in 0..40{if cancel.load(Ordering::SeqCst){return;}tokio::time::sleep(std::time::Duration::from_millis(250)).await;}}});
         });
     }
 }
@@ -89,8 +89,10 @@ async fn connect(session: &Value, cancel: &AtomicBool, result: &Mutex<Value>) ->
         if cancel.load(Ordering::SeqCst) {
             return false;
         }
-        let Ok(mut pipe) = ClientOptions::new().open(format!("\\\\?\\pipe\\discord-ipc-{index}"))
-        else {
+        let pipe_result = ClientOptions::new()
+            .open(format!("\\\\.\\pipe\\discord-ipc-{index}"))
+            .or_else(|_| ClientOptions::new().open(format!("\\\\?\\pipe\\discord-ipc-{index}")));
+        let Ok(mut pipe) = pipe_result else {
             continue;
         };
         let mut buffer = vec![];
@@ -119,8 +121,9 @@ async fn connect(session: &Value, cancel: &AtomicBool, result: &Mutex<Value>) ->
         if cancel.load(Ordering::SeqCst) {
             return false;
         }
+        *result.lock().unwrap() = json!({"state":"connecting","desktopReady":true,"activityConfirmed":false,"errorCode":null});
         let nonce = format!("{}-{}", std::process::id(), rand::random::<u64>());
-        let command = json!({"cmd":"SET_ACTIVITY","nonce":nonce,"args":{"pid":std::process::id(),"activity":{"type":0,"details":format!("Playing {}",session["gameName"].as_str().unwrap_or("Game")),"timestamps":{"start":session["startTime"].as_i64().unwrap_or(0)/1000}}}});
+        let command = json!({"cmd":"SET_ACTIVITY","nonce":nonce,"args":{"pid":session["pid"].as_u64().unwrap_or(std::process::id() as u64),"activity":{"type":0,"details":format!("Playing {}",session["gameName"].as_str().unwrap_or("Game")),"timestamps":{"start":session["startTime"].as_i64().unwrap_or(0)/1000}}}});
         if pipe.write_all(&frame(1, &command)).await.is_err() {
             continue;
         }
@@ -144,13 +147,12 @@ async fn connect(session: &Value, cancel: &AtomicBool, result: &Mutex<Value>) ->
                 Ok(Ok((1, payload))) => {
                     if payload["nonce"] == nonce {
                         if payload["evt"] == "ERROR" {
-                            *result.lock().unwrap() = json!({"state":"rejected","activityConfirmed":false,"errorCode":payload.pointer("/data/code")});
+                            *result.lock().unwrap() = json!({"state":"rejected","activityConfirmed":false,"desktopReady":true,"errorCode":payload.pointer("/data/code")});
                             return true;
                         }
                         if payload["cmd"] == "SET_ACTIVITY" {
                             confirmed = true;
-                            *result.lock().unwrap() =
-                                json!({"state":"ready","activityConfirmed":true,"errorCode":null});
+                            *result.lock().unwrap() = json!({"state":"ready","activityConfirmed":true,"desktopReady":true,"errorCode":null});
                         }
                     }
                 }
@@ -198,4 +200,55 @@ mod tests {
         );
         assert_eq!(serde_json::from_slice::<Value>(&bytes[8..]).unwrap(), value);
     }
+}
+
+pub fn is_discord_desktop_running() -> bool {
+    #[cfg(windows)]
+    {
+        for index in 0..10 {
+            match std::fs::OpenOptions::new()
+                .read(true)
+                .open(format!("\\\\.\\pipe\\discord-ipc-{index}"))
+            {
+                Ok(_) => return true,
+                Err(error) if matches!(error.raw_os_error(), Some(5 | 231)) => return true,
+                _ => {}
+            }
+        }
+        false
+    }
+    #[cfg(not(windows))]
+    false
+}
+
+/// Open the installed desktop client only if its local IPC endpoint is absent.
+pub fn open_desktop_if_missing() -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        if is_discord_desktop_running() {
+            return Ok(());
+        }
+        unsafe {
+            use windows_sys::Win32::UI::{
+                Shell::ShellExecuteW, WindowsAndMessaging::SW_SHOWNORMAL,
+            };
+            let wide = |value: &str| value.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
+            let verb = wide("open");
+            let uri = wide("discord://-/");
+            let result = ShellExecuteW(
+                std::ptr::null_mut(),
+                verb.as_ptr(),
+                uri.as_ptr(),
+                std::ptr::null(),
+                std::ptr::null(),
+                SW_SHOWNORMAL,
+            );
+            if result as isize <= 32 {
+                return Err("discord_launch_failed".into());
+            }
+        }
+        Ok(())
+    }
+    #[cfg(not(windows))]
+    Err("discord_launch_failed".into())
 }

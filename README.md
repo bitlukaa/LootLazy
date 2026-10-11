@@ -11,6 +11,7 @@ Downloading a huge game just for a short quest is a bit much. Questro runs a lig
 - Run a timed session, or leave it running until you stop it.
 - Pick a few games and let your queue run them in order.
 - Start a session straight from a desktop-play quest card.
+- Pause a quest and resume it later, with selected quests saved between app launches.
 - Choose light or dark mode, and English or Arabic.
 - Check for new releases and read what's new in Settings.
 

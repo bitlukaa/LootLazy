@@ -1,7 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod artwork;
 mod backend;
+mod diagnostics;
+mod executables;
 mod feed;
+mod metadata;
 mod presence;
 mod storage;
 mod updates;
@@ -19,15 +22,71 @@ type Shared = Arc<Mutex<backend::Backend>>;
 fn quit(app: tauri::AppHandle) {
     app.exit(0);
 }
+#[tauri::command]
+fn window_close(window: tauri::WebviewWindow, state: tauri::State<'_, Shared>) {
+    let minimize_to_tray = state
+        .lock()
+        .ok()
+        .map(|b| b.overrides["settings"]["minimize_to_tray"].as_bool().unwrap_or(false))
+        .unwrap_or(false);
+    if minimize_to_tray {
+        let _ = window.hide();
+    } else {
+        window.app_handle().exit(0);
+    }
+}
+#[tauri::command]
+fn notify_desktop(title: String, body: String, window: tauri::WebviewWindow) {
+    let _ = window.request_user_attention(Some(tauri::UserAttentionType::Critical));
+    #[cfg(windows)]
+    {
+        std::thread::spawn(move || {
+            use std::os::windows::process::CommandExt;
+            let script = format!(
+                "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; \
+                 $t = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); \
+                 $s = $t.GetElementsByTagName('text'); \
+                 $s.Item(0).AppendChild($t.CreateTextNode('{}')) | Out-Null; \
+                 $s.Item(1).AppendChild($t.CreateTextNode('{}')) | Out-Null; \
+                 $n = [Windows.UI.Notifications.ToastNotification]::new($t); \
+                 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Questro').Show($n)",
+                title.replace('\'', "''"),
+                body.replace('\'', "''")
+            );
+            let _ = std::process::Command::new("powershell")
+                .args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &script])
+                .creation_flags(0x08000000)
+                .status();
+        });
+    }
+}
 static CATALOG_REFRESH: Mutex<()> = Mutex::new(());
-static EXECUTABLE_LOOKUP: Mutex<Option<std::time::Instant>> = Mutex::new(None);
+static EXECUTABLE_LOOKUP: Mutex<Option<std::collections::HashMap<String, std::time::Instant>>> =
+    Mutex::new(None);
+fn refresh_game_catalog(state: &Shared) -> Result<(), String> {
+    let (meta, has_saved) = {
+        let backend = state.lock().map_err(|_| "Backend unavailable")?;
+        (backend.meta.clone(), !backend.catalog.is_empty())
+    };
+    let download = backend::fetch_catalog(&meta, has_saved)?;
+    state
+        .lock()
+        .map_err(|_| "Backend unavailable")?
+        .apply_catalog_refresh(download)
+}
 #[tauri::command]
 async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Result<Value, String> {
     if !route.starts_with("/api/") || route.len() > 2000 {
         return Err("Invalid application route".into());
     }
     let state = state.inner().clone();
-    tauri::async_runtime::spawn_blocking(move || {
+    let log_root = state
+        .lock()
+        .map_err(|_| "Backend unavailable")?
+        .root
+        .clone();
+    let log_route = route.clone();
+    let result = tauri::async_runtime::spawn_blocking(move || {
         let url =
             url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
         match url.path() {
@@ -47,11 +106,7 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
                 .catalog
                 .is_empty();
             if missing || url.path() == "/api/refresh-catalog" {
-                let data = backend::fetch_json("https://discord.com/api/applications/detectable")?;
-                state
-                    .lock()
-                    .map_err(|_| "Backend unavailable")?
-                    .install_catalog(data)?;
+                refresh_game_catalog(&state)?;
             }
         }
         if url.path() == "/api/quests"
@@ -67,9 +122,10 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
         }
         if ["/api/play", "/api/quests/start"].contains(&url.path())
             && body["customProcess"] != true
-            && body["executableName"]
-                .as_str()
-                .is_none_or(|name| name.is_empty())
+            && (body["executableAutomatic"] == true
+                || body["executableName"]
+                    .as_str()
+                    .is_none_or(|name| name.is_empty()))
         {
             let app_id = {
                 let backend = state.lock().map_err(|_| "Backend unavailable")?;
@@ -80,25 +136,49 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
                 }
             };
             if let Some(id) = app_id {
-                let needs = state
-                    .lock()
-                    .map_err(|_| "Backend unavailable")?
-                    .missing_game_executable(&id);
-                if needs {
+                let (missing, steam_id) = {
+                    let backend = state.lock().map_err(|_| "Backend unavailable")?;
+                    (
+                        backend.missing_game_executable(&id),
+                        backend.metadata_lookup(&id),
+                    )
+                };
+                if missing || steam_id.is_some() {
                     let _catalog = CATALOG_REFRESH.lock().map_err(|_| "Catalog unavailable")?;
                     let mut last = EXECUTABLE_LOOKUP
                         .lock()
                         .map_err(|_| "Catalog unavailable")?;
-                    if last.is_none_or(|time| time.elapsed() >= std::time::Duration::from_secs(60))
+                    let last = last.get_or_insert_with(std::collections::HashMap::new);
+                    if last
+                        .get(&id)
+                        .is_none_or(|time| time.elapsed() >= std::time::Duration::from_secs(60))
                     {
-                        *last = Some(std::time::Instant::now());
-                        if let Ok(data) =
-                            backend::fetch_json("https://discord.com/api/applications/detectable")
-                        {
-                            let _ = state
-                                .lock()
-                                .map_err(|_| "Backend unavailable")?
-                                .install_catalog(data);
+                        if last.len() > 256 {
+                            last.clear();
+                        }
+                        last.insert(id.clone(), std::time::Instant::now());
+                        if missing {
+                            let _ = refresh_game_catalog(&state);
+                        }
+                        if let Some(steam_id) = steam_id {
+                            match metadata::steam_launch_names(&steam_id) {
+                                Ok(names) => state
+                                    .lock()
+                                    .map_err(|_| "Backend unavailable")?
+                                    .remember_metadata(&id, &steam_id, names),
+                                Err(error) => {
+                                    let root = state
+                                        .lock()
+                                        .map_err(|_| "Backend unavailable")?
+                                        .root
+                                        .clone();
+                                    diagnostics::record(
+                                        &root,
+                                        "executable_metadata/lookup",
+                                        &error,
+                                    );
+                                }
+                            }
                         }
                     }
                 }
@@ -110,7 +190,11 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
             .route(&route, body)
     })
     .await
-    .map_err(|e| e.to_string())?
+    .map_err(|e| e.to_string())?;
+    if let Err(error) = &result {
+        diagnostics::record(&log_root, &log_route, error);
+    }
+    result.map_err(|error| format!("{}: {}", diagnostics::code(&error), error))
 }
 fn root() -> PathBuf {
     let diagnostic = std::env::args().any(|a| a == "--verify-ui" || a == "--verify-backend");
@@ -206,10 +290,21 @@ fn main() {
     let quit_state = state.clone();
     let app = tauri::Builder::default()
         .manage(state)
-        .invoke_handler(tauri::generate_handler![api, quit])
+        .invoke_handler(tauri::generate_handler![api, quit, window_close, notify_desktop])
         .on_window_event(|window, event| {
-            if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
-                window.app_handle().exit(0);
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let state = window.state::<Shared>();
+                let minimize_to_tray = state
+                    .lock()
+                    .ok()
+                    .map(|b| b.overrides["settings"]["minimize_to_tray"].as_bool().unwrap_or(false))
+                    .unwrap_or(false);
+                if minimize_to_tray {
+                    api.prevent_close();
+                    let _ = window.hide();
+                } else {
+                    window.app_handle().exit(0);
+                }
             }
         })
         .register_asynchronous_uri_scheme_protocol(
@@ -254,6 +349,7 @@ fn main() {
         )
         .setup(move |app| {
             let verify_ui = std::env::args().any(|a| a == "--verify-ui");
+            let start_minimized = std::env::args().any(|a| a == "--minimized");
             let mut builder =
                 WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                     .title("Questro")
@@ -267,9 +363,12 @@ fn main() {
                                 && url.host_str() == Some("tauri.localhost"))
                                 || (url.scheme() == "tauri" && url.host_str() == Some("localhost")))
                     });
+            if verify_ui || start_minimized {
+                builder = builder.visible(false);
+            }
             if verify_ui {
                 builder = builder
-                    .visible(false)
+                    .initialization_script("window.questroDiagnostic = true;")
                     .additional_browser_args("--remote-debugging-port=9387");
             }
             let window = builder.build()?;
@@ -296,6 +395,21 @@ fn main() {
                     }
                     _ => {}
                 })
+                .on_tray_icon_event(|tray, event| {
+                    if let tauri::tray::TrayIconEvent::Click {
+                        button: tauri::tray::MouseButton::Left,
+                        button_state: tauri::tray::MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(w) = app.get_webview_window("main") {
+                            let _ = w.unminimize();
+                            let _ = w.show();
+                            let _ = w.set_focus();
+                        }
+                    }
+                })
                 .build(app)?;
             Ok(())
         })
@@ -311,3 +425,4 @@ fn main() {
         }
     });
 }
+

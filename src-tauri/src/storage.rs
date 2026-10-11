@@ -29,7 +29,9 @@ pub fn id(value: &str) -> Result<String, String> {
 pub fn executable(value: &str) -> Result<String, String> {
     let value = value.trim().replace('\\', "/");
     if value.len() > 240
-        || !value.to_lowercase().ends_with(".exe")
+        || ![".exe", ".bin"]
+            .iter()
+            .any(|extension| value.to_lowercase().ends_with(extension))
         || value.chars().any(|c| c < ' ' || ":<>\"|?*".contains(c))
     {
         return Err("Invalid executable filename".into());
@@ -50,6 +52,7 @@ pub fn executable(value: &str) -> Result<String, String> {
     }
     Ok(value)
 }
+#[allow(dead_code)]
 pub fn target(root: &Path, app: &str, exe: &str) -> Result<PathBuf, String> {
     Ok(root.join(id(app)?).join(executable(exe)?))
 }

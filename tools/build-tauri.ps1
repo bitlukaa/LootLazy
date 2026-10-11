@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $cargoExe = Join-Path $env:USERPROFILE '.cargo/bin/cargo.exe'
 if (!(Test-Path -LiteralPath $cargoExe)) { throw 'Install Rust with the MSVC toolchain first.' }
+& (Join-Path $PSScriptRoot 'build-notices.ps1')
 $env:CARGO_TARGET_DIR = Join-Path $projectRoot 'data/.tauri-build'
 $env:TEMP = Join-Path $projectRoot 'data/.test-temp'
 $env:TMP = $env:TEMP
@@ -20,7 +21,7 @@ catch {
   Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $output 'Questro.exe.pending')
   Write-Output 'Application is open. Update staged for the next launcher start.'
 }
-foreach ($license in @('LUCIDE-LICENSE.txt','DISCORD-QUEST-HELPER-LICENSE.txt','TAURI-LICENSE-MIT.txt')) { Copy-Item -LiteralPath (Join-Path $projectRoot "public/assets/$license") -Destination $output }
+Copy-Item -LiteralPath (Join-Path $projectRoot 'public/assets/THIRD-PARTY-NOTICES.txt') -Destination $output
 Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $output
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
 if (Test-Path -LiteralPath $compiler) {

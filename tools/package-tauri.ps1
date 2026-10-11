@@ -1,4 +1,4 @@
-param([string]$OutputName='Questro-3.2.3',[switch]$UpdateExisting)
+param([string]$OutputName='Questro-3.3.0',[switch]$UpdateExisting)
 $ErrorActionPreference='Stop'
 if ($OutputName -notmatch '^Questro-\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?$') { throw 'Invalid package name.' }
 $projectRoot=Split-Path -Parent $PSScriptRoot
@@ -11,16 +11,14 @@ if (!$output.StartsWith($releasesRoot+'\',[StringComparison]::OrdinalIgnoreCase)
 if ((Test-Path -LiteralPath $output) -and !$UpdateExisting) { throw 'Distribution folder already exists. Use a new OutputName or UpdateExisting; saved data is always preserved.' }
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 Copy-Item -LiteralPath $sourceExe -Destination (Join-Path $output 'Questro.exe')
-foreach($license in @('LUCIDE-LICENSE.txt','DISCORD-QUEST-HELPER-LICENSE.txt','TAURI-LICENSE-MIT.txt')) {
-  Copy-Item -LiteralPath (Join-Path $projectRoot "public/assets/$license") -Destination $output
-}
+Copy-Item -LiteralPath (Join-Path $projectRoot 'public/assets/THIRD-PARTY-NOTICES.txt') -Destination $output
 Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination (Join-Path $output 'README.md')
 $sourceHash=(Get-FileHash -LiteralPath $sourceExe -Algorithm SHA256).Hash
 $packageHash=(Get-FileHash -LiteralPath (Join-Path $output 'Questro.exe') -Algorithm SHA256).Hash
 if ($sourceHash -ne $packageHash) { throw 'Packaged executable does not match the tested build.' }
 $archive=Join-Path $releasesRoot "$OutputName.zip"
 if ((Test-Path -LiteralPath $archive) -and !$UpdateExisting) { throw 'Archive already exists.' }
-$payloadNames=@('Questro.exe','README.md','LUCIDE-LICENSE.txt','DISCORD-QUEST-HELPER-LICENSE.txt','TAURI-LICENSE-MIT.txt')
+$payloadNames=@('Questro.exe','README.md','THIRD-PARTY-NOTICES.txt')
 $payloadFiles=$payloadNames|ForEach-Object {Join-Path $output $_}
 Compress-Archive -LiteralPath $payloadFiles -DestinationPath $archive -CompressionLevel Optimal -Force
 $folderBytes=($payloadFiles|ForEach-Object {(Get-Item -LiteralPath $_).Length}|Measure-Object -Sum).Sum

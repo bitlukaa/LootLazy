@@ -1,0 +1,91 @@
+{
+  "games": {
+    "1445982809792708628": {
+      "name": "AION 2",
+      "executables": [
+        "AION2.exe",
+        "aion2.exe",
+        "Aion2/Binaries/Win64/AION2.exe",
+        "bin64/aion2.exe",
+        "aion2-win64-shipping.exe",
+        "client/aion2.exe"
+      ],
+      "steam_appid": "3393110"
+    },
+    "1428188717016682536": {
+      "name": "Kaion Tale",
+      "executables": [
+        "kaiontale.exe",
+        "kaion tale mmorpg/kaiontale.exe"
+      ],
+      "steam_appid": "1050280"
+    },
+    "1428208674220019782": {
+      "name": "BAIONLENJA",
+      "executables": [
+        "baionlenja.exe",
+        "baionlenja-win64-shipping.exe"
+      ],
+      "steam_appid": "3509160"
+    },
+    "1124358972028235897": {
+      "name": "Total War: Rome II - Emperor Edition",
+      "executables": [
+        "rome2.exe"
+      ]
+    },
+    "1124353038035992649": {
+      "name": "Badlanders",
+      "executables": [
+        "badlanders.exe",
+        "launcher/badlanders.exe"
+      ]
+    },
+    "489916817146511371": {
+      "name": "Seasons after Fall",
+      "executables": [
+        "seasonsafterfall.exe",
+        "seasons.exe"
+      ]
+    },
+    "489917480274362368": {
+      "name": "Shadows: Heretic Kingdoms",
+      "executables": [
+        "shadows.exe",
+        "shadowsheretickingdoms.exe"
+      ]
+    },
+    "492159419837186053": {
+      "name": "Europa Universalis II",
+      "executables": [
+        "eu2.exe"
+      ]
+    },
+    "1428223713928810500": {
+      "name": "The Line (March of Giants)",
+      "executables": [
+        "thelineclient-win64-shipping.exe"
+      ]
+    },
+    "363445589247131650": {
+      "name": "Roblox",
+      "executables": [
+        "roblox.exe",
+        "robloxplayerbeta.exe"
+      ]
+    },
+    "356875221078245376": {
+      "name": "Overwatch",
+      "executables": [
+        "overwatch.exe"
+      ]
+    },
+    "451543892358201393": {
+      "name": "Aion",
+      "executables": [
+        "aion.bin",
+        "aion.exe"
+      ]
+    }
+  }
+}

@@ -5,7 +5,7 @@ use std::{
     io::Read,
     path::Path,
     sync::{mpsc, Arc, Mutex, OnceLock, Weak},
-    time::Duration,
+    time::{Duration, Instant},
 };
 type Job = Box<dyn FnOnce() + Send + 'static>;
 pub struct DownloadPool {
@@ -33,6 +33,7 @@ impl DownloadPool {
 }
 static CLIENT: OnceLock<Result<reqwest::blocking::Client, String>> = OnceLock::new();
 static URL_LOCKS: OnceLock<Mutex<HashMap<String, Weak<Mutex<()>>>>> = OnceLock::new();
+static FAILED_URLS: OnceLock<Mutex<HashMap<String, Instant>>> = OnceLock::new();
 static TRIM_LOCK: Mutex<()> = Mutex::new(());
 pub fn validated(value: &str) -> Result<url::Url, String> {
     let url = url::Url::parse(value).map_err(|e| e.to_string())?;
@@ -79,6 +80,16 @@ fn image_type(bytes: &[u8]) -> Result<&'static str, String> {
 pub fn get(root: &Path, value: &str) -> Result<(Vec<u8>, &'static str), String> {
     let url = validated(value)?;
     let key = format!("{:x}", Sha256::digest(url.as_str().as_bytes()));
+    {
+        let mut failed = FAILED_URLS
+            .get_or_init(|| Mutex::new(HashMap::new()))
+            .lock()
+            .map_err(|_| "Artwork unavailable")?;
+        failed.retain(|_, when| when.elapsed() < Duration::from_secs(900));
+        if failed.contains_key(&key) {
+            return Err("Artwork not found".into());
+        }
+    }
     let lock = {
         let mut locks = URL_LOCKS
             .get_or_init(|| Mutex::new(HashMap::new()))
@@ -113,11 +124,19 @@ pub fn get(root: &Path, value: &str) -> Result<(Vec<u8>, &'static str), String> 
         })
         .as_ref()
         .map_err(Clone::clone)?;
-    let mut response = client
-        .get(url.clone())
-        .send()
-        .and_then(|r| r.error_for_status())
-        .map_err(|e| e.to_string())?;
+    let response = client.get(url.clone()).send().map_err(|e| e.to_string())?;
+    if [reqwest::StatusCode::NOT_FOUND, reqwest::StatusCode::GONE].contains(&response.status()) {
+        let mut failed = FAILED_URLS
+            .get_or_init(|| Mutex::new(HashMap::new()))
+            .lock()
+            .map_err(|_| "Artwork unavailable")?;
+        if failed.len() >= 1024 {
+            failed.clear();
+        }
+        failed.insert(key, Instant::now());
+        return Err("Artwork not found".into());
+    }
+    let mut response = response.error_for_status().map_err(|e| e.to_string())?;
     let mut bytes = vec![];
     (&mut response)
         .take(4 * 1024 * 1024 + 1)

@@ -12,3 +12,5 @@ test('English translations and all static UI translation keys are complete',()=>
 test('maintained README documents are English',()=>{
  for(const file of ['README.md'])assert.equal(/[\u0600-\u06ff]/.test(fs.readFileSync(path.join(root,file),'utf8')),false,file);
 });
+
+test('English startup keeps the numeric formatter available',()=>{const source=fs.readFileSync(path.join(root,'public/js/i18n.js'),'utf8');assert.equal(vm.runInNewContext(source+';number(24634)',{localStorage:{getItem:()=>null}}),'24,634');});
