@@ -1,6 +1,10 @@
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$cargoExe = Join-Path $env:USERPROFILE '.cargo/bin/cargo.exe'
+$cmd = Get-Command cargo.exe -ErrorAction SilentlyContinue
+$cargoExe = if ($cmd) { $cmd.Source } else { $null }
+if (!$cargoExe -or !(Test-Path -LiteralPath $cargoExe)) {
+  $cargoExe = Join-Path $env:USERPROFILE '.cargo/bin/cargo.exe'
+}
 if (!(Test-Path -LiteralPath $cargoExe)) { throw 'Install Rust with the MSVC toolchain first.' }
 & (Join-Path $PSScriptRoot 'build-notices.ps1')
 $env:CARGO_TARGET_DIR = Join-Path $projectRoot 'data/.tauri-build'

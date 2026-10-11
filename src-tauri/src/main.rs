@@ -27,7 +27,11 @@ fn window_close(window: tauri::WebviewWindow, state: tauri::State<'_, Shared>) {
     let minimize_to_tray = state
         .lock()
         .ok()
-        .map(|b| b.overrides["settings"]["minimize_to_tray"].as_bool().unwrap_or(false))
+        .map(|b| {
+            b.overrides["settings"]["minimize_to_tray"]
+                .as_bool()
+                .unwrap_or(false)
+        })
         .unwrap_or(false);
     if minimize_to_tray {
         let _ = window.hide();
@@ -290,14 +294,23 @@ fn main() {
     let quit_state = state.clone();
     let app = tauri::Builder::default()
         .manage(state)
-        .invoke_handler(tauri::generate_handler![api, quit, window_close, notify_desktop])
+        .invoke_handler(tauri::generate_handler![
+            api,
+            quit,
+            window_close,
+            notify_desktop
+        ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let state = window.state::<Shared>();
                 let minimize_to_tray = state
                     .lock()
                     .ok()
-                    .map(|b| b.overrides["settings"]["minimize_to_tray"].as_bool().unwrap_or(false))
+                    .map(|b| {
+                        b.overrides["settings"]["minimize_to_tray"]
+                            .as_bool()
+                            .unwrap_or(false)
+                    })
                     .unwrap_or(false);
                 if minimize_to_tray {
                     api.prevent_close();
@@ -425,4 +438,3 @@ fn main() {
         }
     });
 }
-

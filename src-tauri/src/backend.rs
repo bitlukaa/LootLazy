@@ -98,7 +98,10 @@ impl Backend {
                 overrides[key] = json!({});
             }
         }
-        if overrides["stats"]["total_playtime_seconds"].as_i64().is_none() {
+        if overrides["stats"]["total_playtime_seconds"]
+            .as_i64()
+            .is_none()
+        {
             overrides["stats"]["total_playtime_seconds"] = json!(0);
         }
         if !overrides["saved_games"].is_array() {
@@ -394,7 +397,11 @@ impl Backend {
             s["discordDetected"] = json!(discord_connected);
             if let Some(deadline) = self.warmup_deadline {
                 if Instant::now() < deadline {
-                    let rem = (deadline.saturating_duration_since(Instant::now()).as_millis() as f64 / 1000.0).ceil() as i64;
+                    let rem = (deadline
+                        .saturating_duration_since(Instant::now())
+                        .as_millis() as f64
+                        / 1000.0)
+                        .ceil() as i64;
                     s["timerWarmup"] = json!(true);
                     s["warmupSeconds"] = json!(rem.max(1));
                     s["timerWaiting"] = json!(false);
@@ -435,7 +442,9 @@ impl Backend {
     fn checkpoint_quest(&mut self) -> Result<(), String> {
         if let Some(session) = &self.session {
             if let Some(id) = session["questId"].as_str() {
-                let elapsed = self.elapsed_seconds(session).clamp(0, self.quest_target_duration_seconds().saturating_sub(1));
+                let elapsed = self
+                    .elapsed_seconds(session)
+                    .clamp(0, self.quest_target_duration_seconds().saturating_sub(1));
                 self.quest_progress[id] = json!({"elapsedSeconds":elapsed,"savedAt":stamp()});
                 if let Err(error) = self.save("quest_progress.json", &self.quest_progress) {
                     self.progress_warning = Some("save_failed".into());
@@ -516,13 +525,25 @@ impl Backend {
         if !duration.is_finite() || !(0.0..=1440.0).contains(&duration) {
             return Err("Invalid duration".into());
         }
-        let auto_rpc = self.overrides["settings"]["auto_discord_rpc"].as_bool().unwrap_or(true);
+        let auto_rpc = self.overrides["settings"]["auto_discord_rpc"]
+            .as_bool()
+            .unwrap_or(true);
         if self.allow_rpc && auto_rpc {
             crate::presence::open_desktop_if_missing()?;
         }
         let exe_str = item["executableName"].as_str().unwrap_or("");
-        let fallback = format!("{}.exe", item["gameName"].as_str().unwrap_or("game").replace(['/', '\\', ':'], ""));
-        let exe = if exe_str.is_empty() { &fallback } else { exe_str };
+        let fallback = format!(
+            "{}.exe",
+            item["gameName"]
+                .as_str()
+                .unwrap_or("game")
+                .replace(['/', '\\', ':'], "")
+        );
+        let exe = if exe_str.is_empty() {
+            &fallback
+        } else {
+            exe_str
+        };
         let clean_game = item["gameName"]
             .as_str()
             .unwrap_or("Game")
@@ -809,10 +830,14 @@ impl Backend {
                 .is_some_and(|s| s["mode"] == "rpc_only");
             let discord_running = self.discord_desktop_running();
             let ready = !self.allow_rpc
-                || !self.overrides["settings"]["auto_discord_rpc"].as_bool().unwrap_or(true)
+                || !self.overrides["settings"]["auto_discord_rpc"]
+                    .as_bool()
+                    .unwrap_or(true)
                 || (discord_running
                     && (if rpc_only {
-                        presence["activityConfirmed"] == true || presence["desktopReady"] == true || presence["state"] == "ready"
+                        presence["activityConfirmed"] == true
+                            || presence["desktopReady"] == true
+                            || presence["state"] == "ready"
                     } else {
                         true
                     }));
@@ -832,7 +857,11 @@ impl Backend {
                             }
                         }
                         Some(deadline) if Instant::now() < deadline => {
-                            let rem = (deadline.saturating_duration_since(Instant::now()).as_millis() as f64 / 1000.0).ceil() as i64;
+                            let rem = (deadline
+                                .saturating_duration_since(Instant::now())
+                                .as_millis() as f64
+                                / 1000.0)
+                                .ceil() as i64;
                             if let Some(s) = self.session.as_mut() {
                                 s["timerWaiting"] = json!(false);
                                 s["timerWarmup"] = json!(true);
@@ -1277,11 +1306,13 @@ impl Backend {
                     s["start_minimized"] = json!(s["start_minimized"].as_bool().unwrap_or(false));
                     s["minimize_to_tray"] = json!(s["minimize_to_tray"].as_bool().unwrap_or(false));
                     s["auto_discord_rpc"] = json!(s["auto_discord_rpc"].as_bool().unwrap_or(true));
-                    s["desktop_notifications"] = json!(s["desktop_notifications"].as_bool().unwrap_or(true));
+                    s["desktop_notifications"] =
+                        json!(s["desktop_notifications"].as_bool().unwrap_or(true));
                     s["sound_alerts"] = json!(s["sound_alerts"].as_bool().unwrap_or(true));
                     s["quest_duration_seconds"] = json!(self.quest_target_duration_seconds());
                     s["total_playtime_seconds"] = json!(self.total_playtime_seconds());
-                    s["active_steam_library"] = json!(self.active_steam_library().to_string_lossy().to_string());
+                    s["active_steam_library"] =
+                        json!(self.active_steam_library().to_string_lossy().to_string());
                     return Ok(s);
                 }
                 let mut proposed = self.overrides.clone();
@@ -1310,8 +1341,12 @@ impl Backend {
                     proposed["settings"]["run_on_startup"] = json!(b);
                 }
                 if body.get("run_on_startup").is_some() || body.get("start_minimized").is_some() {
-                    let run_enabled = proposed["settings"]["run_on_startup"].as_bool().unwrap_or(false);
-                    let min_enabled = proposed["settings"]["start_minimized"].as_bool().unwrap_or(false);
+                    let run_enabled = proposed["settings"]["run_on_startup"]
+                        .as_bool()
+                        .unwrap_or(false);
+                    let min_enabled = proposed["settings"]["start_minimized"]
+                        .as_bool()
+                        .unwrap_or(false);
                     set_startup_enabled(run_enabled, min_enabled);
                 }
                 if let Some(paths) = body.get("steam_paths") {
@@ -1330,7 +1365,9 @@ impl Backend {
                 self.save("questro_overrides.json", &proposed)?;
                 self.overrides = proposed;
                 self.executable_resolver.clear_local();
-                let saved_pref = self.overrides["settings"]["run_on_startup"].as_bool().unwrap_or(false);
+                let saved_pref = self.overrides["settings"]["run_on_startup"]
+                    .as_bool()
+                    .unwrap_or(false);
                 Ok(json!({
                     "success": true,
                     "run_on_startup": is_startup_enabled(saved_pref),
@@ -1645,8 +1682,7 @@ fn write_helper(target: &Path) -> Result<(), String> {
             .truncate(true)
             .open(&temporary)
             .map_err(|e| e.to_string())?;
-        file.write_all(bytes)
-            .map_err(|e| e.to_string())?;
+        file.write_all(bytes).map_err(|e| e.to_string())?;
         drop(file);
         if target.exists() {
             let _ = fs::remove_file(target);
@@ -1662,7 +1698,12 @@ fn write_helper(target: &Path) -> Result<(), String> {
 fn is_startup_enabled(fallback: bool) -> bool {
     use std::os::windows::process::CommandExt;
     let output = Command::new("reg")
-        .args(["query", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "Questro"])
+        .args([
+            "query",
+            "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+            "/v",
+            "Questro",
+        ])
         .creation_flags(0x08000000)
         .output();
     match output {
@@ -1686,13 +1727,29 @@ fn set_startup_enabled(enable: bool, minimized: bool) {
                 format!("\"{exe_str}\"")
             };
             let _ = Command::new("reg")
-                .args(["add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "Questro", "/t", "REG_SZ", "/d", &data, "/f"])
+                .args([
+                    "add",
+                    "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                    "/v",
+                    "Questro",
+                    "/t",
+                    "REG_SZ",
+                    "/d",
+                    &data,
+                    "/f",
+                ])
                 .creation_flags(0x08000000)
                 .status();
         }
     } else {
         let _ = Command::new("reg")
-            .args(["delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "Questro", "/f"])
+            .args([
+                "delete",
+                "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                "/v",
+                "Questro",
+                "/f",
+            ])
             .creation_flags(0x08000000)
             .status();
     }
@@ -2081,7 +2138,8 @@ mod tests {
         let mut f = Fixture::new();
         prepare_quest_fixture(&mut f.0);
         f.0.discord_mock = Some(true);
-        f.0.route("/api/quests/start", json!({"questId":"123456"})).unwrap();
+        f.0.route("/api/quests/start", json!({"questId":"123456"}))
+            .unwrap();
         f.0.started_at = None;
 
         // First tick triggers warmup buffer
@@ -2090,7 +2148,12 @@ mod tests {
         assert!(f.0.started_at.is_none());
         let status = f.0.status();
         assert_eq!(status["simulation"]["session"]["timerWarmup"], true);
-        assert!(status["simulation"]["session"]["warmupSeconds"].as_i64().unwrap() >= 1);
+        assert!(
+            status["simulation"]["session"]["warmupSeconds"]
+                .as_i64()
+                .unwrap()
+                >= 1
+        );
 
         // When warmup expires, next tick starts the countdown timer
         f.0.warmup_deadline = Some(Instant::now() - Duration::from_millis(50));
@@ -2110,12 +2173,18 @@ mod tests {
         f.0.quests = json!({"quests":[{"id":"123456","appId":"123456","gameName":"Test","kind":"play","durationSeconds":900,"expiresAt":expiry}]});
         f.0.save("active_quests.json", &f.0.quests).unwrap();
 
-        let res = f.0.route("/api/settings", json!({"quest_duration_seconds": 910, "sound_alerts": true})).unwrap();
+        let res =
+            f.0.route(
+                "/api/settings",
+                json!({"quest_duration_seconds": 910, "sound_alerts": true}),
+            )
+            .unwrap();
         assert_eq!(res["quest_duration_seconds"], 910);
         assert_eq!(res["sound_alerts"], true);
         assert_eq!(f.0.quest_target_duration_seconds(), 910);
 
-        f.0.route("/api/quests/start", json!({"questId":"123456"})).unwrap();
+        f.0.route("/api/quests/start", json!({"questId":"123456"}))
+            .unwrap();
         assert_eq!(f.0.session.as_ref().unwrap()["targetDurationSeconds"], 910);
 
         let initial_playtime = f.0.total_playtime_seconds();
@@ -2306,13 +2375,11 @@ mod tests {
         .unwrap();
         assert_eq!(f.0.overrides["custom_executables"]["123456"], "custom.exe");
 
-        f.0.route("/api/override", json!({"resetAll": true})).unwrap();
-        assert!(f.0.overrides["custom_executables"].as_object().unwrap().is_empty());
+        f.0.route("/api/override", json!({"resetAll": true}))
+            .unwrap();
+        assert!(f.0.overrides["custom_executables"]
+            .as_object()
+            .unwrap()
+            .is_empty());
     }
 }
-
-
-
-
-
-
