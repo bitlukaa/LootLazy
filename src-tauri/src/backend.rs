@@ -252,11 +252,10 @@ impl Backend {
             .map(|item| {
                 let mut item = item.clone();
                 let id = text(&item, "questId");
-                let max_clamp = self.quest_target_duration_seconds().saturating_sub(1);
                 let elapsed = self.quest_progress[&id]["elapsedSeconds"]
                     .as_i64()
                     .unwrap_or(item["resumeElapsedSeconds"].as_i64().unwrap_or(0))
-                    .clamp(0, max_clamp);
+                    .clamp(0, 904);
                 item["resumeElapsedSeconds"] = json!(elapsed);
                 item
             })
@@ -394,12 +393,12 @@ impl Backend {
             )
             .max()
             .unwrap_or(0)
-            .clamp(0, self.quest_target_duration_seconds().saturating_sub(1))
+            .clamp(0, 904)
     }
     fn checkpoint_quest(&mut self) -> Result<(), String> {
         if let Some(session) = &self.session {
             if let Some(id) = session["questId"].as_str() {
-                let elapsed = self.elapsed_seconds(session).clamp(0, self.quest_target_duration_seconds().saturating_sub(1));
+                let elapsed = self.elapsed_seconds(session).clamp(0, 904);
                 self.quest_progress[id] = json!({"elapsedSeconds":elapsed,"savedAt":stamp()});
                 if let Err(error) = self.save("quest_progress.json", &self.quest_progress) {
                     self.progress_warning = Some("save_failed".into());
@@ -471,12 +470,6 @@ impl Backend {
     pub fn active_steam_library(&self) -> PathBuf {
         self.root.join("games")
     }
-    pub fn quest_target_duration_seconds(&self) -> i64 {
-        self.overrides["settings"]["quest_duration_seconds"]
-            .as_i64()
-            .unwrap_or(905)
-            .clamp(60, 3600)
-    }
     fn start_process(&mut self, item: &Value) -> Result<(), String> {
         if self.session.is_some() {
             return Err("A game is already running".into());
@@ -542,7 +535,7 @@ impl Backend {
         s["elapsedBeforeSegment"] = json!(item["resumeElapsedSeconds"]
             .as_i64()
             .unwrap_or(0)
-            .clamp(0, self.quest_target_duration_seconds().saturating_sub(1)));
+            .clamp(0, 904));
         s["timerWaiting"] = json!(self.allow_rpc && auto_rpc);
         self.child = child;
         self.session = Some(s.clone());
@@ -919,13 +912,12 @@ impl Backend {
                 .unwrap_or(json!({"id":app,"name":quest["gameName"],"executables":[]}));
             let resolution = self.resolve(&game);
             let elapsed = self.resumed_seconds(&quest);
-            let target_duration = (self.quest_target_duration_seconds() as f64) / 60.0;
             let item = &mut self.quest_queue.items[index];
             item["questId"] = quest["id"].clone();
             item["appId"] = game["id"].clone();
             item["gameName"] = game["name"].clone();
             item["executableName"] = resolution["primaryExecutable"].clone();
-            item["durationMinutes"] = json!(target_duration);
+            item["durationMinutes"] = json!(905.0 / 60.0);
             item["resumeElapsedSeconds"] = json!(elapsed);
             item["state"] = json!("queued");
         }
@@ -1193,13 +1185,9 @@ impl Backend {
                     s["auto_discord_rpc"] = json!(s["auto_discord_rpc"].as_bool().unwrap_or(true));
                     s["desktop_notifications"] = json!(s["desktop_notifications"].as_bool().unwrap_or(true));
                     s["active_steam_library"] = json!(self.active_steam_library().to_string_lossy().to_string());
-                    s["quest_duration_seconds"] = json!(self.quest_target_duration_seconds());
                     return Ok(s);
                 }
                 let mut proposed = self.overrides.clone();
-                if let Some(secs) = body["quest_duration_seconds"].as_i64() {
-                    proposed["settings"]["quest_duration_seconds"] = json!(secs.clamp(60, 3600));
-                }
                 if let Some(b) = body["scan_local_steam"].as_bool() {
                     proposed["settings"]["scan_local_steam"] = json!(b);
                 }
@@ -1247,8 +1235,7 @@ impl Backend {
                     "minimize_to_tray": self.overrides["settings"]["minimize_to_tray"].as_bool().unwrap_or(false),
                     "auto_discord_rpc": self.overrides["settings"]["auto_discord_rpc"].as_bool().unwrap_or(true),
                     "desktop_notifications": self.overrides["settings"]["desktop_notifications"].as_bool().unwrap_or(true),
-                    "active_steam_library": self.active_steam_library().to_string_lossy().to_string(),
-                    "quest_duration_seconds": self.quest_target_duration_seconds()
+                    "active_steam_library": self.active_steam_library().to_string_lossy().to_string()
                 }))
             }
             "/api/override" => {
@@ -1396,7 +1383,7 @@ impl Backend {
                     json!({"id":quest["appId"],"name":quest["gameName"],"executables":[]}),
                 );
                 let resolution = self.resolve(&game);
-                self.append(json!({"appId":game["id"],"gameName":game["name"],"executableName":resolution["primaryExecutable"],"durationMinutes":(self.quest_target_duration_seconds() as f64)/60.0,"resumeElapsedSeconds":self.resumed_seconds(&quest),"iconHash":game["icon_hash"],"questId":id,"questImage":quest["image"]}),true)
+                self.append(json!({"appId":game["id"],"gameName":game["name"],"executableName":resolution["primaryExecutable"],"durationMinutes":905.0/60.0,"resumeElapsedSeconds":self.resumed_seconds(&quest),"iconHash":game["icon_hash"],"questId":id,"questImage":quest["image"]}),true)
             }
             "/api/quests/pause" => {
                 let id = storage::id(&text(&body, "questId"))?;
@@ -1981,23 +1968,6 @@ mod tests {
             .unwrap();
         let reopened = Backend::new(f.0.root.clone()).unwrap();
         assert_eq!(reopened.closed["234567"]["reason"], "open");
-    }
-    #[test]
-    fn custom_quest_duration_is_configurable_and_used() {
-        let mut f = Fixture::new();
-        f.0.catalog = vec![
-            json!({"id":"123456","name":"Test","executables":[{"os":"win32","name":"audit-first.exe"}]}),
-        ];
-        let expiry = (Utc::now() + chrono::Duration::hours(1)).to_rfc3339();
-        f.0.quests = json!({"quests":[{"id":"123456","appId":"123456","gameName":"Test","kind":"play","durationSeconds":900,"expiresAt":expiry}]});
-        f.0.save("active_quests.json", &f.0.quests).unwrap();
-
-        let res = f.0.route("/api/settings", json!({"quest_duration_seconds": 910})).unwrap();
-        assert_eq!(res["quest_duration_seconds"], 910);
-        assert_eq!(f.0.quest_target_duration_seconds(), 910);
-
-        f.0.route("/api/quests/start", json!({"questId":"123456"})).unwrap();
-        assert_eq!(f.0.session.as_ref().unwrap()["targetDurationSeconds"], 910);
     }
     #[test]
     fn timer_runs_without_frontend_polling() {
