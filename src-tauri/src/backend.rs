@@ -255,7 +255,7 @@ impl Backend {
                 let elapsed = self.quest_progress[&id]["elapsedSeconds"]
                     .as_i64()
                     .unwrap_or(item["resumeElapsedSeconds"].as_i64().unwrap_or(0))
-                    .clamp(0, 929);
+                    .clamp(0, 904);
                 item["resumeElapsedSeconds"] = json!(elapsed);
                 item
             })
@@ -393,12 +393,12 @@ impl Backend {
             )
             .max()
             .unwrap_or(0)
-            .clamp(0, 929)
+            .clamp(0, 904)
     }
     fn checkpoint_quest(&mut self) -> Result<(), String> {
         if let Some(session) = &self.session {
             if let Some(id) = session["questId"].as_str() {
-                let elapsed = self.elapsed_seconds(session).clamp(0, 929);
+                let elapsed = self.elapsed_seconds(session).clamp(0, 904);
                 self.quest_progress[id] = json!({"elapsedSeconds":elapsed,"savedAt":stamp()});
                 if let Err(error) = self.save("quest_progress.json", &self.quest_progress) {
                     self.progress_warning = Some("save_failed".into());
@@ -535,7 +535,7 @@ impl Backend {
         s["elapsedBeforeSegment"] = json!(item["resumeElapsedSeconds"]
             .as_i64()
             .unwrap_or(0)
-            .clamp(0, 929));
+            .clamp(0, 904));
         s["timerWaiting"] = json!(self.allow_rpc && auto_rpc);
         self.child = child;
         self.session = Some(s.clone());
@@ -917,7 +917,7 @@ impl Backend {
             item["appId"] = game["id"].clone();
             item["gameName"] = game["name"].clone();
             item["executableName"] = resolution["primaryExecutable"].clone();
-            item["durationMinutes"] = json!(15.5);
+            item["durationMinutes"] = json!(905.0 / 60.0);
             item["resumeElapsedSeconds"] = json!(elapsed);
             item["state"] = json!("queued");
         }
@@ -1383,7 +1383,7 @@ impl Backend {
                     json!({"id":quest["appId"],"name":quest["gameName"],"executables":[]}),
                 );
                 let resolution = self.resolve(&game);
-                self.append(json!({"appId":game["id"],"gameName":game["name"],"executableName":resolution["primaryExecutable"],"durationMinutes":15.5,"resumeElapsedSeconds":self.resumed_seconds(&quest),"iconHash":game["icon_hash"],"questId":id,"questImage":quest["image"]}),true)
+                self.append(json!({"appId":game["id"],"gameName":game["name"],"executableName":resolution["primaryExecutable"],"durationMinutes":905.0/60.0,"resumeElapsedSeconds":self.resumed_seconds(&quest),"iconHash":game["icon_hash"],"questId":id,"questImage":quest["image"]}),true)
             }
             "/api/quests/pause" => {
                 let id = storage::id(&text(&body, "questId"))?;
@@ -1767,7 +1767,7 @@ mod tests {
         );
         assert_eq!(
             restored.status()["simulation"]["session"]["remainingSeconds"],
-            893
+            868
         );
         restored.shutdown();
     }
@@ -1959,7 +1959,7 @@ mod tests {
             .unwrap();
         f.0.route("/api/quests/start", json!({"questId":"234567"}))
             .unwrap();
-        assert_eq!(f.0.session.as_ref().unwrap()["targetDurationSeconds"], 930);
+        assert_eq!(f.0.session.as_ref().unwrap()["targetDurationSeconds"], 905);
         f.0.route("/api/quests/cancel", json!({"questId":"234567"}))
             .unwrap();
         assert_eq!(f.0.session.as_ref().unwrap()["questId"], "123456");
