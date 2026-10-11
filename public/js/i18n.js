@@ -164,8 +164,8 @@ const I18N = {
     "presence_unavailable": "اتصال النشاط غير متاح. افتح تطبيق Discord على الجهاز.",
     "presence_rejected": "Discord لم يقبل النشاط. جارٍ إعادة المحاولة…",
     "presence_disconnected": "انقطع اتصال النشاط. جارٍ إعادة الاتصال…",
-    "quest_reopen": "إعادة فتح المهمة",
-    "quest_reopen_error": "تعذر إعادة فتح المهمة. حدّث المهام المتاحة وحاول مجددًا.",
+    "quest_reopen": "إعادة المهمة",
+    "quest_reopen_error": "تعذر إعادة تشغيل المهمة. حدّث المهام المتاحة وحاول مجددًا.",
     "quest_cancel": "إلغاء المهمة",
     "quest_closed": "مُغلقة",
     "quest_active": "قيد التشغيل",
@@ -249,7 +249,9 @@ const I18N = {
     "sound_alerts_title": "التنبيهات الصوتية",
     "sound_alerts_desc": "تشغيل صوت خفيف عند اكتمال الجلسة أو المهمة",
     "quest_duration_title": "مدة تشغيل المهام",
-    "quest_duration_desc": "تحديد وقت تشغيل مهام ديسكورد (بالدقائق والثواني الإضافية)"
+    "quest_duration_desc": "تحديد وقت تشغيل مهام ديسكورد (بالدقائق والثواني الإضافية)",
+    "played_label": "وقت اللعب:",
+    "quest_warmup": "جاهزية ديسكورد · تبدأ خلال {seconds} ث"
   },
   "en": {
     "language": "Language",
@@ -415,8 +417,8 @@ const I18N = {
     "presence_unavailable": "Discord activity unavailable. Open the desktop client.",
     "presence_rejected": "Discord did not accept the activity. Retrying…",
     "presence_disconnected": "Activity connection lost. Reconnecting…",
-    "quest_reopen": "Reopen quest",
-    "quest_reopen_error": "Could not reopen the quest. Refresh the available quests and try again.",
+    "quest_reopen": "Repeat quest",
+    "quest_reopen_error": "Could not repeat quest. Refresh the available quests and try again.",
     "quest_cancel": "Cancel quest",
     "quest_closed": "Closed",
     "quest_active": "Running",
@@ -500,7 +502,9 @@ const I18N = {
     "sound_alerts_title": "Sound Alerts",
     "sound_alerts_desc": "Play a gentle chime when a quest or game timer finishes",
     "quest_duration_title": "Quest Duration",
-    "quest_duration_desc": "Set the runtime target for Discord quests (minutes & extra seconds)"
+    "quest_duration_desc": "Set the runtime target for Discord quests (minutes & extra seconds)",
+    "played_label": "Played:",
+    "quest_warmup": "Discord warmup · starting in {seconds}s"
   }
 };
 let currentLang = (localStorage.getItem('questro_lang') || localStorage.getItem('questra_lang')) === 'ar' ? 'ar' : 'en';

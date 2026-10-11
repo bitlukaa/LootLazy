@@ -71,6 +71,7 @@ pub struct Backend {
     presence: Presence,
     allow_rpc: bool,
     started_at: Option<Instant>,
+    warmup_deadline: Option<Instant>,
     quest_progress: Value,
     progress_warning: Option<String>,
     progress_saved_at: Instant,
@@ -204,6 +205,7 @@ impl Backend {
             presence: Presence::new(),
             allow_rpc: true,
             started_at: None,
+            warmup_deadline: None,
             quest_progress: if saved_progress.is_object() {
                 saved_progress
             } else {
@@ -356,7 +358,7 @@ impl Backend {
     pub fn quest_target_duration_seconds(&self) -> i64 {
         self.overrides["settings"]["quest_duration_seconds"]
             .as_i64()
-            .unwrap_or(905)
+            .unwrap_or(900)
             .clamp(60, 3600)
     }
     pub fn total_playtime_seconds(&self) -> i64 {
@@ -384,6 +386,14 @@ impl Backend {
             s["progressPercent"] = json!(target.map(|t| (elapsed * 100 / t).min(100)));
             s["presence"] = self.presence.status();
             s["discordDetected"] = json!(discord_connected);
+            if let Some(deadline) = self.warmup_deadline {
+                if Instant::now() < deadline {
+                    let rem = (deadline.saturating_duration_since(Instant::now()).as_millis() as f64 / 1000.0).ceil() as i64;
+                    s["timerWarmup"] = json!(true);
+                    s["warmupSeconds"] = json!(rem.max(1));
+                    s["timerWaiting"] = json!(false);
+                }
+            }
         }
         json!({"discordConnected":discord_connected,"simulation":{"active":session.is_some(),"session":session},"queue":self.queue.status(),"questQueue":self.quest_queue.status(),"storageWarning":self.progress_warning,"lastFinished":self.last_finished,"totalPlaytimeSeconds":self.total_playtime_seconds()})
     }
@@ -565,6 +575,7 @@ impl Backend {
         } else {
             Some(Instant::now())
         };
+        self.warmup_deadline = None;
         let _ = self.checkpoint_quest();
         if activity && self.allow_rpc && auto_rpc {
             self.presence.start(s);
@@ -593,6 +604,7 @@ impl Backend {
                 let _ = self.save("questro_overrides.json", &self.overrides);
             }
             self.started_at = None;
+            self.warmup_deadline = None;
             session["durationSeconds"] = json!(duration);
             session["durationFormatted"] = json!(clock(duration));
             session["playedAt"] = json!(stamp());
@@ -798,24 +810,71 @@ impl Backend {
                     } else {
                         presence["desktopReady"] == true || presence["state"] == "ready"
                     }));
+            let is_quest = self
+                .session
+                .as_ref()
+                .is_some_and(|s| s["questId"].as_str().is_some());
             if ready && self.started_at.is_none() {
-                self.started_at = Some(Instant::now());
+                if is_quest {
+                    match self.warmup_deadline {
+                        None => {
+                            self.warmup_deadline = Some(Instant::now() + Duration::from_secs(5));
+                            if let Some(s) = self.session.as_mut() {
+                                s["timerWaiting"] = json!(false);
+                                s["timerWarmup"] = json!(true);
+                                s["warmupSeconds"] = json!(5);
+                            }
+                        }
+                        Some(deadline) if Instant::now() < deadline => {
+                            let rem = (deadline.saturating_duration_since(Instant::now()).as_millis() as f64 / 1000.0).ceil() as i64;
+                            if let Some(s) = self.session.as_mut() {
+                                s["timerWaiting"] = json!(false);
+                                s["timerWarmup"] = json!(true);
+                                s["warmupSeconds"] = json!(rem.max(1));
+                            }
+                        }
+                        Some(_) => {
+                            self.warmup_deadline = None;
+                            self.started_at = Some(Instant::now());
+                            if let Some(s) = self.session.as_mut() {
+                                s["timerWaiting"] = json!(false);
+                                s["timerWarmup"] = json!(false);
+                                s["warmupSeconds"] = json!(0);
+                            }
+                        }
+                    }
+                } else {
+                    self.started_at = Some(Instant::now());
+                    if let Some(s) = self.session.as_mut() {
+                        s["timerWaiting"] = json!(false);
+                        s["timerWarmup"] = json!(false);
+                        s["warmupSeconds"] = json!(0);
+                    }
+                }
+            } else if !ready {
+                self.warmup_deadline = None;
+                if self.started_at.is_some() {
+                    let elapsed = self.elapsed_seconds(self.session.as_ref().unwrap());
+                    self.started_at = None;
+                    if let Some(s) = self.session.as_mut() {
+                        s["elapsedBeforeSegment"] = json!(elapsed);
+                        s["timerWaiting"] = json!(true);
+                        s["timerWarmup"] = json!(false);
+                        s["warmupSeconds"] = json!(0);
+                    }
+                    if is_quest {
+                        let _ = self.checkpoint_quest();
+                    }
+                } else if let Some(s) = self.session.as_mut() {
+                    s["timerWaiting"] = json!(true);
+                    s["timerWarmup"] = json!(false);
+                    s["warmupSeconds"] = json!(0);
+                }
+            } else if self.started_at.is_some() {
                 if let Some(s) = self.session.as_mut() {
                     s["timerWaiting"] = json!(false);
-                }
-            } else if !ready && self.started_at.is_some() {
-                let elapsed = self.elapsed_seconds(self.session.as_ref().unwrap());
-                self.started_at = None;
-                if let Some(s) = self.session.as_mut() {
-                    s["elapsedBeforeSegment"] = json!(elapsed);
-                    s["timerWaiting"] = json!(true);
-                }
-                if self
-                    .session
-                    .as_ref()
-                    .is_some_and(|s| s["questId"].as_str().is_some())
-                {
-                    let _ = self.checkpoint_quest();
+                    s["timerWarmup"] = json!(false);
+                    s["warmupSeconds"] = json!(0);
                 }
             }
             if self
@@ -1808,7 +1867,7 @@ mod tests {
         );
         assert_eq!(
             restored.status()["simulation"]["session"]["remainingSeconds"],
-            868
+            863
         );
         restored.shutdown();
     }
@@ -2000,7 +2059,7 @@ mod tests {
             .unwrap();
         f.0.route("/api/quests/start", json!({"questId":"234567"}))
             .unwrap();
-        assert_eq!(f.0.session.as_ref().unwrap()["targetDurationSeconds"], 905);
+        assert_eq!(f.0.session.as_ref().unwrap()["targetDurationSeconds"], 900);
         f.0.route("/api/quests/cancel", json!({"questId":"234567"}))
             .unwrap();
         assert_eq!(f.0.session.as_ref().unwrap()["questId"], "123456");
@@ -2009,6 +2068,29 @@ mod tests {
             .unwrap();
         let reopened = Backend::new(f.0.root.clone()).unwrap();
         assert_eq!(reopened.closed["234567"]["reason"], "open");
+    }
+    #[test]
+    fn quest_warmup_delay_before_starting_timer() {
+        let mut f = Fixture::new();
+        prepare_quest_fixture(&mut f.0);
+        f.0.route("/api/quests/start", json!({"questId":"123456"})).unwrap();
+        f.0.started_at = None;
+
+        // First tick triggers warmup buffer
+        f.0.tick_inner();
+        assert!(f.0.warmup_deadline.is_some());
+        assert!(f.0.started_at.is_none());
+        let status = f.0.status();
+        assert_eq!(status["simulation"]["session"]["timerWarmup"], true);
+        assert!(status["simulation"]["session"]["warmupSeconds"].as_i64().unwrap() >= 1);
+
+        // When warmup expires, next tick starts the countdown timer
+        f.0.warmup_deadline = Some(Instant::now() - Duration::from_millis(50));
+        f.0.tick_inner();
+        assert!(f.0.warmup_deadline.is_none());
+        assert!(f.0.started_at.is_some());
+        let status = f.0.status();
+        assert_ne!(status["simulation"]["session"]["timerWarmup"], true);
     }
     #[test]
     fn custom_quest_duration_and_playtime_accumulation() {
