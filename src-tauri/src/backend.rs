@@ -351,6 +351,7 @@ impl Backend {
     }
     pub fn status(&self) -> Value {
         let mut session = self.session.clone();
+        let discord_connected = crate::presence::is_discord_desktop_running();
         if let Some(s) = session.as_mut() {
             let elapsed = self.elapsed_seconds(s);
             let target = s["targetDurationSeconds"].as_i64();
@@ -361,25 +362,16 @@ impl Backend {
             s["remainingFormatted"] = json!(remaining.map(clock));
             s["progressPercent"] = json!(target.map(|t| (elapsed * 100 / t).min(100)));
             s["presence"] = self.presence.status();
-            s["discordDetected"] = Value::Null;
+            s["discordDetected"] = json!(discord_connected);
         }
-        json!({"simulation":{"active":session.is_some(),"session":session},"queue":self.queue.status(),"questQueue":self.quest_queue.status(),"storageWarning":self.progress_warning,"lastFinished":self.last_finished})
+        json!({"discordConnected":discord_connected,"simulation":{"active":session.is_some(),"session":session},"queue":self.queue.status(),"questQueue":self.quest_queue.status(),"storageWarning":self.progress_warning,"lastFinished":self.last_finished})
     }
     fn elapsed_seconds(&self, session: &Value) -> i64 {
-        if session["questId"].as_str().is_some() {
-            return session["elapsedBeforeSegment"].as_i64().unwrap_or(0)
-                + self
-                    .started_at
-                    .map(|t| t.elapsed().as_secs() as i64)
-                    .unwrap_or(0);
-        }
-        self.started_at
-            .map(|t| t.elapsed().as_secs() as i64)
-            .unwrap_or_else(|| {
-                ((Utc::now().timestamp_millis() - session["startTime"].as_i64().unwrap_or(0))
-                    / 1000)
-                    .max(0)
-            })
+        session["elapsedBeforeSegment"].as_i64().unwrap_or(0)
+            + self
+                .started_at
+                .map(|t| t.elapsed().as_secs() as i64)
+                .unwrap_or(0)
     }
     fn resumed_seconds(&self, quest: &Value) -> i64 {
         let ids = quest_ids(quest);
@@ -763,23 +755,21 @@ impl Backend {
                 return;
             }
         }
-        if self
-            .session
-            .as_ref()
-            .is_some_and(|s| s["questId"].as_str().is_some())
-        {
+        if self.session.is_some() {
             let presence = self.presence.status();
             let rpc_only = self
                 .session
                 .as_ref()
                 .is_some_and(|s| s["mode"] == "rpc_only");
+            let discord_running = crate::presence::is_discord_desktop_running();
             let ready = !self.allow_rpc
                 || !self.overrides["settings"]["auto_discord_rpc"].as_bool().unwrap_or(true)
-                || if rpc_only {
-                    presence["activityConfirmed"] == true
-                } else {
-                    presence["desktopReady"] == true
-                };
+                || (discord_running
+                    && (if rpc_only {
+                        presence["activityConfirmed"] == true
+                    } else {
+                        presence["desktopReady"] == true || presence["state"] == "ready"
+                    }));
             if ready && self.started_at.is_none() {
                 self.started_at = Some(Instant::now());
                 if let Some(s) = self.session.as_mut() {
@@ -792,9 +782,20 @@ impl Backend {
                     s["elapsedBeforeSegment"] = json!(elapsed);
                     s["timerWaiting"] = json!(true);
                 }
-                let _ = self.checkpoint_quest();
+                if self
+                    .session
+                    .as_ref()
+                    .is_some_and(|s| s["questId"].as_str().is_some())
+                {
+                    let _ = self.checkpoint_quest();
+                }
             }
-            if self.progress_saved_at.elapsed() >= Duration::from_secs(5) {
+            if self
+                .session
+                .as_ref()
+                .is_some_and(|s| s["questId"].as_str().is_some())
+                && self.progress_saved_at.elapsed() >= Duration::from_secs(5)
+            {
                 let _ = self.checkpoint_quest();
             }
         }
