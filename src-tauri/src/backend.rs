@@ -824,11 +824,11 @@ impl Backend {
                 if is_quest {
                     match self.warmup_deadline {
                         None => {
-                            self.warmup_deadline = Some(Instant::now() + Duration::from_secs(5));
+                            self.warmup_deadline = Some(Instant::now() + Duration::from_secs(10));
                             if let Some(s) = self.session.as_mut() {
                                 s["timerWaiting"] = json!(false);
                                 s["timerWarmup"] = json!(true);
-                                s["warmupSeconds"] = json!(5);
+                                s["warmupSeconds"] = json!(10);
                             }
                         }
                         Some(deadline) if Instant::now() < deadline => {

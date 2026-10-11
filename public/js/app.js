@@ -22,7 +22,7 @@ function translate(){document.querySelectorAll('[data-i18n]').forEach(el=>el.tex
 function switchTab(tab){if(!['simulator','quests','settings'].includes(tab))return;state.tab=tab;document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));document.querySelectorAll('.view-panel').forEach(el=>el.classList.toggle('active',el.id==='view-'+tab));if(tab==='settings')loadSettings();}
 function updateToggle(key,value){const el=document.querySelector(`[data-setting-toggle="${key}"]`);if(el)el.setAttribute('aria-checked',String(!!value));}
 async function loadSettings(){try{const s=await request('/api/settings');updateToggle('run_on_startup',s.run_on_startup===true);updateToggle('start_minimized',s.start_minimized===true);updateToggle('minimize_to_tray',s.minimize_to_tray===true);updateToggle('auto_discord_rpc',s.auto_discord_rpc!==false);updateToggle('desktop_notifications',s.desktop_notifications!==false);updateToggle('sound_alerts',s.sound_alerts!==false);window.__minimizeToTray=s.minimize_to_tray===true;state.desktopNotifications=s.desktop_notifications!==false;state.soundAlerts=s.sound_alerts!==false;if(s.quest_duration_seconds){state.questDurationSeconds=s.quest_duration_seconds;if($('setting-quest-minutes'))$('setting-quest-minutes').value=Math.floor(s.quest_duration_seconds/60);if($('setting-quest-seconds'))$('setting-quest-seconds').value=s.quest_duration_seconds%60;}if(s.total_playtime_seconds!==undefined)updatePlaytime(s.total_playtime_seconds);if($('active-steam-library-path'))$('active-steam-library-path').textContent=s.active_steam_library||'—';}catch{}}
-async function saveQuestDuration(){const mins=Math.max(1,Math.min(60,parseInt($('setting-quest-minutes').value)||15)),secs=Math.max(0,Math.min(59,parseInt($('setting-quest-seconds').value)||0)),total=mins*60+secs;try{await request('/api/settings',{quest_duration_seconds:total});state.questDurationSeconds=total;toast(t('saved'),'success');}catch{toast(t('settings_error'),'error');}}
+async function saveQuestDuration(){const mins=Math.max(1,Math.min(60,parseInt($('setting-quest-minutes').value)||15)),secs=Math.max(0,Math.min(59,parseInt($('setting-quest-seconds').value)||0)),total=mins*60+secs;try{await request('/api/settings',{quest_duration_seconds:total});state.questDurationSeconds=total;questSignature='';renderQuests();toast(t('saved'),'success');}catch{toast(t('settings_error'),'error');}}
 async function setSettingChoice(key,value){updateToggle(key,value);if(key==='minimize_to_tray')window.__minimizeToTray=value;if(key==='sound_alerts')state.soundAlerts=value;if(key==='desktop_notifications'){state.desktopNotifications=value;if(value&&window.Notification&&Notification.permission==='default')Notification.requestPermission();}try{await request('/api/settings',{[key]:value});toast(t('saved'),'success');}catch{toast(t('settings_error'),'error');}}
 async function resetOverrides(){if(!confirm(t('reset_confirm')))return;try{await request('/api/override',{resetAll:true});toast(t('reset_done'),'success');if(state.selectedGame)selectGame(state.selectedGame);}catch{toast(t('settings_error'),'error');}}
 function playChime(){if(state.soundAlerts===false)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.type='sine';osc.frequency.setValueAtTime(587.33,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(880,ctx.currentTime+0.12);gain.gain.setValueAtTime(0.12,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.55);osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.55);}catch{}}
@@ -66,7 +66,7 @@ function questIds(quest){return [...new Set([quest.id,...(Array.isArray(quest.va
 function questMatches(quest,id){return questIds(quest).includes(id);}
 function trackQuestUpdates(quests){const initialized=seenQuestIds.size>0;for(const quest of quests){const ids=questIds(quest);if(initialized&&!ids.some(id=>seenQuestIds.has(id)))ids.forEach(id=>newQuestIds.add(id));ids.forEach(id=>seenQuestIds.add(id));}const available=new Set(quests.flatMap(questIds));for(const id of newQuestIds)if(!available.has(id))newQuestIds.delete(id);localStorage.setItem('questro_seen_quests',JSON.stringify([...seenQuestIds].slice(-4000)));localStorage.setItem('questro_new_quests',JSON.stringify([...newQuestIds]));}
 function acknowledgeQuest(quest){questIds(quest).forEach(id=>{newQuestIds.delete(id);seenQuestIds.add(id);});localStorage.setItem('questro_seen_quests',JSON.stringify([...seenQuestIds].slice(-4000)));localStorage.setItem('questro_new_quests',JSON.stringify([...newQuestIds]));}
-let questsBusy=false,questSignature='',questActionBusy=false,lastQuestRefresh=0;
+let questsBusy=false,questSignature='',lastQueueOrderSig='',questActionBusy=false,lastQuestRefresh=0;
 async function loadQuests(refresh=false,silent=false){
  if(questsBusy)return;questsBusy=true;const button=$('btn-refresh-quests');busy(button,true);
  try{const data=await request('/api/quests'+(refresh?'?refresh=true':''));const running=state.quests.find(q=>questMatches(q,state.session?.questId));state.quests=(data.quests||[]).filter(q=>q.kind==='play'&&q.durationSeconds===900);if(running&&!state.quests.some(q=>questMatches(q,state.session?.questId)))state.quests.unshift({...running,unavailable:true});trackQuestUpdates(state.quests);lastQuestRefresh=refresh?Date.now():Date.parse(data.last_synced)||0;renderQuests();$('quests-error').hidden=true;if(refresh&&!silent)toast(t('quests_refreshed',{count:number(state.quests.length)}),'success');}
@@ -101,32 +101,107 @@ async function reopenQuest(quest){
  try{await request('/api/quests/reopen',{questId:quest.id});await loadQuests(false,true);}
  catch(error){toast(errorText(error,'quest_reopen_error'),'error');}finally{questActionBusy=false;updateQuestSessions();}
 }
+function createQuestCard(quest){
+ const card=document.createElement('article');card.className='quest-card';card.dataset.questId=quest.id;
+ card.innerHTML='<div class="quest-cover">'+artwork({image:quest.image})+'</div><div class="quest-body"><div class="quest-meta"><div class="quest-labels"><span class="quest-kind">'+escapeHtml(t('kind_play'))+'</span><span class="quest-queue-badge" hidden></span><span class="quest-new" hidden></span></div><span>'+escapeHtml(t('expires',{date:dateText(quest.expiresAt)}))+'</span></div><h2>'+escapeHtml(quest.questName||quest.gameName)+'</h2><p>'+escapeHtml(t('task_play',{time:humanTime(state.questDurationSeconds||900)}))+'</p><div class="progress-track quest-progress" hidden><div></div></div><button class="button button-primary quest-play"></button><p class="quest-error-text error-message" role="alert" hidden></p></div>';
+ card.querySelector('button').onclick=()=>playQuest(quest);const cancel=document.createElement('button');cancel.className='button button-quiet quest-cancel';cancel.textContent=t('quest_cancel');cancel.onclick=()=>quest.localFinished?reopenQuest(quest):cancelQuest(quest);const pause=document.createElement('button');pause.className='button button-secondary quest-pause';pause.textContent=t('quest_pause');pause.hidden=true;pause.onclick=()=>pauseQuest(quest);const actions=document.createElement('div');actions.className='quest-actions';actions.append(pause,cancel);card.querySelector('.quest-body').appendChild(actions);return card;
+}
 function renderQuests(){
- const signature=JSON.stringify([state.quests,currentLang,state.questSearchQuery,state.questFilter]);if(signature===questSignature){updateQuestSessions();return;}questSignature=signature;
+ const activeId=state.session?.questId||'';
+ const queueItems=(state.questQueue?.items||[]).filter(item=>['queued','waiting','starting','paused'].includes(item.state));
+ const queuedIds=queueItems.map(item=>item.questId);
+ const queueOrderSig=activeId+':'+queuedIds.join(',');
+ const signature=JSON.stringify([state.quests,currentLang,state.questSearchQuery,state.questFilter,state.questDurationSeconds,queueOrderSig]);
+ if(signature===questSignature){updateQuestSessions();return;}
+ questSignature=signature;
+ lastQueueOrderSig=queueOrderSig;
+
  const container=$('quests-container');container.replaceChildren();
  let filtered=state.quests.slice();
- if(state.questFilter==='active')filtered=filtered.filter(q=>!q.localFinished);
- else if(state.questFilter==='completed')filtered=filtered.filter(q=>!!q.localFinished);
  if(state.questSearchQuery){
   const q=state.questSearchQuery.toLowerCase();
   filtered=filtered.filter(quest=>(quest.questName||quest.gameName||'').toLowerCase().includes(q)||(quest.game?.name||'').toLowerCase().includes(q));
  }
  $('quests-count').textContent=number(filtered.length);
- if(!filtered.length){container.appendChild(empty(t(state.questSearchQuery?'no_matching_quests':'quests_empty'),state.questSearchQuery?'':t('quests_empty_hint'),state.questSearchQuery?'search':'sparkles'));return;}
- filtered.sort((a,b)=>Number(!!a.localFinished)-Number(!!b.localFinished));
- for(const quest of filtered){
-  const card=document.createElement('article');card.className='quest-card';card.dataset.questId=quest.id;
-  card.innerHTML='<div class="quest-cover">'+artwork({image:quest.image})+'</div><div class="quest-body"><div class="quest-meta"><div class="quest-labels"><span class="quest-kind">'+escapeHtml(t('kind_play'))+'</span><span class="quest-new" hidden></span></div><span>'+escapeHtml(t('expires',{date:dateText(quest.expiresAt)}))+'</span></div><h2>'+escapeHtml(quest.questName||quest.gameName)+'</h2><p>'+escapeHtml(t('task_play',{time:humanTime(state.questDurationSeconds||900)}))+'</p><div class="progress-track quest-progress" hidden><div></div></div><button class="button button-primary quest-play"></button><p class="quest-error-text error-message" role="alert" hidden></p></div>';
-  card.querySelector('button').onclick=()=>playQuest(quest);const cancel=document.createElement('button');cancel.className='button button-quiet quest-cancel';cancel.textContent=t('quest_cancel');cancel.onclick=()=>quest.localFinished?reopenQuest(quest):cancelQuest(quest);const pause=document.createElement('button');pause.className='button button-secondary quest-pause';pause.textContent=t('quest_pause');pause.hidden=true;pause.onclick=()=>pauseQuest(quest);const actions=document.createElement('div');actions.className='quest-actions';actions.append(pause,cancel);card.querySelector('.quest-body').appendChild(actions);container.appendChild(card);
- }updateQuestSessions();
+ if(!filtered.length){
+  container.appendChild(empty(t(state.questSearchQuery?'no_matching_quests':'quests_empty'),state.questSearchQuery?'':t('quests_empty_hint'),state.questSearchQuery?'search':'sparkles'));
+  return;
+ }
+
+ const activeQuest=state.quests.find(q=>questMatches(q,activeId));
+ const orderedQueued=[];
+ for(const item of queueItems){
+  const match=state.quests.find(q=>questMatches(q,item.questId));
+  if(match&&!orderedQueued.includes(match)&&(!activeQuest||!questMatches(match,activeQuest.id)))orderedQueued.push(match);
+ }
+ const activeAndQueue=[];
+ if(activeQuest&&filtered.includes(activeQuest))activeAndQueue.push(activeQuest);
+ for(const q of orderedQueued){
+  if(filtered.includes(q)&&!activeAndQueue.includes(q))activeAndQueue.push(q);
+ }
+
+ const available=filtered.filter(q=>!activeAndQueue.includes(q)&&!q.localFinished);
+ const completed=filtered.filter(q=>!activeAndQueue.includes(q)&&!!q.localFinished);
+
+ const showActive=state.questFilter!=='completed';
+ const showAvailable=state.questFilter!=='completed';
+ const showCompleted=state.questFilter!=='active';
+
+ const addSection=(titleKey,quests,hasPulse)=>{
+  if(!quests.length)return;
+  const section=document.createElement('section');section.className='quests-section';
+  const header=document.createElement('div');header.className='quests-section-header';
+  const h2=document.createElement('h2');
+  if(hasPulse){const pulse=document.createElement('span');pulse.className='pulse-indicator';h2.appendChild(pulse);}
+  const text=document.createElement('span');text.textContent=t(titleKey);
+  const badge=document.createElement('span');badge.className='count-badge';badge.textContent=number(quests.length);
+  h2.append(text,badge);header.appendChild(h2);section.appendChild(header);
+  const grid=document.createElement('div');grid.className='quests-grid';
+  for(const q of quests)grid.appendChild(createQuestCard(q));
+  section.appendChild(grid);container.appendChild(section);
+ };
+
+ if(showActive&&activeAndQueue.length)addSection('section_active_queue',activeAndQueue,true);
+ if(showAvailable&&available.length)addSection('section_available',available,false);
+ if(showCompleted&&completed.length)addSection('section_completed',completed,false);
+
+ updateQuestSessions();
 }
 function updateQuestSessions(){
  const queue=state.questQueue||{items:[],active:false},saved=(queue.items||[]).filter(item=>!['completed','cancelled'].includes(item.state));
+ const activeId=state.session?.questId||'';
+ const queueItems=(queue.items||[]).filter(item=>['queued','waiting','starting','paused'].includes(item.state));
+ const queueOrderSig=activeId+':'+queueItems.map(item=>item.questId).join(',');
+ if(queueOrderSig!==lastQueueOrderSig){
+  lastQueueOrderSig=queueOrderSig;
+  questSignature='';
+  renderQuests();
+  return;
+ }
  $('btn-resume-quest-queue').hidden=!saved.length||queue.active;$('btn-resume-quest-queue').disabled=questActionBusy||!!state.session||!!state.queue?.active;
  $('quest-queue-recovery').hidden=!saved.length||queue.active;$('quest-save-warning').hidden=!state.storageWarning;$('quest-save-warning').textContent=state.storageWarning?errorText(state.storageWarning):'';
+
+ const activeQuest=state.quests.find(q=>questMatches(q,activeId));
+ const orderedQueued=[];
+ for(const item of queueItems){
+  const match=state.quests.find(q=>questMatches(q,item.questId));
+  if(match&&!orderedQueued.includes(match)&&(!activeQuest||!questMatches(match,activeQuest.id)))orderedQueued.push(match);
+ }
+
  for(const quest of state.quests){const card=document.querySelector('[data-quest-id="'+quest.id+'"]');if(!card)continue;
   const badge=card.querySelector('.quest-new');badge.textContent=t('quest_new');badge.hidden=!questIds(quest).some(id=>newQuestIds.has(id))||!!quest.localFinished;
+  const qBadge=card.querySelector('.quest-queue-badge');
   const item=queue.items?.findLast(item=>questMatches(quest,item.questId)),waiting=item&&['queued','waiting','starting'].includes(item.state)&&queue.active,active=questMatches(quest,state.session?.questId),paused=!active&&!quest.localFinished&&(quest.resumeElapsedSeconds>0||item?.state==='paused'),button=card.querySelector('.quest-play'),errText=card.querySelector('.quest-error-text'),progress=card.querySelector('.quest-progress');
+
+  if(qBadge){
+   if(active){qBadge.textContent='#1';qBadge.hidden=false;}
+   else if(waiting||item?.state==='queued'||item?.state==='waiting'||item?.state==='starting'){
+    const idx=orderedQueued.indexOf(quest);
+    qBadge.textContent='#'+(activeQuest?idx+2:idx+1);
+    qBadge.hidden=idx<0;
+   }else{qBadge.hidden=true;}
+  }
+
   button.disabled=questActionBusy||active||!!waiting||!!state.queue?.active||(!active&&(!quest.game?.id||quest.localFinished));
   let btnText=t('quest_play');
   if(active){
@@ -149,8 +224,6 @@ function updateQuestSessions(){
   if(errText){errText.textContent=problem||'';errText.hidden=!problem;}card.classList.toggle('quest-closed',!!quest.localFinished);
   progress.hidden=!active;progress.firstElementChild.style.width=(active?state.session.progressPercent:0)+'%';card.classList.toggle('quest-running',active);
  }
- const container=$('quests-container'),rank=q=>questMatches(q,state.session?.questId)?0:q.localFinished?2:1;
- state.quests.slice().sort((a,b)=>rank(a)-rank(b)).forEach((quest,index)=>{const card=container.querySelector('[data-quest-id="'+quest.id+'"]');if(card&&container.children[index]!==card)container.insertBefore(card,container.children[index]||null);});
 }
 async function loadStats(){try{state.stats=await request('/api/catalog-stats');renderStats();}catch{}}
 function renderStats(){if(!state.stats)return;$('catalog-count-badge').textContent=t('games_count',{count:number(state.stats.totalGames||0)});}

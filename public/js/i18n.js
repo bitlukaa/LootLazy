@@ -251,7 +251,10 @@ const I18N = {
     "quest_duration_title": "مدة تشغيل المهام",
     "quest_duration_desc": "تحديد وقت تشغيل مهام ديسكورد (بالدقائق والثواني الإضافية)",
     "played_label": "وقت اللعب:",
-    "quest_preparing": "جارٍ التجهيز…"
+    "quest_preparing": "جارٍ التجهيز…",
+    "section_active_queue": "قيد التشغيل والانتظار",
+    "section_available": "المهام المتاحة",
+    "section_completed": "المهام المكتملة"
   },
   "en": {
     "language": "Language",
@@ -504,7 +507,10 @@ const I18N = {
     "quest_duration_title": "Quest Duration",
     "quest_duration_desc": "Set the runtime target for Discord quests (minutes & extra seconds)",
     "played_label": "Played:",
-    "quest_preparing": "Preparing…"
+    "quest_preparing": "Preparing…",
+    "section_active_queue": "Active & Queue",
+    "section_available": "Available Quests",
+    "section_completed": "Completed Quests"
   }
 };
 let currentLang = (localStorage.getItem('questro_lang') || localStorage.getItem('questra_lang')) === 'ar' ? 'ar' : 'en';
