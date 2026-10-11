@@ -48,17 +48,20 @@
    <section id="queue-panel" class="panel selected-games-panel" hidden><div class="queue-summary"><div><span id="queue-title-icon"></span><h2 data-i18n="selected_games">Queue</h2><span id="queue-count" class="count-badge">0</span></div><div><span id="queue-status" class="status-pill"></span></div></div><div class="queue-body"><p id="queue-current" class="inline-note"></p><div id="queue-list" class="queue-list"></div><div class="queue-actions"><button id="queue-next-btn" class="button button-primary" hidden data-i18n="queue_next">Start next</button><button id="queue-start-btn" class="button button-primary" data-i18n="queue_start">Start queue</button><button id="queue-cancel-btn" class="button button-danger" data-i18n="quest_stop">Stop</button><button id="queue-clear-btn" class="button button-quiet" data-i18n="queue_clear">Clear</button></div></div></section>
 </section>
 <section id="view-quests" class="view-panel">
- <div class="page-heading"><div class="page-title"><h1 data-i18n="tab_quests">Quests</h1><span id="quests-count" class="count-badge"></span></div><div class="heading-actions"><button id="btn-open-quest-duration" type="button" class="button button-secondary quest-duration-btn" data-i18n-title="quest_duration_title" title="Quest Duration"><span id="quest-duration-icon-slot"></span><span id="quest-duration-label">15:00</span></button><button id="btn-resume-quest-queue" class="button button-secondary" hidden><span id="resume-queue-icon"></span><span data-i18n="resume_quest_queue">Resume Queue</span></button><button id="btn-refresh-quests" class="button button-primary"><span id="refresh-quests-icon-slot" class="refresh-icon"></span><span data-i18n="refresh_quests">Refresh quests</span></button></div></div>
+ <div class="page-heading"><div class="page-title"><h1 data-i18n="tab_quests">Quests</h1><span id="quests-count" class="count-badge"></span></div><div class="heading-actions"><button id="btn-resume-quest-queue" class="button button-secondary" hidden><span id="resume-queue-icon"></span><span data-i18n="resume_quest_queue">Resume Queue</span></button><button id="btn-refresh-quests" class="button button-primary"><span id="refresh-quests-icon-slot" class="refresh-icon"></span><span data-i18n="refresh_quests">Refresh quests</span></button></div></div>
  <div class="quests-toolbar">
   <div class="search-field quests-search-field">
    <span id="quests-search-icon-slot"></span>
    <input id="quest-search-input" type="search" autocomplete="off" spellcheck="false" data-i18n-placeholder="search_quests" data-i18n-aria-label="search_quests">
    <button id="quest-search-clear" type="button" class="search-clear-btn" hidden data-i18n-aria-label="clear_search">×</button>
   </div>
-  <div class="quests-filter-pills" role="tablist" data-i18n-aria-label="tab_quests">
-   <button type="button" class="filter-pill active" data-quest-filter="all" data-i18n="filter_all">All</button>
-   <button type="button" class="filter-pill" data-quest-filter="active" data-i18n="filter_active">Available</button>
-   <button type="button" class="filter-pill" data-quest-filter="completed" data-i18n="filter_completed">Completed</button>
+  <div class="quests-toolbar-actions">
+   <button id="btn-open-quest-duration" type="button" class="quest-duration-pill" data-i18n-title="quest_duration_title" title="Quest Duration"><span id="quest-duration-icon-slot"></span><span id="quest-duration-label">15:00</span></button>
+   <div class="quests-filter-pills" role="tablist" data-i18n-aria-label="tab_quests">
+    <button type="button" class="filter-pill active" data-quest-filter="all" data-i18n="filter_all">All</button>
+    <button type="button" class="filter-pill" data-quest-filter="active" data-i18n="filter_active">Available</button>
+    <button type="button" class="filter-pill" data-quest-filter="completed" data-i18n="filter_completed">Completed</button>
+   </div>
   </div>
  </div>
  <p class="quests-reminder muted" data-i18n="quests_desktop_note">Accept the quest in Discord and choose Desktop, then start it here.</p>
