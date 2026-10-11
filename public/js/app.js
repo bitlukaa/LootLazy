@@ -116,7 +116,7 @@ function renderQuests(){
  filtered.sort((a,b)=>Number(!!a.localFinished)-Number(!!b.localFinished));
  for(const quest of filtered){
   const card=document.createElement('article');card.className='quest-card';card.dataset.questId=quest.id;
-  card.innerHTML='<div class="quest-cover">'+artwork({image:quest.image})+'</div><div class="quest-body"><div class="quest-meta"><div class="quest-labels"><span class="quest-kind">'+escapeHtml(t('kind_play'))+'</span><span class="quest-new" hidden></span></div><span>'+escapeHtml(t('expires',{date:dateText(quest.expiresAt)}))+'</span></div><h2>'+escapeHtml(quest.questName||quest.gameName)+'</h2><p>'+escapeHtml(t('task_play',{time:humanTime(state.questDurationSeconds||900)}))+'</p><p class="quest-run-status" role="status"></p><div class="progress-track quest-progress" hidden><div></div></div><button class="button button-primary quest-play"></button></div>';
+  card.innerHTML='<div class="quest-cover">'+artwork({image:quest.image})+'</div><div class="quest-body"><div class="quest-meta"><div class="quest-labels"><span class="quest-kind">'+escapeHtml(t('kind_play'))+'</span><span class="quest-new" hidden></span></div><span>'+escapeHtml(t('expires',{date:dateText(quest.expiresAt)}))+'</span></div><h2>'+escapeHtml(quest.questName||quest.gameName)+'</h2><p>'+escapeHtml(t('task_play',{time:humanTime(state.questDurationSeconds||900)}))+'</p><div class="progress-track quest-progress" hidden><div></div></div><button class="button button-primary quest-play"></button><p class="quest-error-text error-message" role="alert" hidden></p></div>';
   card.querySelector('button').onclick=()=>playQuest(quest);const cancel=document.createElement('button');cancel.className='button button-quiet quest-cancel';cancel.textContent=t('quest_cancel');cancel.onclick=()=>quest.localFinished?reopenQuest(quest):cancelQuest(quest);const pause=document.createElement('button');pause.className='button button-secondary quest-pause';pause.textContent=t('quest_pause');pause.hidden=true;pause.onclick=()=>pauseQuest(quest);const actions=document.createElement('div');actions.className='quest-actions';actions.append(pause,cancel);card.querySelector('.quest-body').appendChild(actions);container.appendChild(card);
  }updateQuestSessions();
 }
@@ -126,14 +126,27 @@ function updateQuestSessions(){
  $('quest-queue-recovery').hidden=!saved.length||queue.active;$('quest-save-warning').hidden=!state.storageWarning;$('quest-save-warning').textContent=state.storageWarning?errorText(state.storageWarning):'';
  for(const quest of state.quests){const card=document.querySelector('[data-quest-id="'+quest.id+'"]');if(!card)continue;
   const badge=card.querySelector('.quest-new');badge.textContent=t('quest_new');badge.hidden=!questIds(quest).some(id=>newQuestIds.has(id))||!!quest.localFinished;
-  const item=queue.items?.findLast(item=>questMatches(quest,item.questId)),waiting=item&&['queued','waiting','starting'].includes(item.state)&&queue.active,active=questMatches(quest,state.session?.questId),paused=!active&&!quest.localFinished&&(quest.resumeElapsedSeconds>0||item?.state==='paused'),button=card.querySelector('.quest-play'),status=card.querySelector('.quest-run-status'),progress=card.querySelector('.quest-progress');
+  const item=queue.items?.findLast(item=>questMatches(quest,item.questId)),waiting=item&&['queued','waiting','starting'].includes(item.state)&&queue.active,active=questMatches(quest,state.session?.questId),paused=!active&&!quest.localFinished&&(quest.resumeElapsedSeconds>0||item?.state==='paused'),button=card.querySelector('.quest-play'),errText=card.querySelector('.quest-error-text'),progress=card.querySelector('.quest-progress');
   button.disabled=questActionBusy||active||!!waiting||!!state.queue?.active||(!active&&(!quest.game?.id||quest.localFinished));
-  button.textContent=active?(state.session.timerWaiting?t('quest_wait_discord'):state.session.timerWarmup?t('quest_preparing'):(state.session.remainingFormatted||state.session.elapsedFormatted)):t(waiting?'quest_queued':quest.localFinished?'quest_closed':paused?'quest_resume':'quest_play');button.classList.remove('button-danger');button.classList.toggle('quest-timer',active);button.setAttribute('aria-label',active&&!state.session.timerWaiting&&!state.session.timerWarmup?t('remaining')+' '+button.textContent:button.textContent);
+  let btnText=t('quest_play');
+  if(active){
+   if(state.session.timerWaiting)btnText=t('quest_wait_discord');
+   else if(state.session.timerWarmup)btnText=t('quest_preparing');
+   else btnText=state.session.remainingFormatted||state.session.elapsedFormatted||clock(state.questDurationSeconds||900);
+  }else if(waiting){
+   if(item.state==='waiting')btnText=t('quest_gap',{seconds:number(queue.waitSecondsRemaining||0)});
+   else if(item.state==='starting')btnText=t('quest_preparing');
+   else btnText=t('quest_waiting',{position:number(queue.items.indexOf(item)-queue.index)});
+  }else if(quest.localFinished){
+   btnText=t('quest_closed');
+  }else if(paused){
+   btnText=t('quest_resume')+' · '+clock((state.questDurationSeconds||900)-(quest.resumeElapsedSeconds||0));
+  }
+  button.textContent=btnText;button.classList.remove('button-danger');button.classList.toggle('quest-timer',active||(waiting&&item?.state==='waiting')||paused);button.setAttribute('aria-label',active&&!state.session.timerWaiting&&!state.session.timerWarmup?t('remaining')+' '+btnText:btnText);
   const cancel=card.querySelector('.quest-cancel');cancel.hidden=false;cancel.disabled=questActionBusy;cancel.textContent=t(quest.localFinished?'quest_reopen':active?'quest_stop':'quest_cancel');cancel.classList.toggle('quest-reopen',!!quest.localFinished);cancel.classList.toggle('button-danger',active);
   const pause=card.querySelector('.quest-pause');pause.textContent=t('quest_pause');pause.hidden=!active;pause.disabled=questActionBusy;
-  let message=waiting?t(item.state==='waiting'?'quest_gap':'quest_waiting',{seconds:number(queue.waitSecondsRemaining||0),position:number(queue.items.indexOf(item)-queue.index)}):paused?t('quest_paused_remaining',{time:clock((state.questDurationSeconds||900)-(quest.resumeElapsedSeconds||0))}):item&&!queue.active&&item.state==='queued'?t('quest_saved_in_queue'):'';
-  const problem=active?activityProblem(state.session):item?.state==='error'?errorText(queue.error,'start_error'):'';if(problem)message=problem;
-  status.textContent=message;status.hidden=!message;status.classList.toggle('error-message',!!problem);card.classList.toggle('quest-closed',!!quest.localFinished);
+  const problem=active?activityProblem(state.session):item?.state==='error'?errorText(queue.error,'start_error'):'';
+  if(errText){errText.textContent=problem||'';errText.hidden=!problem;}card.classList.toggle('quest-closed',!!quest.localFinished);
   progress.hidden=!active;progress.firstElementChild.style.width=(active?state.session.progressPercent:0)+'%';card.classList.toggle('quest-running',active);
  }
  const container=$('quests-container'),rank=q=>questMatches(q,state.session?.questId)?0:q.localFinished?2:1;
