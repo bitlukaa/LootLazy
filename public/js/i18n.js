@@ -237,7 +237,19 @@ const I18N = {
     "error_save_failed": "تعذر حفظ التقدم. تحقق من صلاحية الكتابة في مجلد Questro.",
     "error_network": "تعذر الاتصال. بياناتك المحفوظة ما زالت متاحة.",
     "error_discord_connection": "Discord غير جاهز. افتح تطبيقه على الكمبيوتر وانتظر اكتمال تشغيله.",
-    "error_discord_rejected": "Discord رفض النشاط. جرّب اسم ملف تشغيل آخر."
+    "error_discord_rejected": "Discord رفض النشاط. جرّب اسم ملف تشغيل آخر.",
+    "search_quests": "البحث في المهام...",
+    "filter_all": "الكل",
+    "filter_active": "المتاحة",
+    "filter_completed": "المكتملة",
+    "no_matching_quests": "لا توجد مهام مطابقة لبحثك.",
+    "clear_search": "مسح البحث",
+    "total_playtime": "إجمالي وقت اللعب",
+    "total_playtime_desc": "إجمالي الوقت المقضي في تشغيل الألعاب والمهام",
+    "sound_alerts_title": "التنبيهات الصوتية",
+    "sound_alerts_desc": "تشغيل صوت خفيف عند اكتمال الجلسة أو المهمة",
+    "quest_duration_title": "مدة تشغيل المهام",
+    "quest_duration_desc": "تحديد وقت تشغيل مهام ديسكورد (بالدقائق والثواني الإضافية)"
   },
   "en": {
     "language": "Language",
@@ -476,7 +488,19 @@ const I18N = {
     "error_save_failed": "Progress could not be saved. Check write access to Questro’s folder.",
     "error_network": "Could not connect. Your saved data is still available.",
     "error_discord_connection": "Discord is not ready. Open its desktop app and wait for it to finish loading.",
-    "error_discord_rejected": "Discord rejected the activity. Try another executable name."
+    "error_discord_rejected": "Discord rejected the activity. Try another executable name.",
+    "search_quests": "Search quests...",
+    "filter_all": "All",
+    "filter_active": "Available",
+    "filter_completed": "Completed",
+    "no_matching_quests": "No quests match your search.",
+    "clear_search": "Clear search",
+    "total_playtime": "Total Playtime",
+    "total_playtime_desc": "Total time spent across all games and quests",
+    "sound_alerts_title": "Sound Alerts",
+    "sound_alerts_desc": "Play a gentle chime when a quest or game timer finishes",
+    "quest_duration_title": "Quest Duration",
+    "quest_duration_desc": "Set the runtime target for Discord quests (minutes & extra seconds)"
   }
 };
 let currentLang = (localStorage.getItem('questro_lang') || localStorage.getItem('questra_lang')) === 'ar' ? 'ar' : 'en';

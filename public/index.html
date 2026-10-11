@@ -18,7 +18,7 @@
  <button class="nav-tab active" data-tab="simulator"><span data-i18n="tab_simulator">Game Time</span></button>
  <button class="nav-tab" data-tab="quests"><span data-i18n="tab_quests">Quests</span></button>
  <button class="nav-tab" data-tab="settings"><span data-i18n="tab_settings">Settings</span></button>
-</nav><div id="discord-indicator" class="discord-indicator disconnected" data-i18n-title="discord_status_title"><span class="discord-dot"></span><span id="discord-status-text" data-i18n="discord_disconnected">Discord Disconnected</span></div></header>
+</nav><div class="navbar-status-wrap"><div id="playtime-badge" class="playtime-badge" data-i18n-title="total_playtime_desc"><span id="playtime-icon-slot"></span><span id="playtime-text">0h 0m</span></div><div id="discord-indicator" class="discord-indicator disconnected" data-i18n-title="discord_status_title"><span class="discord-dot"></span><span id="discord-status-text" data-i18n="discord_disconnected">Discord Disconnected</span></div></div></header>
 <div class="app-scroll"><main class="app-content">
 <section id="view-simulator" class="view-panel active">
  <div class="page-heading"><div><h1 data-i18n="tab_simulator">Game Time</h1></div><div class="sim-modes" role="group" data-i18n-aria-label="simulation_mode"><button class="sim-mode active" data-sim-mode="library"><span id="mode-library-icon"></span><span data-i18n="select_from_list">Browse games</span></button><button class="sim-mode" data-sim-mode="custom"><span id="mode-custom-icon"></span><span data-i18n="custom_process">Manual session</span></button><button class="sim-mode" data-sim-mode="selected"><span id="mode-selected-icon"></span><span data-i18n="selected_games">Queue</span><span id="selected-games-count" class="count-badge">0</span></button></div></div>
@@ -49,6 +49,18 @@
 </section>
 <section id="view-quests" class="view-panel">
  <div class="page-heading"><div class="page-title"><h1 data-i18n="tab_quests">Quests</h1><span id="quests-count" class="count-badge"></span></div><div class="heading-actions"><button id="btn-resume-quest-queue" class="button button-secondary" hidden><span id="resume-queue-icon"></span><span data-i18n="resume_quest_queue">Resume Queue</span></button><button id="btn-refresh-quests" class="button button-primary"><span id="refresh-quests-icon-slot" class="refresh-icon"></span><span data-i18n="refresh_quests">Refresh quests</span></button></div></div>
+ <div class="quests-toolbar">
+  <div class="search-field quests-search-field">
+   <span id="quests-search-icon-slot"></span>
+   <input id="quest-search-input" type="search" autocomplete="off" spellcheck="false" data-i18n-placeholder="search_quests" data-i18n-aria-label="search_quests">
+   <button id="quest-search-clear" type="button" class="search-clear-btn" hidden data-i18n-aria-label="clear_search">×</button>
+  </div>
+  <div class="quests-filter-pills" role="tablist" data-i18n-aria-label="tab_quests">
+   <button type="button" class="filter-pill active" data-quest-filter="all" data-i18n="filter_all">All</button>
+   <button type="button" class="filter-pill" data-quest-filter="active" data-i18n="filter_active">Available</button>
+   <button type="button" class="filter-pill" data-quest-filter="completed" data-i18n="filter_completed">Completed</button>
+  </div>
+ </div>
  <p class="quests-reminder muted" data-i18n="quests_desktop_note">Accept the quest in Discord and choose Desktop, then start it here.</p>
  <p id="quest-queue-recovery" class="muted recovery-note" hidden data-i18n="quest_queue_saved">Your selected quests are saved. Resume when you’re ready.</p>
  <div id="quest-save-warning" class="error-banner" role="alert" hidden></div>
@@ -65,6 +77,9 @@
   <div class="settings-row"><div><h2 data-i18n="minimize_to_tray_title">Minimize to Tray on Close</h2><p class="muted" data-i18n="minimize_to_tray_desc">Keep Questro running in the system tray when closing the window</p></div><button type="button" class="toggle-switch" role="switch" aria-checked="false" data-setting-toggle="minimize_to_tray" data-i18n-aria-label="minimize_to_tray_title"><span class="toggle-thumb"></span></button></div>
   <div class="settings-row"><div><h2 data-i18n="discord_activity_title">Discord Activity</h2><p class="muted" data-i18n="discord_activity_desc">Show game status and timer in your Discord profile</p></div><button type="button" class="toggle-switch" role="switch" aria-checked="false" data-setting-toggle="auto_discord_rpc" data-i18n-aria-label="discord_activity_title"><span class="toggle-thumb"></span></button></div>
   <div class="settings-row"><div><h2 data-i18n="desktop_notifications_title">Desktop Notifications</h2><p class="muted" data-i18n="desktop_notifications_desc">Notify when game timer or quest finishes</p></div><button type="button" class="toggle-switch" role="switch" aria-checked="false" data-setting-toggle="desktop_notifications" data-i18n-aria-label="desktop_notifications_title"><span class="toggle-thumb"></span></button></div>
+   <div class="settings-row"><div><h2 data-i18n="sound_alerts_title">Sound Alerts</h2><p class="muted" data-i18n="sound_alerts_desc">Play a gentle chime when a quest or game timer finishes</p></div><button type="button" class="toggle-switch" role="switch" aria-checked="true" data-setting-toggle="sound_alerts" data-i18n-aria-label="sound_alerts_title"><span class="toggle-thumb"></span></button></div>
+   <div class="settings-row"><div><h2 data-i18n="quest_duration_title">Quest Duration</h2><p class="muted" data-i18n="quest_duration_desc">Set runtime target for Discord quests (minutes & extra seconds)</p></div><div class="quest-duration-inputs"><label class="duration-input-wrap"><input id="setting-quest-minutes" type="number" min="1" max="60" value="15" inputmode="numeric"><span data-i18n="minutes_unit">m</span></label><span class="time-colon">:</span><label class="duration-input-wrap"><input id="setting-quest-seconds" type="number" min="0" max="59" value="5" inputmode="numeric"><span data-i18n="seconds_unit">s</span></label><button id="btn-save-quest-duration" class="button button-secondary" data-i18n="save_apply">Save</button></div></div>
+   <div class="settings-row"><div><h2 data-i18n="total_playtime">Total Playtime</h2><p class="muted" data-i18n="total_playtime_desc">Total time spent across all games and quests</p></div><div id="settings-playtime-value" class="settings-stat-badge">0h 0m</div></div>
 
  </section>
  <section class="panel updates-settings">
