@@ -83,7 +83,11 @@ impl Backend {
         fs::create_dir_all(root.join("data")).map_err(|e| e.to_string())?;
         let read =
             |name: &str, fallback: Value| storage::read(&root.join("data").join(name), fallback);
-        let mut overrides = read("questra_overrides.json", storage::defaults());
+        let mut overrides = if root.join("data/questro_overrides.json").exists() {
+            read("questro_overrides.json", storage::defaults())
+        } else {
+            read("questra_overrides.json", storage::defaults())
+        };
         if !overrides.is_object() {
             overrides = storage::defaults();
         }
@@ -154,7 +158,11 @@ impl Backend {
         let mut curated: Value =
             serde_json::from_str(include_str!("../../public/executable-candidates.json"))
                 .unwrap_or(json!({"games":{}}));
-        let local_curated = read("questra_catalog.json", json!({}));
+        let local_curated = if root.join("data/questro_catalog.json").exists() {
+            read("questro_catalog.json", json!({}))
+        } else {
+            read("questra_catalog.json", json!({}))
+        };
         if let Some(games) = local_curated["games"].as_object() {
             for (id, entry) in games {
                 curated["games"][id] = entry.clone();
@@ -1215,7 +1223,7 @@ impl Backend {
                     }
                     proposed["settings"]["steam_paths"] = paths.clone();
                 }
-                self.save("questra_overrides.json", &proposed)?;
+                self.save("questro_overrides.json", &proposed)?;
                 self.overrides = proposed;
                 self.executable_resolver.clear_local();
                 let saved_pref = self.overrides["settings"]["run_on_startup"].as_bool().unwrap_or(false);
@@ -1238,7 +1246,7 @@ impl Backend {
                     let exe = storage::executable(&text(&body, "executableName"))?;
                     proposed["custom_executables"][&app] = json!(exe);
                 }
-                self.save("questra_overrides.json", &proposed)?;
+                self.save("questro_overrides.json", &proposed)?;
                 self.overrides = proposed;
                 let game = self
                     .game(&text(&body, "appId"))
@@ -2039,7 +2047,7 @@ mod tests {
     fn settings_and_names_roll_back_when_saving_fails() {
         let mut f = Fixture::new();
         let before = f.0.overrides.clone();
-        fs::create_dir(f.0.root.join("data/questra_overrides.json")).unwrap();
+        fs::create_dir(f.0.root.join("data/questro_overrides.json")).unwrap();
         assert!(f
             .0
             .route(

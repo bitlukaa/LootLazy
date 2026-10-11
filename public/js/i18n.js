@@ -473,7 +473,7 @@ const I18N = {
     "error_discord_rejected": "Discord rejected the activity. Try another executable name."
   }
 };
-let currentLang = localStorage.getItem('questra_lang') === 'ar' ? 'ar' : 'en';
+let currentLang = (localStorage.getItem('questro_lang') || localStorage.getItem('questra_lang')) === 'ar' ? 'ar' : 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 
 function number(value){return Number(value).toLocaleString(currentLang==='ar'?'ar-EG':'en-US');}
