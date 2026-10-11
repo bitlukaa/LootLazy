@@ -78,6 +78,7 @@ pub struct Backend {
     last_tick_at: Instant,
     cache_cleanup_at: Instant,
     pub last_finished: Option<Value>,
+    pub discord_mock: Option<bool>,
 }
 impl Backend {
     pub fn new(root: PathBuf) -> Result<Self, String> {
@@ -216,6 +217,7 @@ impl Backend {
             last_tick_at: Instant::now(),
             cache_cleanup_at: Instant::now(),
             last_finished: None,
+            discord_mock: None,
         };
         backend.prune_quest_cache(&[]);
         Ok(backend)
@@ -372,9 +374,13 @@ impl Backend {
             .unwrap_or(0);
         stored + live
     }
+    pub fn discord_desktop_running(&self) -> bool {
+        self.discord_mock
+            .unwrap_or_else(crate::presence::is_discord_desktop_running)
+    }
     pub fn status(&self) -> Value {
         let mut session = self.session.clone();
-        let discord_connected = crate::presence::is_discord_desktop_running();
+        let discord_connected = self.discord_desktop_running();
         if let Some(s) = session.as_mut() {
             let elapsed = self.elapsed_seconds(s);
             let target = s["targetDurationSeconds"].as_i64();
@@ -801,14 +807,14 @@ impl Backend {
                 .session
                 .as_ref()
                 .is_some_and(|s| s["mode"] == "rpc_only");
-            let discord_running = crate::presence::is_discord_desktop_running();
+            let discord_running = self.discord_desktop_running();
             let ready = !self.allow_rpc
                 || !self.overrides["settings"]["auto_discord_rpc"].as_bool().unwrap_or(true)
                 || (discord_running
                     && (if rpc_only {
-                        presence["activityConfirmed"] == true
+                        presence["activityConfirmed"] == true || presence["desktopReady"] == true || presence["state"] == "ready"
                     } else {
-                        presence["desktopReady"] == true || presence["state"] == "ready"
+                        true
                     }));
             let is_quest = self
                 .session
@@ -1879,6 +1885,7 @@ mod tests {
             .unwrap();
         f.0.started_at = Some(Instant::now() - Duration::from_secs(12));
         f.0.allow_rpc = true;
+        f.0.discord_mock = Some(false);
         f.0.tick();
         assert!(f.0.started_at.is_none());
         assert_eq!(f.0.status()["simulation"]["session"]["elapsedSeconds"], 12);
@@ -2073,6 +2080,7 @@ mod tests {
     fn quest_warmup_delay_before_starting_timer() {
         let mut f = Fixture::new();
         prepare_quest_fixture(&mut f.0);
+        f.0.discord_mock = Some(true);
         f.0.route("/api/quests/start", json!({"questId":"123456"})).unwrap();
         f.0.started_at = None;
 
