@@ -38,8 +38,10 @@ Install Node.js 22 or later and run `npm ci --ignore-scripts`, `npx playwright i
 
 ## Release signing
 
-Initialize the local key once with `tools/init-update-key.ps1`. It is protected by Windows DPAPI for the current user under LOCALAPPDATA/QuestroSigning, outside this repository. Only `src-tauri/update-public-key.hex` belongs in source control. Preserve the protected key and the Windows profile needed to recover it; never rotate the embedded public key casually or upload the private key.
+Initialize the local key once with `tools/init-update-key.ps1`. It is protected by Windows DPAPI for the current user under LOCALAPPDATA/LootLazySigning, outside this repository. Only `src-tauri/update-public-key.hex` belongs in source control. Preserve the protected key and the Windows profile needed to recover it; never rotate the embedded public key casually or upload the private key.
 
 After the final build, run `tools/sign-release.ps1 -BinaryPath releases/LootLazy-<version>/LootLazy.exe`. Publish the resulting file with the exact asset name `LootLazy.exe.sig` alongside `LootLazy.exe` and the portable ZIP. The signature binds the version, SHA256 and file size. CI artifacts are development builds and are not automatically signed or published.
 
 Older clients do not enforce the new signature policy until they install version 3.6.8 or later. Windows Authenticode signing of LootLazy itself is separate and still requires an appropriate publisher certificate. Steam SDK verification uses the installed SDK publisher signature and does not sign or modify the game.
+
+Legacy protected keys are copied from QuestroSigning on first use; the original remains a backup. Never generate a replacement merely because the application was renamed.

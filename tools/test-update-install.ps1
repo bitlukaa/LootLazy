@@ -1,12 +1,12 @@
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path -Parent $PSScriptRoot
 $testBase=[IO.Path]::GetFullPath((Join-Path $projectRoot 'data/.test-temp'))
-$testRoot=[IO.Path]::GetFullPath((Join-Path $testBase ('questro-update-'+[guid]::NewGuid().ToString())))
+$testRoot=[IO.Path]::GetFullPath((Join-Path $testBase ('lootlazy-update-'+[guid]::NewGuid().ToString())))
 if(!$testRoot.StartsWith($testBase+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Invalid test root'}
 $updates=Join-Path $testRoot 'data/updates'
 New-Item -ItemType Directory -Force -Path $updates | Out-Null
-$target=Join-Path $testRoot 'Questro.exe'
-$source=Join-Path $updates 'Questro-update.exe'
+$target=Join-Path $testRoot 'LootLazy.exe'
+$source=Join-Path $updates 'LootLazy-update.exe'
 $manifestPath=Join-Path $updates 'install.json'
 $settings=Join-Path $testRoot 'data/settings.json'
 Set-Content -LiteralPath $target -Value 'original executable fixture'

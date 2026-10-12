@@ -60,7 +60,7 @@ Choose your version from [GitHub Releases](https://github.com/bitlukaa/LootLazy/
 
 Windows 10/11 (64-bit) and Microsoft Edge WebView2 are required. Setup can download WebView2 if needed.
 
-For the first release after the rename, download LootLazy manually. Older Questro clients cannot follow the renamed update endpoint. Existing local settings and signing verification remain compatible.
+Download 3.6.10 manually if upgrading from Questro or LootLazy 3.6.9: earlier update helpers do not handle the renamed executable correctly. Keep your existing portable folder to retain its data. Version 3.6.10 fixes the installer helper and preserves legacy settings and signing verification.
 
 ## Getting started
 

@@ -784,7 +784,11 @@ Object.assign(I18N.ar,{
  cards_session_hint:"متابعة البطاقات والإيقاف التلقائي غير متاحين في هذه النسخة. لا نطلب تسجيل دخول Steam عبر الويب أو ملفات جلسة.",
  connection_cards_desc:"الجلسات اليدوية لا تحتاج جلسة Steam عبر الويب. متابعة البطاقات المتبقية لم يتم ربطها بعد."
 });
-let currentLang = (localStorage.getItem('lootlazy_lang') || localStorage.getItem('questro_lang') || localStorage.getItem('questra_lang')) === 'ar' ? 'ar' : 'en';
+// Copy legacy preferences without deleting the original keys.
+for(const suffix of ['lang','theme','variety_counts','steam_durations']){
+ try{const key='lootlazy_'+suffix;if(localStorage.getItem(key)===null){const old=localStorage.getItem('questro_'+suffix)||localStorage.getItem('questra_'+suffix);if(old!==null)localStorage.setItem(key,old);}}catch{}
+}
+let currentLang = (localStorage.getItem('lootlazy_lang') || localStorage.getItem('lootlazy_lang') || localStorage.getItem('questra_lang')) === 'ar' ? 'ar' : 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 
 function number(value){return Number(value).toLocaleString(currentLang==='ar'?'ar-EG':'en-US');}

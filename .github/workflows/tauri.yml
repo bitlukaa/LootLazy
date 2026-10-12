@@ -33,6 +33,8 @@ jobs:
         run: ./tools/test-tauri.ps1
       - name: Update replacement regressions
         run: ./tools/test-update-install.ps1
+      - name: Protected signing key migration fixtures
+        run: ./tools/test-signing-migration.ps1
       - name: Build portable application
         run: ./tools/build-tauri.ps1
       - name: Build Setup installer
@@ -42,7 +44,7 @@ jobs:
           name: LootLazy-Windows
           path: |
             releases/*-Setup.exe
-            dist/Questro-Tauri/LootLazy.exe
-            dist/Questro-Tauri/README.md
-            dist/Questro-Tauri/LICENSE
-            dist/Questro-Tauri/THIRD-PARTY-NOTICES.txt
+            dist/LootLazy-Tauri/LootLazy.exe
+            dist/LootLazy-Tauri/README.md
+            dist/LootLazy-Tauri/LICENSE
+            dist/LootLazy-Tauri/THIRD-PARTY-NOTICES.txt

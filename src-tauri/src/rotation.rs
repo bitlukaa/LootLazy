@@ -853,7 +853,7 @@ mod tests {
     use super::*;
     fn path() -> PathBuf {
         std::env::temp_dir().join(format!(
-            "questro-rotation-{}-{}.json",
+            "lootlazy-rotation-{}-{}.json",
             std::process::id(),
             rand::random::<u64>()
         ))
@@ -918,7 +918,7 @@ mod tests {
     #[test]
     fn parallel_steam_sessions_have_independent_timers() {
         let root =
-            std::env::temp_dir().join(format!("questro-steam-test-{}", rand::random::<u64>()));
+            std::env::temp_dir().join(format!("lootlazy-steam-test-{}", rand::random::<u64>()));
         fs::create_dir_all(root.join("data")).unwrap();
         let mut steam = SteamIdle::new(&root);
         steam.items = vec![
@@ -955,7 +955,7 @@ mod tests {
     #[test]
     fn steam_clock_waits_for_worker_readiness() {
         let root =
-            std::env::temp_dir().join(format!("questro-steam-wait-{}", rand::random::<u64>()));
+            std::env::temp_dir().join(format!("lootlazy-steam-wait-{}", rand::random::<u64>()));
         fs::create_dir_all(root.join("data")).unwrap();
         let ready = root.join("status.txt");
         fs::write(&ready, "waiting").unwrap();
@@ -988,7 +988,7 @@ mod tests {
     #[test]
     fn paired_steam_timer_waits_for_its_game_time_owner() {
         let root =
-            std::env::temp_dir().join(format!("questro-steam-pair-{}", rand::random::<u64>()));
+            std::env::temp_dir().join(format!("lootlazy-steam-pair-{}", rand::random::<u64>()));
         fs::create_dir_all(root.join("data")).unwrap();
         let mut steam = SteamIdle::new(&root);
         steam.items = vec![
@@ -1014,7 +1014,7 @@ mod tests {
     #[test]
     fn steam_total_survives_removal_and_restart() {
         let root =
-            std::env::temp_dir().join(format!("questro-steam-total-{}", rand::random::<u64>()));
+            std::env::temp_dir().join(format!("lootlazy-steam-total-{}", rand::random::<u64>()));
         fs::create_dir_all(root.join("data")).unwrap();
         let mut steam = SteamIdle::new(&root);
         steam.items = vec![

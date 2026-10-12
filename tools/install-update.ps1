@@ -5,7 +5,7 @@ $target=[IO.Path]::GetFullPath([string]$manifest.target)
 $source=[IO.Path]::GetFullPath([string]$manifest.source)
 $appFolder=Split-Path -Parent $target
 $updateFolder=[IO.Path]::GetFullPath((Join-Path $appFolder 'data/updates'))
-if((Split-Path -Leaf $target) -ine 'Questro.exe' -or !(Split-Path -Parent $source).Equals($updateFolder,[StringComparison]::OrdinalIgnoreCase)){throw 'Invalid update paths'}
+if((Split-Path -Leaf $target) -ine 'LootLazy.exe' -or !(Split-Path -Parent $source).Equals($updateFolder,[StringComparison]::OrdinalIgnoreCase)){throw 'Invalid update paths'}
 $statusPath=Join-Path $updateFolder 'status.json'
 $backup=Join-Path $updateFolder 'previous.exe'
 $backupCreated=$false

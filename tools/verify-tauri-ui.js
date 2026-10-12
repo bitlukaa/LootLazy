@@ -1,15 +1,15 @@
-// Questro native interface and recovery regression checks.
+// LootLazy native interface and recovery regression checks.
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
 const {spawn,execFileSync}=require('child_process');
-const {chromium}=require(process.env.QUESTRO_PLAYWRIGHT||process.env.QUESTRA_PLAYWRIGHT||'playwright');
-const root=path.resolve(__dirname,'..'),exe=path.join(root,'dist/Questro-Tauri/Questro.exe');
+const {chromium}=require(process.env.LOOTLAZY_PLAYWRIGHT||process.env.QUESTRA_PLAYWRIGHT||'playwright');
+const root=path.resolve(__dirname,'..'),exe=path.join(root,'dist/LootLazy-Tauri/LootLazy.exe');
 fs.mkdirSync(path.join(root,'data/.test-temp'),{recursive:true});fs.mkdirSync(path.join(root,'.internal'),{recursive:true});
-const fixture=fs.mkdtempSync(path.join(root,'data/.test-temp/questro-tauri-ui-'));
+const fixture=fs.mkdtempSync(path.join(root,'data/.test-temp/lootlazy-tauri-ui-'));
 fs.mkdirSync(path.join(fixture,'data'),{recursive:true});
 const save=(name,value)=>fs.writeFileSync(path.join(fixture,'data',name),JSON.stringify(value));
 const games=Array.from({length:60},(_,i)=>({id:String(800000000+i),name:'Fixture game '+i,executables:[{os:'win32',name:'fixture-'+i+'.exe'},{os:'win32',name:'alternate-'+i+'.exe'}]}));
 games.push({id:'988888888888888888',name:'Automatic fixture',executables:[{os:'win32',name:'automatic-fixture.exe'}]});
-for(const id of ['123456789','234567890'])games.push({id,name:'Quest game '+id,executables:[{os:'win32',name:'questro-ui-'+id+'.exe'}]});
+for(const id of ['123456789','234567890'])games.push({id,name:'Quest game '+id,executables:[{os:'win32',name:'lootlazy-ui-'+id+'.exe'}]});
 save('detectable_cache.json',games);save('catalog_meta.json',{lastUpdated:new Date().toISOString()});
 const expiresAt=new Date(Date.now()+86400000).toISOString();
 save('active_quests.json',{source:'fixture',last_synced:new Date().toISOString(),quests:['123456789','234567890'].map(id=>({id,appId:id,gameName:'Quest game '+id,questName:'Quest '+id,kind:'play',durationSeconds:900,durationMinutes:15,startsAt:new Date(Date.now()-3600000).toISOString(),expiresAt,variantIds:[id],rewards:[]}))});
@@ -17,10 +17,10 @@ save('questra_overrides.json',{settings:{scan_local_steam:false,desktop_notifica
 let child,browser,page;const checks=[],errors=[],runtimeWarnings=[];
 async function until(fn,timeout=15000){const end=Date.now()+timeout;while(Date.now()<end){try{const value=await fn();if(value)return value;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error('Timed out waiting for native interface');}
 async function open(){
- child=spawn(exe,['--verify-ui'],{cwd:path.dirname(exe),env:{...process.env,QUESTRO_DATA_ROOT:fixture},stdio:'pipe',windowsHide:true});child.stderr.on('data',b=>{const text=b.toString();if(text.includes('Failed to unregister class Chrome_WidgetWin_0. Error = 1412'))runtimeWarnings.push(text.trim());else errors.push(text);});
+ child=spawn(exe,['--verify-ui'],{cwd:path.dirname(exe),env:{...process.env,LOOTLAZY_DATA_ROOT:fixture},stdio:'pipe',windowsHide:true});child.stderr.on('data',b=>{const text=b.toString();if(text.includes('Failed to unregister class Chrome_WidgetWin_0. Error = 1412'))runtimeWarnings.push(text.trim());else errors.push(text);});
  const endpoint=await until(async()=>{if(child.exitCode!==null)throw Error('Application exited');const response=await fetch('http://127.0.0.1:9387/json/version');return response.ok&&(await response.json()).webSocketDebuggerUrl;});
  browser=await chromium.connectOverCDP(endpoint);page=await until(async()=>browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('tauri.localhost')));
- page.on('pageerror',error=>errors.push(error.stack||error.message));await page.waitForFunction(()=>typeof state!=='undefined'&&state.games.length&&state.stats&&state.questQueue,{},{timeout:10000}).catch(async error=>{console.error('Startup details:',await page.evaluate(()=>({stateDefined:typeof state!=='undefined',games:typeof state!=='undefined'?state.games.length:null,stats:typeof state!=='undefined'?state.stats:null,queue:typeof state!=='undefined'?state.questQueue:null,bridge:typeof window.questroRequest,diagnostic:window.questroDiagnostic,missing:['btn-resume-quest-queue','quest-save-warning','quest-queue-recovery','btn-refresh-quests'].filter(id=>!document.getElementById(id)),text:document.body.innerText.slice(0,1000)})));console.error('Page errors:',errors);console.error('Language render:',await page.evaluate(()=>{try{setLanguage('en');return 'OK';}catch(e){return e.stack;}}));const cdp=await page.context().newCDPSession(page);cdp.on('Console.messageAdded',entry=>console.error('Console:',entry.message.text));await cdp.send('Console.enable');console.error('Bootstrap:',await page.evaluate(()=>{const failures=[];const handler=event=>failures.push(event.error?.stack||event.message);window.addEventListener('error',handler);document.dispatchEvent(new Event('DOMContentLoaded'));window.removeEventListener('error',handler);return failures;}));await page.screenshot({path:path.join(root,'.internal/UI_STARTUP_FAILURE.png')});throw error;});
+ page.on('pageerror',error=>errors.push(error.stack||error.message));await page.waitForFunction(()=>typeof state!=='undefined'&&state.games.length&&state.stats&&state.questQueue,{},{timeout:10000}).catch(async error=>{console.error('Startup details:',await page.evaluate(()=>({stateDefined:typeof state!=='undefined',games:typeof state!=='undefined'?state.games.length:null,stats:typeof state!=='undefined'?state.stats:null,queue:typeof state!=='undefined'?state.questQueue:null,bridge:typeof window.lootlazyRequest,diagnostic:window.lootlazyDiagnostic,missing:['btn-resume-quest-queue','quest-save-warning','quest-queue-recovery','btn-refresh-quests'].filter(id=>!document.getElementById(id)),text:document.body.innerText.slice(0,1000)})));console.error('Page errors:',errors);console.error('Language render:',await page.evaluate(()=>{try{setLanguage('en');return 'OK';}catch(e){return e.stack;}}));const cdp=await page.context().newCDPSession(page);cdp.on('Console.messageAdded',entry=>console.error('Console:',entry.message.text));await cdp.send('Console.enable');console.error('Bootstrap:',await page.evaluate(()=>{const failures=[];const handler=event=>failures.push(event.error?.stack||event.message);window.addEventListener('error',handler);document.dispatchEvent(new Event('DOMContentLoaded'));window.removeEventListener('error',handler);return failures;}));await page.screenshot({path:path.join(root,'.internal/UI_STARTUP_FAILURE.png')});throw error;});
  await page.evaluate(()=>setLanguage('en'));
 }
 async function settle(){await page.evaluate(async()=>{await Promise.all(document.getAnimations().filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});}
@@ -55,9 +55,9 @@ const card=id=>page.locator('[data-quest-id="'+id+'"]');
  assert.ok(await page.locator('.app-scroll').evaluate(el=>el.scrollHeight<=el.clientHeight+1),'Desktop Game Time fits without outer scrolling');
  await page.screenshot({path:path.join(root,'.internal/game-time-light.png')});await page.evaluate(()=>applyTheme('dark'));await settle();await page.screenshot({path:path.join(root,'.internal/game-time-dark.png')});
  await page.locator('[data-tab=settings]').click();await settle();await page.locator('.app-scroll').evaluate(el=>el.scrollTop=0);await page.screenshot({path:path.join(root,'.internal/tauri-settings.png')});checks.push('English/Arabic, themes, update details and the redesigned compact desktop layout render in native WebView2');
- assert.deepEqual(errors,[]);await close();fs.writeFileSync(path.join(root,'.internal/TAURI_UI_VERIFICATION.json'),JSON.stringify({testedAt:new Date().toISOString(),runtime:'Tauri/WebView2',checks,errors,runtimeWarnings,discordVisibleDetectionVerified:false},null,2));console.log('Questro native UI and recovery checks passed.');
+ assert.deepEqual(errors,[]);await close();fs.writeFileSync(path.join(root,'.internal/TAURI_UI_VERIFICATION.json'),JSON.stringify({testedAt:new Date().toISOString(),runtime:'Tauri/WebView2',checks,errors,runtimeWarnings,discordVisibleDetectionVerified:false},null,2));console.log('LootLazy native UI and recovery checks passed.');
  }finally{
- if(page&&!page.isClosed())await page.evaluate(()=>window.questroRequest('/api/stop',{}).finally(()=>setTimeout(()=>window.desktopAPI.close(),50))).catch(()=>{});
+ if(page&&!page.isClosed())await page.evaluate(()=>window.lootlazyRequest('/api/stop',{}).finally(()=>setTimeout(()=>window.desktopAPI.close(),50))).catch(()=>{});
  if(child&&child.exitCode===null){await new Promise(resolve=>{child.once('exit',resolve);setTimeout(resolve,5000);});if(child.exitCode===null){try{execFileSync('taskkill.exe',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});}catch{}}}
  if(browser)await browser.close().catch(()=>{});
  execFileSync('powershell.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',path.join(root,'tools/cleanup-tauri-test.ps1'),'-FixtureRoot',fixture],{windowsHide:true,stdio:'pipe'});

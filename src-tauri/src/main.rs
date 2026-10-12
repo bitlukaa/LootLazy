@@ -294,7 +294,7 @@ async fn api(
 fn root() -> PathBuf {
     let diagnostic = std::env::args().any(|a| a == "--verify-ui" || a == "--verify-backend");
     if diagnostic {
-        std::env::var_os("QUESTRO_DATA_ROOT")
+        std::env::var_os("LOOTLAZY_DATA_ROOT").or_else(|| std::env::var_os("QUESTRO_DATA_ROOT"))
     } else {
         None
     }
@@ -391,11 +391,13 @@ fn main() {
         return;
     }
     let isolated_ui_test = std::env::args().any(|a| a == "--verify-ui")
-        && std::env::var_os("QUESTRO_DATA_ROOT").is_some()
+        && std::env::var_os("LOOTLAZY_DATA_ROOT")
+            .or_else(|| std::env::var_os("QUESTRO_DATA_ROOT"))
+            .is_some()
         && root
             .file_name()
             .and_then(|n| n.to_str())
-            .is_some_and(|n| n.starts_with("questro-tauri-ui-"))
+            .is_some_and(|n| n.starts_with("lootlazy-tauri-ui-"))
         && root
             .parent()
             .and_then(|p| p.file_name())
@@ -515,7 +517,7 @@ fn main() {
             }
             if verify_ui {
                 builder = builder
-                    .initialization_script("window.questroDiagnostic = true;")
+                    .initialization_script("window.lootlazyDiagnostic = true;")
                     .additional_browser_args("--remote-debugging-port=9387");
             }
             let window = builder.build()?;

@@ -1,5 +1,12 @@
 # Release history
 
+## 3.6.10 — October 12, 2026
+
+- Use LootLazy build paths, interface names and launchers exclusively.
+- Correct the updater helper executable-name check and exercise replacement with LootLazy.exe.
+- Copy legacy browser preferences to renamed keys and read legacy settings files when new files are absent.
+- Migrate the protected signing key to LootLazySigning without rotating it; retain the original as a backup.
+
 ## 3.6.9 — October 12, 2026
 
 - Rename application, native window, tray controls, package metadata and distribution assets to LootLazy.

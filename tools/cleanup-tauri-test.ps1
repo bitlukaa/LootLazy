@@ -2,8 +2,8 @@ param([Parameter(Mandatory=$true)][string]$FixtureRoot)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path -Parent $PSScriptRoot
 $resolvedFixture=[IO.Path]::GetFullPath($FixtureRoot)
-$allowedPrefix=Join-Path $projectRoot 'data\.test-temp\questro-tauri-ui-'
- $activityPrefix=Join-Path $projectRoot 'data\.test-temp\questro-live-ui-'
+$allowedPrefix=Join-Path $projectRoot 'data\.test-temp\lootlazy-tauri-ui-'
+ $activityPrefix=Join-Path $projectRoot 'data\.test-temp\lootlazy-live-ui-'
 if (!$resolvedFixture.StartsWith($allowedPrefix,[StringComparison]::OrdinalIgnoreCase) -and !$resolvedFixture.StartsWith($activityPrefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Invalid test cleanup path' }
 # WebView2 can outlive its hidden test host briefly. Match only this unique test profile.
 Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" | Where-Object {$_.CommandLine -and $_.CommandLine.Contains($resolvedFixture)} | ForEach-Object {Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue}

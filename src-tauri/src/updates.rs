@@ -259,7 +259,7 @@ pub fn stage(root: &std::path::Path) -> Result<Value, String> {
     )?;
     let directory = root.join("data/updates");
     std::fs::create_dir_all(&directory).map_err(|_| "updates_save_failed")?;
-    let source = directory.join("Questro-update.exe");
+    let source = directory.join("LootLazy-update.exe");
     let partial = directory.join("download.partial");
     let mut file = std::fs::File::create(&partial).map_err(|_| "updates_save_failed")?;
     file.write_all(&bytes).map_err(|_| "updates_save_failed")?;

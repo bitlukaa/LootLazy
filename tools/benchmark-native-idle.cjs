@@ -2,7 +2,7 @@
 const fs=require('fs'),path=require('path'),{spawn,execFileSync}=require('child_process');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..');
-const fixture=fs.mkdtempSync(path.join(root,'data/.test-temp/questro-tauri-ui-'));
+const fixture=fs.mkdtempSync(path.join(root,'data/.test-temp/lootlazy-tauri-ui-'));
 fs.mkdirSync(path.join(fixture,'data'));
 for(const [file,value] of Object.entries({'detectable_cache.json':[{id:'988888888888888888',name:'Benchmark fixture',executables:[{os:'win32',name:'benchmark-fixture.exe'}]}],'catalog_meta.json':{lastUpdated:new Date().toISOString()},'questra_overrides.json':{settings:{scan_local_steam:false,desktop_notifications:false,minimize_to_tray:false}}}))fs.writeFileSync(path.join(fixture,'data',file),JSON.stringify(value));
 let app,browser,page;
@@ -10,7 +10,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function sample(){const script=`$all=Get-CimInstance Win32_Process; $owned=@(${app.pid}); do { $next=@($all | Where-Object { $_.ParentProcessId -in $owned -and $_.ProcessId -notin $owned } | ForEach-Object { [int]$_.ProcessId }); $owned+=$next } while($next.Count); $p=@(Get-Process -Id $owned -ErrorAction SilentlyContinue); [pscustomobject]@{time=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds();cpuSeconds=($p | Measure-Object CPU -Sum).Sum;workingSetBytes=($p | Measure-Object WorkingSet64 -Sum).Sum;privateBytes=($p | Measure-Object PrivateMemorySize64 -Sum).Sum;processCount=$p.Count} | ConvertTo-Json -Compress`;return JSON.parse(execFileSync('powershell.exe',['-NoProfile','-Command',script],{encoding:'utf8',windowsHide:true}));}
 (async()=>{try{
  try{await fetch('http://127.0.0.1:9387/json/version');throw Error('Diagnostic port in use');}catch(e){if(e.message==='Diagnostic port in use')throw e;}
- app=spawn(path.join(root,'dist/Questro-Tauri/Questro.exe'),['--verify-ui'],{env:{...process.env,QUESTRO_DATA_ROOT:fixture},windowsHide:true,stdio:'ignore'});
+ app=spawn(path.join(root,'dist/LootLazy-Tauri/LootLazy.exe'),['--verify-ui'],{env:{...process.env,LOOTLAZY_DATA_ROOT:fixture},windowsHide:true,stdio:'ignore'});
  for(let i=0;i<100;i++){try{const data=await(await fetch('http://127.0.0.1:9387/json/version')).json();browser=await chromium.connectOverCDP(data.webSocketDebuggerUrl);break;}catch{await wait(100);}}
  if(!browser)throw Error('Native app unavailable');for(let i=0;i<100;i++){page=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('tauri.localhost'));if(page)break;await wait(100);}if(!page)throw Error('Native page unavailable');await page.waitForFunction(()=>typeof state!=='undefined'&&state.stats&&state.games.length);await wait(5000);
  const first=sample(),samples=[first];for(let i=0;i<6;i++){await wait(10000);samples.push(sample());}

@@ -21,3 +21,9 @@ test('application logic, comments, and test code stay English outside localizati
  for(const directory of ['src','runner','src-tauri/src','tools','tests','public'])inspect(path.join(root,directory));
  const dictionary=fs.readFileSync(allowed,'utf8');for(const line of dictionary.split(/\r?\n/))if(/^\s*(\/\/|\/\*|\*)/.test(line))assert.equal(/\p{Script=Arabic}/u.test(line),false,'Translation comments stay English');
 });
+
+test('legacy browser preferences migrate without overwriting newer values',()=>{
+ const values=new Map([['questro_lang','ar'],['questro_theme','dark'],['lootlazy_theme','light'],['questro_variety_counts','[31]'],['questro_steam_durations','{"730":15}']]);
+ const source=fs.readFileSync(path.join(root,'public/js/i18n.js'),'utf8');vm.runInNewContext(source,{localStorage:{getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value)}});
+ assert.equal(values.get('lootlazy_lang'),'ar');assert.equal(values.get('lootlazy_theme'),'light');assert.equal(values.get('lootlazy_variety_counts'),'[31]');assert.equal(values.get('lootlazy_steam_durations'),'{"730":15}');assert.equal(values.get('questro_lang'),'ar');
+});

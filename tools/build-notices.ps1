@@ -1,6 +1,6 @@
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path -Parent $PSScriptRoot
-$parts=@('Questro third-party notices', '')
+$parts=@('LootLazy third-party notices', '')
 foreach($entry in @(@('Icon components','icons.txt'),@('Brand icons','simple-icons.txt'),@('UI component portions','ui-components.txt'),@('Desktop runtime','runtime.txt'),@('Update signature cryptography','cryptography.txt'))){
   $parts += $entry[0]
   $parts += Get-Content -LiteralPath (Join-Path $projectRoot ('public/assets/third-party/'+$entry[1])) -Raw

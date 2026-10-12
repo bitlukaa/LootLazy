@@ -4,7 +4,8 @@ Add-Type -AssemblyName System.Security
 $projectRoot=Split-Path -Parent $PSScriptRoot
 if(!$Version){$Version=(Get-Content -LiteralPath (Join-Path $projectRoot 'src-tauri/tauri.conf.json') -Raw|ConvertFrom-Json).version}
 if((Get-Item -LiteralPath $BinaryPath).VersionInfo.ProductVersion -ne $Version){throw 'Binary version does not match the release being signed.'}
-$keyFile=Join-Path $env:LOCALAPPDATA 'QuestroSigning/update-key.dpapi'
+. (Join-Path $PSScriptRoot 'signing-path.ps1')
+$keyFile=Get-LootLazySigningKeyPath
 if(!(Test-Path -LiteralPath $keyFile)){throw 'Initialize the local update signing key first.'}
 $keyBytes=[Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes($keyFile),$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)
 try{

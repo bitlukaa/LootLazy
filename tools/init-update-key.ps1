@@ -1,8 +1,9 @@
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Security
 $projectRoot=Split-Path -Parent $PSScriptRoot
-$keyFolder=Join-Path $env:LOCALAPPDATA 'QuestroSigning'
-$keyFile=Join-Path $keyFolder 'update-key.dpapi'
+. (Join-Path $PSScriptRoot 'signing-path.ps1')
+$keyFile=Get-LootLazySigningKeyPath
+$keyFolder=Split-Path -Parent $keyFile
 New-Item -ItemType Directory -Force -Path $keyFolder | Out-Null
 if(Test-Path -LiteralPath $keyFile){
  $keyBytes=[Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes($keyFile),$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)

@@ -12,7 +12,7 @@ test('session diagnostics show errors without asserting game detection',()=>{con
 
 test('catalog refresh sends once at the cooldown boundary and records its time',async()=>{
  let now=900000;const routes=[],saved=[];const context={state:{},$:()=>({}),busy:()=>{},Date:{now:()=>now},setTimeout:cb=>cb(),lastRealCatalogFetch:0,localStorage:{setItem:(...args)=>saved.push(args)},request:async route=>{routes.push(route);return {changed:false,count:50};},loadStats:async()=>{},fetchGames:async()=>{},toast:()=>{},t:key=>key};
- const fn=run('refreshCatalog',context);await fn({},false);assert.deepEqual(routes,['/api/refresh-catalog']);assert.equal(context.lastRealCatalogFetch,now);assert.equal(saved[0][0],'questro_last_catalog_fetch');
+ const fn=run('refreshCatalog',context);await fn({},false);assert.deepEqual(routes,['/api/refresh-catalog']);assert.equal(context.lastRealCatalogFetch,now);assert.equal(saved[0][0],'lootlazy_last_catalog_fetch');
  now+=899999;await fn({},false);assert.equal(routes.length,1);now++;await fn({},false);assert.equal(routes.length,2);
 });
 
@@ -20,7 +20,7 @@ test('quest refresh applies its one-minute manual cooldown at the boundary',asyn
  const start=source.indexOf('async function loadQuests('),end=source.indexOf('async function playQuest(',start);assert.ok(start>=0&&end>start);
  let now=1000000;const routes=[],messages=[],saved=[];const context={state:{quests:[]},questsBusy:false,lastRealQuestFetch:940001,lastQuestRefresh:0,$:()=>({}),busy:()=>{},Date:{now:()=>now,parse:Date.parse},setTimeout:cb=>cb(),renderQuests:()=>{},trackQuestUpdates:()=>{},questMatches:()=>false,localStorage:{setItem:(...args)=>saved.push(args)},toast:value=>messages.push(value),number:String,t:key=>key,request:async route=>{routes.push(route);return {quests:[],last_synced:new Date(now).toISOString()};}};
  const fn=vm.runInNewContext(source.slice(start,end)+';loadQuests',context);await fn(true,false);assert.equal(routes.length,0);assert.deepEqual(messages,['quests_refreshed']);assert.equal(context.questsBusy,false);
- now++;await fn(true,false);assert.deepEqual(routes,['/api/quests?refresh=true']);assert.equal(context.lastRealQuestFetch,now);assert.equal(saved[0][0],'questro_last_quest_fetch');
+ now++;await fn(true,false);assert.deepEqual(routes,['/api/quests?refresh=true']);assert.equal(context.lastRealQuestFetch,now);assert.equal(saved[0][0],'lootlazy_last_quest_fetch');
  await fn(true,false);assert.equal(routes.length,1);
 });
 test('quest refresh toasts quests_current when existing quests are unchanged',async()=>{

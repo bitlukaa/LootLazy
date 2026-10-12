@@ -97,11 +97,15 @@ impl Backend {
         fs::create_dir_all(root.join("data")).map_err(|e| e.to_string())?;
         let read =
             |name: &str, fallback: Value| storage::read(&root.join("data").join(name), fallback);
-        let mut overrides = if root.join("data/questro_overrides.json").exists() {
-            read("questro_overrides.json", storage::defaults())
-        } else {
-            read("questra_overrides.json", storage::defaults())
-        };
+        let settings_name = [
+            "lootlazy_overrides.json",
+            "questro_overrides.json",
+            "questra_overrides.json",
+        ]
+        .into_iter()
+        .find(|name| root.join("data").join(name).exists())
+        .unwrap_or("lootlazy_overrides.json");
+        let mut overrides = read(settings_name, storage::defaults());
         if !overrides.is_object() {
             overrides = storage::defaults();
         }
@@ -181,11 +185,15 @@ impl Backend {
         let mut curated: Value =
             serde_json::from_str(include_str!("../../public/executable-candidates.json"))
                 .unwrap_or(json!({"games":{}}));
-        let local_curated = if root.join("data/questro_catalog.json").exists() {
-            read("questro_catalog.json", json!({}))
-        } else {
-            read("questra_catalog.json", json!({}))
-        };
+        let catalog_name = [
+            "lootlazy_catalog.json",
+            "questro_catalog.json",
+            "questra_catalog.json",
+        ]
+        .into_iter()
+        .find(|name| root.join("data").join(name).exists())
+        .unwrap_or("lootlazy_catalog.json");
+        let local_curated = read(catalog_name, json!({}));
         if let Some(games) = local_curated["games"].as_object() {
             for (id, entry) in games {
                 curated["games"][id] = entry.clone();
@@ -680,7 +688,7 @@ impl Backend {
         let mut command = Command::new(&target);
         command.args([
             "--title",
-            item["gameName"].as_str().unwrap_or("Questro"),
+            item["gameName"].as_str().unwrap_or("LootLazy"),
             "--native-window",
             "--parent",
             &std::process::id().to_string(),
@@ -759,7 +767,7 @@ impl Backend {
                     cur + (duration - session["resumeBaselineSeconds"].as_i64().unwrap_or(0))
                         .max(0)
                 );
-                let _ = self.save("questro_overrides.json", &self.overrides);
+                let _ = self.save("lootlazy_overrides.json", &self.overrides);
             }
             self.started_at = None;
             self.warmup_deadline = None;
@@ -2073,7 +2081,7 @@ impl Backend {
                     }
                     proposed["settings"]["steam_paths"] = paths.clone();
                 }
-                if let Err(error) = self.save("questro_overrides.json", &proposed) {
+                if let Err(error) = self.save("lootlazy_overrides.json", &proposed) {
                     if body.get("run_on_startup").is_some() || body.get("start_minimized").is_some()
                     {
                         let _ = set_startup_enabled(
@@ -2113,7 +2121,7 @@ impl Backend {
                     let exe = storage::executable(&text(&body, "executableName"))?;
                     proposed["custom_executables"][&app] = json!(exe);
                 }
-                self.save("questro_overrides.json", &proposed)?;
+                self.save("lootlazy_overrides.json", &proposed)?;
                 self.overrides = proposed;
                 let game = self
                     .game(&text(&body, "appId"))
@@ -2445,7 +2453,7 @@ fn is_startup_enabled(fallback: bool) -> bool {
             "query",
             "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
             "/v",
-            "Questro",
+            "LootLazy",
         ])
         .creation_flags(0x08000000)
         .output();
@@ -2474,7 +2482,7 @@ fn set_startup_enabled(enable: bool, minimized: bool) -> Result<(), String> {
                     "add",
                     "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
                     "/v",
-                    "Questro",
+                    "LootLazy",
                     "/t",
                     "REG_SZ",
                     "/d",
@@ -2488,7 +2496,7 @@ fn set_startup_enabled(enable: bool, minimized: bool) -> Result<(), String> {
                 return Err("Could not update Windows startup".into());
             }
         } else {
-            return Err("Could not locate Questro executable".into());
+            return Err("Could not locate LootLazy executable".into());
         }
     } else {
         if !is_startup_enabled(false) {
@@ -2499,7 +2507,7 @@ fn set_startup_enabled(enable: bool, minimized: bool) -> Result<(), String> {
                 "delete",
                 "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
                 "/v",
-                "Questro",
+                "LootLazy",
                 "/f",
             ])
             .creation_flags(0x08000000)
@@ -2603,6 +2611,22 @@ pub fn fetch_catalog(meta: &Value, has_saved_catalog: bool) -> Result<CatalogDow
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn renamed_settings_read_legacy_files_and_write_preferred_names() {
+        let f = Fixture::new();
+        storage::save(
+            &f.0.root.join("data/questro_overrides.json"),
+            &json!({"settings":{"desktop_notifications":false}}),
+        )
+        .unwrap();
+        let loaded = Backend::new(f.0.root.clone()).unwrap();
+        assert_eq!(loaded.overrides["settings"]["desktop_notifications"], false);
+        loaded
+            .save("lootlazy_overrides.json", &loaded.overrides)
+            .unwrap();
+        assert!(f.0.root.join("data/lootlazy_overrides.json").exists());
+        assert!(f.0.root.join("data/questro_overrides.json").exists());
+    }
     #[test]
     fn helper_directories_remain_confined_for_dot_and_reserved_names() {
         let root = PathBuf::from("C:/fixture/games");
@@ -2888,7 +2912,8 @@ mod tests {
     struct Fixture(Backend);
     impl Fixture {
         fn new() -> Self {
-            let root = std::env::temp_dir().join(format!("questro-rust-{}", rand::random::<u64>()));
+            let root =
+                std::env::temp_dir().join(format!("lootlazy-rust-{}", rand::random::<u64>()));
             let mut b = Backend::new(root).unwrap();
             b.allow_rpc = false;
             Self(b)
@@ -3277,7 +3302,7 @@ mod tests {
     fn settings_and_names_roll_back_when_saving_fails() {
         let mut f = Fixture::new();
         let before = f.0.overrides.clone();
-        fs::create_dir(f.0.root.join("data/questro_overrides.json")).unwrap();
+        fs::create_dir(f.0.root.join("data/lootlazy_overrides.json")).unwrap();
         assert!(f
             .0
             .route(

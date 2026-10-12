@@ -61,10 +61,10 @@ fn verify_publisher(path: &Path) -> Result<(), String> {
     let engine =
         std::path::PathBuf::from(std::env::var_os("WINDIR").unwrap_or_else(|| "C:/Windows".into()))
             .join("System32/WindowsPowerShell/v1.0/powershell.exe");
-    let script="$s = Get-AuthenticodeSignature -LiteralPath $env:QUESTRO_RUNTIME_PATH; if ($s.Status -eq 'Valid' -and $s.SignerCertificate.Subject -match '(^|,\\s*)O=Valve Corp\\.(,|$)') { exit 0 } else { exit 1 }";
+    let script="$s = Get-AuthenticodeSignature -LiteralPath $env:LOOTLAZY_RUNTIME_PATH; if ($s.Status -eq 'Valid' -and $s.SignerCertificate.Subject -match '(^|,\\s*)O=Valve Corp\\.(,|$)') { exit 0 } else { exit 1 }";
     let mut child = Command::new(engine)
         .args(["-NoProfile", "-NonInteractive", "-Command", script])
-        .env("QUESTRO_RUNTIME_PATH", path)
+        .env("LOOTLAZY_RUNTIME_PATH", path)
         .env_remove("PSModulePath")
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -98,7 +98,7 @@ mod tests {
     #[test]
     fn tampered_or_unrecognized_runtimes_are_rejected() {
         let path =
-            std::env::temp_dir().join(format!("questro-runtime-{}.dll", rand::random::<u64>()));
+            std::env::temp_dir().join(format!("lootlazy-runtime-{}.dll", rand::random::<u64>()));
         std::fs::write(&path, b"untrusted").unwrap();
         assert!(lock_verified(&path, None).is_err());
         let mut bytes = vec![0u8; 512];

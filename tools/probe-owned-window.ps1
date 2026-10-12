@@ -3,7 +3,7 @@ $ErrorActionPreference='Stop'
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
-public class QuestroOwnedWindowProbe {
+public class LootLazyOwnedWindowProbe {
  public delegate bool Callback(IntPtr handle,IntPtr param);
  [DllImport("user32.dll")]public static extern bool EnumWindows(Callback callback,IntPtr param);
  [DllImport("user32.dll")]public static extern uint GetWindowThreadProcessId(IntPtr handle,out uint pid);
@@ -15,5 +15,5 @@ public class QuestroOwnedWindowProbe {
 }
 '@
 $taskProcess=Get-Process -Id $TargetProcessId
-$counts=[QuestroOwnedWindowProbe]::Count($TargetProcessId)
+$counts=[LootLazyOwnedWindowProbe]::Count($TargetProcessId)
 [pscustomobject]@{pid=$taskProcess.Id;windows=$counts[0];nativeWindows=$counts[1];minimizedWindows=$counts[2];taskbarEligibleWindows=$counts[3]}|ConvertTo-Json -Compress

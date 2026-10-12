@@ -1,8 +1,8 @@
-// Questro native window controls and Rust command bridge.
+// LootLazy native window controls and Rust command bridge.
 if (window.__TAURI__) {
   const { invoke } = window.__TAURI__.core;
   const win = window.__TAURI__.window.getCurrentWindow();
-  window.questroRequest = (url, body) => invoke('api', { route: url, body: body ?? null });
+  window.lootlazyRequest = (url, body) => invoke('api', { route: url, body: body ?? null });
   window.desktopAPI = {
     minimize: () => win.minimize(),
     maximize: () => win.toggleMaximize(),

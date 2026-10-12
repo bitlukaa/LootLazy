@@ -75,9 +75,9 @@ pub fn record(root: &Path, route: &str, error: &str) {
     if fs::create_dir_all(&folder).is_err() {
         return;
     }
-    let file = folder.join("questro.log");
+    let file = folder.join("lootlazy.log");
     if fs::metadata(&file).is_ok_and(|m| m.len() >= 256 * 1024) {
-        let previous = folder.join("questro.previous.log");
+        let previous = folder.join("lootlazy.previous.log");
         let _ = fs::remove_file(&previous);
         if fs::rename(&file, previous).is_err() {
             return;

@@ -246,7 +246,7 @@ mod tests {
     use super::*;
     #[test]
     fn removed_quest_images_are_deleted_without_touching_shared_images_or_user_files() {
-        let root = std::env::temp_dir().join(format!("questro-art-{}", rand::random::<u64>()));
+        let root = std::env::temp_dir().join(format!("lootlazy-art-{}", rand::random::<u64>()));
         let dir = root.join("data/artwork");
         fs::create_dir_all(&dir).unwrap();
         let removed = "https://cdn.discordapp.com/quests/123456/old.png".to_string();

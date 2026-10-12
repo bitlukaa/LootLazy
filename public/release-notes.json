@@ -1,1 +1,1 @@
-{"version":"3.6.9","en":["Renamed the application to LootLazy.","Fixed renamed GitHub release validation with legacy asset compatibility.","Remaining-card tracking is clearly marked as an inactive preview."],"ar":["تغيير اسم التطبيق إلى LootLazy.","إصلاح روابط التحديث مع دعم الملفات القديمة.","توضيح أن متابعة البطاقات قيد التجهيز."]}
+{"version":"3.6.10","en":["Cleaned legacy build and interface names.","Preserved legacy settings and signing-key compatibility."],"ar":["تنظيف أسماء البناء والواجهة القديمة.","الحفاظ على توافق الإعدادات ومفتاح التوقيع القديم."]}

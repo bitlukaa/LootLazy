@@ -1,4 +1,4 @@
-Questro third-party notices
+LootLazy third-party notices
 
 Icon components
 ISC License
