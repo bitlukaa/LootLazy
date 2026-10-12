@@ -1,13 +1,11 @@
 {
-  "version": "3.6.0",
+  "version": "3.6.1",
   "en": [
-    "Setup and portable downloads.",
-    "Download and install available updates from Settings.",
-    "Simplified update controls and clarified Discord activity setting."
+    "Small matching icons across the main navigation.",
+    "Optimized Steam icon for a lighter interface."
   ],
   "ar": [
-    "نسخة تثبيت ونسخة محمولة.",
-    "تنزيل التحديثات المتاحة وتثبيتها من الإعدادات.",
-    "تبسيط أدوات التحديث وتوضيح إعداد نشاط ديسكورد."
+    "أيقونات صغيرة بمقاس موحّد في الشريط الرئيسي.",
+    "تخفيف حجم أيقونة ستيم."
   ]
 }

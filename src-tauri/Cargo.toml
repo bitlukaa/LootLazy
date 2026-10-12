@@ -1,6 +1,6 @@
 [package]
 name = "questro"
-version = "3.6.0"
+version = "3.6.1"
 edition = "2021"
 description = "Questro portable desktop application"
 license = "MIT"

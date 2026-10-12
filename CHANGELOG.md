@@ -1,5 +1,10 @@
 # Release history
 
+## 3.6.1 — October 12, 2026
+
+- Added matching icons to all main navigation tabs.
+- Optimized the Steam navigation image while keeping it clear at small sizes.
+
 ## 3.6.0 — October 12, 2026
 
 - Added Setup and portable download options.

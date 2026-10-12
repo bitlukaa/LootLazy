@@ -228,3 +228,5 @@ html[data-theme-transition=active]::view-transition-new(root){z-index:999;clip-p
 @media(min-width:1024px){#view-simulator .workspace-grid,.variety-workspace{height:max(420px,calc(100dvh - 250px))}}
 
 .steam-search-hint{font-size:12px;line-height:1.7;margin-top:14px}
+
+.questro-navbar .navigation .nav-tab{gap:6px;padding-inline:8px}.nav-tab .nav-icon{display:block;width:18px;height:18px;min-width:18px;object-fit:contain;flex-shrink:0;pointer-events:none;user-select:none}.questro-navbar .navigation{gap:2px}
