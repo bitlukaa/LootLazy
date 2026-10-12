@@ -216,7 +216,7 @@ impl Backend {
                 .filter(Value::is_object)
                 .take(50)
                 .collect(),
-            variety: crate::rotation::Rotation::new(root.join("data/variety_queue.json")),
+            variety: crate::rotation::Rotation::new_variety(root.join("data/variety_queue.json")),
             steam_idle: crate::rotation::SteamIdle::new(&root),
             steam_runtime: None,
             steam_search: read("steam_search.json", json!([]))

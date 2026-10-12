@@ -1,9 +1,13 @@
 {
-  "version": "3.6.5",
+  "version": "3.6.6",
   "en": [
-    "Simplified support page with crypto donations only."
+    "Game Variety opens with a clean lineup and waits for your choice of games.",
+    "Paused sessions with actual playtime retain their progress.",
+    "Updated the crypto donation address."
   ],
   "ar": [
-    "تبسيط صفحة الدعم لتبرعات الكريبتو فقط."
+    "صفحة Game Variety تبدأ بدون قائمة مجهزة تلقائيًا.",
+    "الجلسات المتوقفة التي فيها وقت لعب تحتفظ بتقدمها.",
+    "تحديث عنوان التبرع بالعملات الرقمية."
   ]
 }

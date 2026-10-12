@@ -26,7 +26,7 @@ If Questro helps you, consider leaving a star!
 ## Features
 
 - **Game Time** — Run lightweight game activity with continuous, preset, or custom timers. Manage one game or a saved queue.
-- **Game Variety** — Choose 10, 50, 100, or a custom number of games. Shuffle, search, reorder, and run the group with one duration per game.
+- **Game Variety** — Start with a clean lineup and choose 10, 50, 100, or a custom number of games. Shuffle, search, reorder, and run the group with one duration per game. Paused sessions with playtime can be resumed.
 - **Desktop play quests** — Browse available 15-minute quests and start directly from their cards. Accept the quest in Discord first; unfinished local sessions can be resumed.
 - **Idle Steam** — Keep owned games active for playtime and eligible Steam Trading Card drops. Run several games together with separate timers, and search for titles even when they aren't installed.
 - **Two-way sync** — Start matched Discord and Steam sessions together from either page.

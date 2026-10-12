@@ -1,5 +1,12 @@
 # Release history
 
+## 3.6.6 — October 12, 2026
+
+- Game Variety starts empty until a game count or Shuffle is selected.
+- Unstarted saved lineups are cleared on restart; paused sessions with playtime retain progress.
+- Updated the crypto donation address and explained eligible Steam Trading Card drops in the README.
+- Refreshed the screenshot gallery with directly viewable PNG captures and ready quest buttons.
+
 ## 3.6.5 — October 12, 2026
 
 - Removed the unused Buy Me a Coffee option and centered the crypto support card.
