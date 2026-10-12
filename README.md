@@ -34,6 +34,18 @@ If Questro helps you, consider leaving a star!
 - **Make it yours** — Light and dark themes, English and Arabic, compact client indicators, desktop notifications, and tray controls.
 - **Keep it light** — A native Windows app with an executable of approximately 4.2 MB.
 
+## Screenshots
+
+| Game Time | Game Variety |
+|:---:|:---:|
+| [![Game Time](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-time.png)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-time.png) | [![Game Variety](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-variety.png)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-variety.png) |
+
+| Idle Steam | Quests |
+|:---:|:---:|
+| [![Idle Steam](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/idle-steam.png)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/idle-steam.png) | [![Quests](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/quests.png)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/quests.png) |
+
+Click a screenshot to view it at full size.
+
 ## Download & run
 
 Choose your version from [GitHub Releases](https://github.com/bitlukaa/Questro/releases/latest).
