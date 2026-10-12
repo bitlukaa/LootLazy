@@ -40,11 +40,11 @@ For Steam sessions, the game must be in your Steam library. Steam needs to be si
 
 See the [release history](CHANGELOG.md) for updates.
 
-## A few things to know
+## Privacy & limitations
 
-Questro does not ask for your Discord password or account token. Quest acceptance and reward claims stay in Discord.
+Questro does not request your Discord password or account token, and does not automatically accept quests or claim rewards. However, we cannot guarantee that using it will not result in account restrictions or a ban. Use it at your own discretion.
 
-A completed local timer does not confirm quest completion or recorded Steam playtime. Compatibility and account safety cannot be guaranteed; follow each platform's rules.
+A completed local timer does not confirm quest completion or recorded Steam playtime. Compatibility and reward eligibility are not guaranteed; follow each platform's rules.
 
 Windows 10 or 11, 64-bit, and Microsoft Edge WebView2 are required. The current executable is approximately **4.2 MB**; saved data and cached artwork use additional space.
 
