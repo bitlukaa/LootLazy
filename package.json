@@ -1,6 +1,6 @@
 {
   "name": "questro",
-  "version": "3.6.6",
+  "version": "3.6.8",
   "description": "Questro",
   "scripts": {
     "start": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/start-tauri.ps1",
@@ -9,7 +9,9 @@
     "test": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-tauri.ps1",
     "test:ui": "node tools/verify-tauri-ui.js",
     "test:localization": "node --test tests/localization.test.js",
-    "package": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/package-tauri.ps1"
+    "package": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/package-tauri.ps1",
+    "test:renderer": "node tools/verify-rotations-ui.js",
+    "test:unit": "node --test tests/localization.test.js tests/ui-settings.test.js tests/card-drops.test.js"
   },
   "keywords": [
     "game-simulator",
@@ -18,5 +20,8 @@
     "questro"
   ],
   "author": "Questro",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
 }

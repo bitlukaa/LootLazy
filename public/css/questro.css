@@ -265,3 +265,24 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .support-option button:not(:disabled){opacity:1}
 
 .support-options{grid-template-columns:minmax(0,560px);justify-content:center}
+
+/* Saved custom counts share the preset dimensions; removal is a separate button. */
+.variety-custom-editor{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex-basis:100%;margin-top:4px}
+.variety-custom-editor .button{width:auto;min-width:58px;height:34px;min-height:34px;padding:0 12px;font-size:12px}
+.variety-count-options .custom-count-chip{display:inline-flex;align-items:center;flex:0 0 60px;width:60px;height:34px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);box-sizing:border-box}
+.variety-count-options .custom-count-chip.active{border-color:var(--accent);background:var(--selected)}
+.variety-count-options .custom-count-chip .duration-preset{flex:1;min-width:0;width:auto;height:32px;min-height:32px;padding:4px 0 4px 4px;border:0;border-radius:0;background:transparent}
+.variety-count-options .custom-count-remove{border:0;background:transparent;color:var(--muted);flex:0 0 20px;width:20px;height:32px;cursor:pointer;font-size:15px;padding:0}
+.variety-count-options .custom-count-remove:hover{color:var(--red);background:var(--selected)}
+.variety-count-options .custom-count-remove:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.custom-count-remove:disabled{opacity:.45;cursor:default}
+/* Stable completed quest button styling - clean, neutral, and consistent */
+.quest-card.quest-closed .quest-play,
+.quest-card.quest-closed .quest-play:disabled {
+  background: var(--surface-2) !important;
+  color: var(--muted) !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+  cursor: default !important;
+  opacity: 0.8 !important;
+}

@@ -654,10 +654,7 @@ impl Backend {
         } else {
             exe_str
         };
-        let clean_game = item["gameName"]
-            .as_str()
-            .unwrap_or("Game")
-            .replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "");
+        let clean_game = game_directory_name(item["gameName"].as_str().unwrap_or("Game"), &id);
         let games_root = self.root.join("games");
         let game_dir = games_root.join(&clean_game);
         let rel_exe = storage::executable(exe)?;
@@ -1536,6 +1533,7 @@ impl Backend {
                 .filter(|g| {
                     g["type"].as_i64().unwrap_or(1) == 1
                         && storage::id(&text(g, "id")).is_ok()
+                        && has_discord_artwork(g)
                         && seen.insert(text(g, "id"))
                 })
                 .collect();
@@ -2370,7 +2368,23 @@ fn validated_item(mut item: Value) -> Result<Value, String> {
     item["state"] = json!("queued");
     Ok(item)
 }
+fn game_directory_name(name: &str, id: &str) -> String {
+    let clean: String = name
+        .chars()
+        .filter(|c| !c.is_control() && !"/\\:*?\"<>|".contains(*c))
+        .collect();
+    let clean = clean.trim();
+    if storage::executable(&format!("{clean}/probe.exe")).is_ok() {
+        clean.to_string()
+    } else {
+        format!("app-{id}")
+    }
+}
 fn ensure_owned_path(root: &Path, target: &Path) -> Result<(), String> {
+    let relative = target
+        .strip_prefix(root)
+        .map_err(|_| "Helper path is outside the games directory")?;
+    storage::executable(relative.to_str().ok_or("Invalid helper path")?)?;
     let mut path = Some(target);
     while let Some(p) = path {
         if p.exists() {
@@ -2589,6 +2603,33 @@ pub fn fetch_catalog(meta: &Value, has_saved_catalog: bool) -> Result<CatalogDow
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn helper_directories_remain_confined_for_dot_and_reserved_names() {
+        let root = PathBuf::from("C:/fixture/games");
+        for name in ["..", ".", "", "CON", "NUL.txt", "name.", "...", "LPT1"] {
+            let folder = game_directory_name(name, "123456");
+            assert_eq!(folder, "app-123456", "{name}");
+            assert!(ensure_owned_path(&root, &root.join(folder).join("helper.exe")).is_ok());
+        }
+        assert!(ensure_owned_path(&root, &root.join("..").join("helper.exe")).is_err());
+        assert!(ensure_owned_path(&root, &PathBuf::from("C:/fixture/outside.exe")).is_err());
+        assert_eq!(
+            game_directory_name("Counter-Strike 2", "123456"),
+            "Counter-Strike 2"
+        );
+    }
+    #[test]
+    fn variety_resize_replenishes_only_games_with_discord_artwork() {
+        let mut f = Fixture::new();
+        f.0.catalog = vec![
+            json!({"id":"123456","name":"With artwork","type":1,"icon_hash":"0123456789abcdef"}),
+            json!({"id":"234567","name":"Without artwork","type":1}),
+        ];
+        f.0.resize_variety(&json!({"count":10})).unwrap();
+        let items = f.0.variety.data["items"].as_array().unwrap();
+        assert_eq!(items.len(), 1);
+        assert!(items.iter().all(has_discord_artwork));
+    }
     #[test]
     fn catalog_response_above_the_old_limit_is_accepted_but_still_bounded() {
         let mut body = vec![b' '; 13 * 1024 * 1024];

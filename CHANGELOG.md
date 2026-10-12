@@ -1,5 +1,21 @@
 # Release history
 
+## 3.6.8 — October 12, 2026
+
+- Confine helper writes to the games subtree, including dot and reserved game names.
+- Require detached Ed25519 update signatures bound to the version, binary hash and size.
+- Verify Valve publisher signatures on Steam runtimes and hold read-only file locks during validation/loading.
+- Rebuild the session helper from C# source, pin frontend test dependencies, and include frontend tests in CI.
+- Filter replenished Game Variety pools to Discord artwork and expand regression coverage.
+- Lower WebView2 memory pressure while hidden in the tray and restore normal mode when shown.
+
+## 3.6.7 — Included in 3.6.8
+
+- Start Game Variety with 10 games and explicitly save or cancel custom counts; saved custom presets can be removed.
+- Remove next-action glow rings and keep completed quest buttons neutral during polling and card recreation.
+- Refresh the games catalog every 24 hours, with a 15-minute cooldown for manual refresh. Quests refresh every 5 minutes, with a 1-minute manual cooldown.
+- Refresh the Game Variety screenshot, remove unused guidance state, and expand regression coverage.
+
 ## 3.6.6 — October 12, 2026
 
 - Game Variety starts empty until a game count or Shuffle is selected.

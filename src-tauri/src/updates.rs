@@ -52,7 +52,7 @@ fn parse_release(release: &Value, current: &str) -> Result<Value, String> {
     let binary = executable_metadata(release).ok();
     let current = semver::Version::parse(current).map_err(|_| "Invalid current version")?;
     Ok(
-        json!({"status":if version>current {"available"}else{"up_to_date"},"latestVersion":version.to_string(),"notes":release["body"].as_str().unwrap_or("").chars().take(8000).collect::<String>(),"downloadUrl":url.as_str(),"canInstall":binary.is_some(),"binaryUrl":binary.as_ref().map(|value|value["binaryUrl"].clone()),"sha256":binary.as_ref().map(|value|value["sha256"].clone()),"binarySize":binary.as_ref().map(|value|value["binarySize"].clone())}),
+        json!({"status":if version>current {"available"}else{"up_to_date"},"latestVersion":version.to_string(),"notes":release["body"].as_str().unwrap_or("").chars().take(8000).collect::<String>(),"downloadUrl":url.as_str(),"canInstall":binary.is_some(),"binaryUrl":binary.as_ref().map(|value|value["binaryUrl"].clone()),"sha256":binary.as_ref().map(|value|value["sha256"].clone()),"binarySize":binary.as_ref().map(|value|value["binarySize"].clone()),"signatureUrl":binary.as_ref().map(|value|value["signatureUrl"].clone())}),
     )
 }
 fn fetch() -> Result<Value, String> {
@@ -145,7 +145,27 @@ fn executable_metadata(release: &Value) -> Result<Value, String> {
         .as_u64()
         .filter(|size| (512..=64 * 1024 * 1024).contains(size))
         .ok_or("Invalid update size")?;
-    Ok(json!({"binaryUrl":url.as_str(),"sha256":hash,"binarySize":size,"canInstall":true}))
+    let signature = release["assets"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .find(|asset| asset["name"] == "Questro.exe.sig")
+        .ok_or("Signed update unavailable")?;
+    let signature_url = trusted_asset_url(
+        signature["browser_download_url"]
+            .as_str()
+            .ok_or("Missing signature URL")?,
+        "Questro.exe.sig",
+    )?;
+    if !signature["size"]
+        .as_u64()
+        .is_some_and(|size| (1..=4096).contains(&size))
+    {
+        return Err("Invalid signature size".into());
+    }
+    Ok(
+        json!({"binaryUrl":url.as_str(),"sha256":hash,"binarySize":size,"signatureUrl":signature_url.as_str(),"canInstall":true}),
+    )
 }
 pub fn stage(root: &std::path::Path) -> Result<Value, String> {
     use sha2::{Digest, Sha256};
@@ -205,6 +225,28 @@ pub fn stage(root: &std::path::Path) -> Result<Value, String> {
     {
         return Err("updates_checksum_failed".into());
     }
+    let signature_url = trusted_asset_url(
+        release["signatureUrl"]
+            .as_str()
+            .ok_or("updates_signature_failed")?,
+        "Questro.exe.sig",
+    )?;
+    let mut signature_response = client
+        .get(signature_url)
+        .send()
+        .and_then(|response| response.error_for_status())
+        .map_err(|_| "updates_signature_failed")?;
+    let mut signature = Vec::new();
+    (&mut signature_response)
+        .take(4097)
+        .read_to_end(&mut signature)
+        .map_err(|_| "updates_signature_failed")?;
+    crate::update_signature::verify(
+        &signature,
+        release["latestVersion"].as_str().unwrap_or(""),
+        &hash,
+        expected,
+    )?;
     let directory = root.join("data/updates");
     std::fs::create_dir_all(&directory).map_err(|_| "updates_save_failed")?;
     let source = directory.join("Questro-update.exe");
@@ -227,6 +269,7 @@ pub fn stage(root: &std::path::Path) -> Result<Value, String> {
 pub fn launch_installer(root: &std::path::Path) -> Result<(), String> {
     let directory = root.join("data/updates");
     let mut command = std::process::Command::new("powershell.exe");
+    command.env_remove("PSModulePath");
     command
         .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"])
         .arg(directory.join("install.ps1"))
@@ -251,6 +294,8 @@ mod tests {
         let mut value = release("99.0.0");
         assert_eq!(parse_release(&value, "3.5.4").unwrap()["canInstall"], false);
         value["assets"].as_array_mut().unwrap().push(json!({"name":"Questro.exe","browser_download_url":format!("{RELEASES}/download/v99.0.0/Questro.exe"),"digest":format!("sha256:{}","a".repeat(64)),"size":4096}));
+        assert_eq!(parse_release(&value, "3.5.4").unwrap()["canInstall"], false);
+        value["assets"].as_array_mut().unwrap().push(json!({"name":"Questro.exe.sig","browser_download_url":format!("{RELEASES}/download/v99.0.0/Questro.exe.sig"),"size":300}));
         assert_eq!(parse_release(&value, "3.5.4").unwrap()["canInstall"], true);
         value["assets"][1]["digest"] = json!("sha256:invalid");
         assert!(executable_metadata(&value).is_err());

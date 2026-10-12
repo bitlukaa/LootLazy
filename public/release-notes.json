@@ -1,13 +1,5 @@
 {
-  "version": "3.6.6",
-  "en": [
-    "Game Variety opens with a clean lineup and waits for your choice of games.",
-    "Paused sessions with actual playtime retain their progress.",
-    "Updated the crypto donation address."
-  ],
-  "ar": [
-    "صفحة Game Variety تبدأ بدون قائمة مجهزة تلقائيًا.",
-    "الجلسات المتوقفة التي فيها وقت لعب تحتفظ بتقدمها.",
-    "تحديث عنوان التبرع بالعملات الرقمية."
-  ]
+ "version":"3.6.8",
+ "en":["Confined session helpers to the games folder and rebuilt the helper from source.","Updates now require an independent publisher signature.","Steam runtimes must pass Valve publisher verification before loading.","Improved artwork filtering and reproducible frontend checks."],
+ "ar":["حصر ملفات مساعد التشغيل داخل مجلد الألعاب وإعادة بنائه من المصدر.","التحديثات تتطلب توقيعًا مستقلًا من الناشر.","التحقق من توقيع Valve لمكتبة Steam قبل تحميلها.","تحسين فلترة صور الألعاب واختبارات الواجهة."]
 }

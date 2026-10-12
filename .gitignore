@@ -12,3 +12,8 @@ src-tauri/target/
 src-tauri/gen/schemas/
 releases/
 .internal/
+
+# Local signing secrets must never enter the repository
+*.dpapi
+*.pk8
+*.private-key

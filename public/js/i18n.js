@@ -1,6 +1,10 @@
 // Questro interface translations. Keep application logic and comments in English.
 const I18N = {
   "ar": {
+    "updates_unsigned": "توجد نسخة أحدث، لكن توقيع التحديث المطلوب غير موجود.",
+    "updates_signature_failed": "تعذر التحقق من توقيع التحديث، لذلك تم إيقاف التثبيت.",
+    "steam_runtime_untrusted": "تعذر التحقق من مكتبة Steam. تحقّق من ملفات اللعبة المثبتة من داخل Steam.",
+    "remove_custom_count": "حذف العدد المخصص {count}",
     "crypto_currency": "العملة",
     "crypto_network": "الشبكة",
     "crypto_address": "عنوان التبرع",
@@ -303,6 +307,10 @@ const I18N = {
     "section_completed": "المهام المكتملة"
   },
   "en": {
+    "updates_unsigned": "A newer version is available, but its required update signature is missing.",
+    "steam_runtime_untrusted": "Steam runtime verification failed. Verify your installed game files in Steam.",
+    "updates_signature_failed": "The update signature could not be verified. Installation was stopped.",
+    "remove_custom_count": "Remove custom count {count}",
     "crypto_currency": "Currency",
     "crypto_network": "Network",
     "crypto_address": "Donation address",

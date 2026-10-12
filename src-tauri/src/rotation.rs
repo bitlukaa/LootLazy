@@ -465,12 +465,14 @@ impl SteamIdle {
             let ready = dir.join("status.txt");
             let _ = fs::remove_file(&ready);
             fs::write(dir.join("steam_appid.txt"), &id).map_err(|e| e.to_string())?;
+            let (_, runtime_hash) = crate::steam_runtime::lock_verified(dll, None)?;
             let mut command = Command::new(std::env::current_exe().map_err(|e| e.to_string())?);
             command
                 .args(["--steam-session-worker", &id])
                 .arg(dll)
                 .arg(&ready)
                 .arg(std::process::id().to_string())
+                .arg(&runtime_hash)
                 .current_dir(&dir)
                 .env("SteamAppId", &id)
                 .env("SteamGameId", &id);
@@ -694,7 +696,7 @@ pub fn worker(args: &[String]) -> i32 {
                     Threading::{OpenProcess, WaitForSingleObject},
                 },
             };
-            if args.len() != 6 {
+            if args.len() != 7 {
                 return 2;
             }
             let id = match args[2].parse::<u32>() {
@@ -715,6 +717,13 @@ pub fn worker(args: &[String]) -> i32 {
                 }
                 _ => {
                     error("steam_runtime_missing");
+                    return 2;
+                }
+            };
+            let _runtime_lock = match crate::steam_runtime::lock_verified(&path, Some(&args[6])) {
+                Ok((file, _)) => file,
+                Err(_) => {
+                    error("steam_runtime_untrusted");
                     return 2;
                 }
             };

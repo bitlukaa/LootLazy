@@ -5,14 +5,28 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install chromium
+      - name: Frontend unit and localization regressions
+        run: npm run test:unit
+      - name: Isolated renderer regressions
+        run: npm run test:renderer
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
+      - name: Build session helper from source
+        run: ./tools/build-helper.ps1
       - name: Format
         run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
       - name: Rust regressions

@@ -31,3 +31,15 @@ Do not commit generated builds, local settings, game helper files, credentials, 
 Review and understand any code produced with AI assistance before submitting it. Credit actual collaborators when appropriate.
 
 By contributing, you agree that your contribution may be distributed under the project's [MIT License](LICENSE).
+
+## Reproduce the frontend checks
+
+Install Node.js 22 or later and run `npm ci --ignore-scripts`, `npx playwright install chromium`, `npm run test:unit`, and `npm run test:renderer`. Set QUESTRO_BROWSER only to use a specific installed Chromium browser. Build Windows helpers with `tools/build-helper.ps1` before direct Cargo builds; the normal build script does this automatically.
+
+## Release signing
+
+Initialize the local key once with `tools/init-update-key.ps1`. It is protected by Windows DPAPI for the current user under LOCALAPPDATA/QuestroSigning, outside this repository. Only `src-tauri/update-public-key.hex` belongs in source control. Preserve the protected key and the Windows profile needed to recover it; never rotate the embedded public key casually or upload the private key.
+
+After the final build, run `tools/sign-release.ps1 -BinaryPath releases/Questro-<version>/Questro.exe`. Publish the resulting file with the exact asset name `Questro.exe.sig` alongside `Questro.exe` and the portable ZIP. The signature binds the version, SHA256 and file size. CI artifacts are development builds and are not automatically signed or published.
+
+Older clients do not enforce the new signature policy until they install version 3.6.8 or later. Windows Authenticode signing of Questro itself is separate and still requires an appropriate publisher certificate. Steam SDK verification uses the installed SDK publisher signature and does not sign or modify the game.

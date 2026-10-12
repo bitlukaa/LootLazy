@@ -6,6 +6,7 @@ if (!$cargoExe -or !(Test-Path -LiteralPath $cargoExe)) {
   $cargoExe = Join-Path $env:USERPROFILE '.cargo/bin/cargo.exe'
 }
 if (!(Test-Path -LiteralPath $cargoExe)) { throw 'Install Rust with the MSVC toolchain first.' }
+& (Join-Path $PSScriptRoot 'build-helper.ps1')
 & (Join-Path $PSScriptRoot 'build-notices.ps1')
 $env:CARGO_TARGET_DIR = Join-Path $projectRoot 'data/.tauri-build'
 $env:TEMP = Join-Path $projectRoot 'data/.test-temp'

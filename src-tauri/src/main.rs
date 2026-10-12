@@ -8,8 +8,10 @@ mod metadata;
 mod presence;
 mod rotation;
 mod steam_client;
+mod steam_runtime;
 mod steam_store;
 mod storage;
+mod update_signature;
 mod updates;
 use serde_json::Value;
 use std::{
@@ -21,6 +23,28 @@ use std::{
 };
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 type Shared = Arc<Mutex<backend::Backend>>;
+// Lower WebView memory pressure in the tray without suspending scripts or native timers.
+fn set_webview_memory(app: &tauri::AppHandle, inactive: bool) {
+    #[cfg(windows)]
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.with_webview(move |view| {
+            use webview2_com::Microsoft::Web::WebView2::Win32::{
+                ICoreWebView2_19, COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL,
+            };
+            use windows_core::Interface;
+            unsafe {
+                if let Ok(core) = view.controller().CoreWebView2() {
+                    if let Ok(memory) = core.cast::<ICoreWebView2_19>() {
+                        let _ = memory.SetMemoryUsageTargetLevel(
+                            COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL(if inactive { 1 } else { 0 }),
+                        );
+                    }
+                }
+            }
+        });
+    }
+}
+
 #[tauri::command]
 fn quit(app: tauri::AppHandle) {
     app.exit(0);
@@ -38,6 +62,7 @@ fn window_close(window: tauri::WebviewWindow, state: tauri::State<'_, Shared>) {
         .unwrap_or(false);
     if minimize_to_tray {
         let _ = window.hide();
+        set_webview_memory(window.app_handle(), true);
     } else {
         window.app_handle().exit(0);
     }
@@ -61,6 +86,7 @@ fn notify_desktop(title: String, body: String, window: tauri::WebviewWindow) {
                 body.replace('\'', "''")
             );
             let _ = std::process::Command::new("powershell")
+                .env_remove("PSModulePath")
                 .args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &script])
                 .creation_flags(0x08000000)
                 .status();
@@ -317,6 +343,41 @@ fn main() {
     {
         std::process::exit(rotation::worker(&arguments));
     }
+    if arguments
+        .get(1)
+        .is_some_and(|arg| arg == "--verify-update-signature")
+        && arguments.len() == 5
+    {
+        use sha2::{Digest, Sha256};
+        let result = (|| -> Result<(), String> {
+            let path = std::path::Path::new(&arguments[2]);
+            if std::fs::metadata(path).map_err(|e| e.to_string())?.len() > 64 * 1024 * 1024 {
+                return Err("File too large".into());
+            }
+            let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+            let document = std::fs::read(&arguments[3]).map_err(|e| e.to_string())?;
+            update_signature::verify(
+                &document,
+                &arguments[4],
+                &format!("{:x}", Sha256::digest(&bytes)),
+                bytes.len() as u64,
+            )
+        })();
+        std::process::exit(if result.is_ok() { 0 } else { 2 });
+    }
+    if arguments
+        .get(1)
+        .is_some_and(|arg| arg == "--verify-steam-runtime")
+        && arguments.len() == 3
+    {
+        std::process::exit(
+            if steam_runtime::lock_verified(std::path::Path::new(&arguments[2]), None).is_ok() {
+                0
+            } else {
+                2
+            },
+        );
+    }
     let root = root();
     let temp = root.join("data/temp");
     std::fs::create_dir_all(&temp).expect("Questro folder must be writable");
@@ -387,6 +448,7 @@ fn main() {
                 if minimize_to_tray {
                     api.prevent_close();
                     let _ = window.hide();
+                    set_webview_memory(window.app_handle(), true);
                 } else {
                     window.app_handle().exit(0);
                 }
@@ -458,6 +520,9 @@ fn main() {
             }
             let window = builder.build()?;
             window.set_icon(tauri::image::Image::from_app_icon_resource(32)?)?;
+            if verify_ui || start_minimized {
+                set_webview_memory(app.handle(), true);
+            }
             use tauri::{
                 menu::{Menu, MenuItem},
                 tray::TrayIconBuilder,
@@ -474,6 +539,7 @@ fn main() {
                     "show" => {
                         if let Some(w) = app.get_webview_window("main") {
                             let _ = w.unminimize();
+                            set_webview_memory(w.app_handle(), false);
                             let _ = w.show();
                             let _ = w.set_focus();
                         }
@@ -490,6 +556,7 @@ fn main() {
                         let app = tray.app_handle();
                         if let Some(w) = app.get_webview_window("main") {
                             let _ = w.unminimize();
+                            set_webview_memory(w.app_handle(), false);
                             let _ = w.show();
                             let _ = w.set_focus();
                         }

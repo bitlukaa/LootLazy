@@ -26,13 +26,13 @@ If Questro helps you, consider leaving a star!
 ## Features
 
 - **Game Time** — Run lightweight game activity with continuous, preset, or custom timers. Manage one game or a saved queue.
-- **Game Variety** — Start with a clean lineup and choose 10, 50, 100, or a custom number of games. Shuffle, search, reorder, and run the group with one duration per game. Paused sessions with playtime can be resumed.
+- **Game Variety** — Begin with 10 games and choose 10, 50, 100, or save your own custom counts. Remove saved custom counts, shuffle, search, reorder, and run the group with one duration per game. Paused sessions with playtime can be resumed.
 - **Desktop play quests** — Browse available 15-minute quests and start directly from their cards. Accept the quest in Discord first; unfinished local sessions can be resumed.
 - **Idle Steam** — Keep owned games active for playtime and eligible Steam Trading Card drops. Run several games together with separate timers, and search for titles even when they aren't installed.
 - **Two-way sync** — Start matched Discord and Steam sessions together from either page.
 - **Pick up where you left off** — Pause, resume, clear, and reorder saved queues after reopening Questro.
 - **Make it yours** — Light and dark themes, English and Arabic, compact client indicators, desktop notifications, and tray controls.
-- **Keep it light** — A native Windows app with an executable of approximately 4.2 MB.
+- **Keep it light** — A native Windows app with an executable of approximately 4.3 MB.
 
 ## Screenshots
 
@@ -64,13 +64,15 @@ Windows 10/11 (64-bit) and Microsoft Edge WebView2 are required. Setup can downl
 
 **Quests:** accept the quest in Discord and choose **Desktop**, then click **Start Quest** in Questro. Check progress and claim your reward in Discord yourself.
 
-**Steam:** sign in to Steam, choose a game you own, and start. A compatible runtime from an installed Steam game is required; the selected title does not have to be installed.
+**Steam:** sign in to Steam, choose a game you own, and start. A compatible Valve-signed runtime from an installed Steam game is required; the selected title does not have to be installed.
 
 **Trading Cards:** choose an eligible game with card drops remaining to idle while Steam awards available drops. Check remaining drops on your Steam Badges page. Questro does not track remaining cards or stop automatically when drops run out; Steam controls eligibility and drop timing. See the [Steam Trading Cards FAQ](https://steamcommunity.com/tradingcards/faq/).
 
-**Updates:** use **Check updates** in Settings, then **Download & install** when a newer release is available. Stop active sessions first; saved settings and queues are preserved.
+**Updates:** use **Check updates** in Settings, then **Download & install** when a newer release is available. Stop active sessions first; saved settings and queues are preserved. Starting with version 3.6.8, updates also require a publisher signature.
 
 ## Privacy & account safety
+
+Local session helpers run separately from the game. Questro does not inject code into game processes or modify game files or memory.
 
 Questro does not request Discord passwords or account tokens, and does not automatically accept quests or claim rewards. Sessions use Questro's local timer; the app does not read your account's quest progress.
 
