@@ -1,6 +1,6 @@
 # Release history
 
-## 3.6.10 — October 12, 2026
+## 3.6.10 — October 13, 2026
 
 - Use LootLazy build paths, interface names and launchers exclusively.
 - Correct the updater helper executable-name check and exercise replacement with LootLazy.exe.
