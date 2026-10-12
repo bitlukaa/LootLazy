@@ -2510,7 +2510,7 @@ dependencies = [
 
 [[package]]
 name = "questro"
-version = "3.5.3"
+version = "3.5.4"
 dependencies = [
  "chrono",
  "rand",

@@ -1,13 +1,11 @@
 {
-  "version": "3.5.3",
+  "version": "3.5.4",
   "en": [
-    "Corrected Settings layout and sound preview.",
-    "Optional Discord sync from Idle Steam for matched titles.",
-    "Brief badge guidance and Steam library search tips."
+    "Simplified Settings: sound alerts removed.",
+    "Completion notifications remain available."
   ],
   "ar": [
-    "تصحيح ترتيب الإعدادات وتجربة الصوت.",
-    "مزامنة اختيارية مع ديسكورد من ستيم للألعاب المتطابقة.",
-    "توضيحات مختصرة للشارات والبحث عن ألعاب ستيم."
+    "تبسيط الإعدادات وإزالة التنبيهات الصوتية.",
+    "إشعارات انتهاء الجلسات تظل متاحة."
   ]
 }

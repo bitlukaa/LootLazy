@@ -2024,7 +2024,6 @@ impl Backend {
                     s["auto_discord_rpc"] = json!(s["auto_discord_rpc"].as_bool().unwrap_or(true));
                     s["desktop_notifications"] =
                         json!(s["desktop_notifications"].as_bool().unwrap_or(true));
-                    s["sound_alerts"] = json!(s["sound_alerts"].as_bool().unwrap_or(true));
                     s["quest_duration_seconds"] = json!(self.quest_target_duration_seconds());
                     s["total_playtime_seconds"] = json!(self.total_playtime_seconds());
                     s["steam_playtime_seconds"] = json!(self.steam_idle.total_seconds());
@@ -2035,9 +2034,6 @@ impl Backend {
                 let mut proposed = self.overrides.clone();
                 if let Some(secs) = body["quest_duration_seconds"].as_i64() {
                     proposed["settings"]["quest_duration_seconds"] = json!(secs.clamp(60, 3600));
-                }
-                if let Some(b) = body["sound_alerts"].as_bool() {
-                    proposed["settings"]["sound_alerts"] = json!(b);
                 }
                 if let Some(b) = body["scan_local_steam"].as_bool() {
                     proposed["settings"]["scan_local_steam"] = json!(b);
@@ -2105,7 +2101,6 @@ impl Backend {
                     "minimize_to_tray": self.overrides["settings"]["minimize_to_tray"].as_bool().unwrap_or(false),
                     "auto_discord_rpc": self.overrides["settings"]["auto_discord_rpc"].as_bool().unwrap_or(true),
                     "desktop_notifications": self.overrides["settings"]["desktop_notifications"].as_bool().unwrap_or(true),
-                    "sound_alerts": self.overrides["settings"]["sound_alerts"].as_bool().unwrap_or(true),
                     "quest_duration_seconds": self.quest_target_duration_seconds(),
                     "total_playtime_seconds": self.total_playtime_seconds(),
                     "active_steam_library": self.active_steam_library().to_string_lossy().to_string()
@@ -3147,13 +3142,10 @@ mod tests {
         f.0.save("active_quests.json", &f.0.quests).unwrap();
 
         let res =
-            f.0.route(
-                "/api/settings",
-                json!({"quest_duration_seconds": 910, "sound_alerts": true}),
-            )
-            .unwrap();
+            f.0.route("/api/settings", json!({"quest_duration_seconds": 910}))
+                .unwrap();
         assert_eq!(res["quest_duration_seconds"], 910);
-        assert_eq!(res["sound_alerts"], true);
+
         assert_eq!(f.0.quest_target_duration_seconds(), 910);
 
         f.0.route("/api/quests/start", json!({"questId":"123456"}))

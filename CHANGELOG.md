@@ -1,5 +1,10 @@
 # Release history
 
+## 3.5.4 — October 12, 2026
+
+- Removed Sound Alerts and its preview control.
+- Kept visual and desktop completion notifications.
+
 ## 3.5.3 — October 12, 2026
 
 - Fixed the Settings layout and placed the sound preview alongside Sound Alerts.
