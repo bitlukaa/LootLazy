@@ -38,11 +38,11 @@ If Questro helps you, consider leaving a star!
 
 | Game Time | Game Variety |
 |:---:|:---:|
-| [![Game Time](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-time.svg)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-time.svg) | [![Game Variety](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-variety.svg)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-variety.svg) |
+| [![Game Time](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-time.png)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-time.png) | [![Game Variety](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-variety.png)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/game-variety.png) |
 
 | Idle Steam | Quests |
 |:---:|:---:|
-| [![Idle Steam](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/idle-steam.svg)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/idle-steam.svg) | [![Quests](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/quests.svg)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/quests.svg) |
+| [![Idle Steam](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/idle-steam.png)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/idle-steam.png) | [![Quests](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/quests.png)](https://raw.githubusercontent.com/bitlukaa/Questro/main/docs/screenshots/quests.png) |
 
 Click a screenshot to view it at full size.
 
