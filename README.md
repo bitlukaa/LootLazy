@@ -19,7 +19,7 @@ Questro keeps things simple: choose your games, set a timer, and start a session
 
 ## Get started
 
-1. Download the latest archive from [Releases](https://github.com/bitlukaa/Questro/releases), extract it, and open **Questro.exe**.
+1. Choose a download from [Releases](https://github.com/bitlukaa/Questro/releases): **Setup** installs Questro and creates shortcuts; **Portable ZIP** runs without installation.
 2. Choose a game or quest and set your duration.
 3. Start the session. You can pause, resume, or clear a saved queue whenever you need.
 
@@ -27,8 +27,10 @@ For quests, accept the quest in Discord and choose **Desktop** before starting i
 
 For Steam sessions, the game must be in your Steam library. Steam needs to be signed in, and a compatible Steam runtime must be available from an installed game. The selected title does not have to be installed.
 
-## Latest update · 3.5.4
+## Latest update · 3.6.0
 
+- Setup and portable download options.
+- In-app update downloads and installation when a newer release is available.
 - Corrected Settings layout.
 - Two-way Discord and Steam sync for matched titles.
 - Short badge guidance and Steam library search tips.
@@ -39,6 +41,10 @@ For Steam sessions, the game must be in your Steam library. Steam needs to be si
 - A dedicated Donation page and optional completion notifications.
 
 See the [release history](CHANGELOG.md) for updates.
+
+## Updates
+
+Use **Check updates** in Settings. When a newer release is available, choose **Download & install** to update and restart Questro. Stop active sessions first; your saved settings and queues are preserved.
 
 ## Privacy & limitations
 

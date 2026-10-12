@@ -49,9 +49,10 @@ fn parse_release(release: &Value, current: &str) -> Result<Value, String> {
     {
         return Err("Invalid download".into());
     }
+    let binary = executable_metadata(release).ok();
     let current = semver::Version::parse(current).map_err(|_| "Invalid current version")?;
     Ok(
-        json!({"status":if version>current {"available"}else{"up_to_date"},"latestVersion":version.to_string(),"notes":release["body"].as_str().unwrap_or("").chars().take(8000).collect::<String>(),"downloadUrl":url.as_str()}),
+        json!({"status":if version>current {"available"}else{"up_to_date"},"latestVersion":version.to_string(),"notes":release["body"].as_str().unwrap_or("").chars().take(8000).collect::<String>(),"downloadUrl":url.as_str(),"canInstall":binary.is_some(),"binaryUrl":binary.as_ref().map(|value|value["binaryUrl"].clone()),"sha256":binary.as_ref().map(|value|value["sha256"].clone()),"binarySize":binary.as_ref().map(|value|value["binarySize"].clone())}),
     )
 }
 fn fetch() -> Result<Value, String> {
@@ -104,34 +105,166 @@ pub fn check() -> Value {
     *cached = Some((Instant::now(), value.clone()));
     value
 }
-pub fn open_releases() -> Result<(), String> {
-    #[cfg(windows)]
-    unsafe {
-        use windows_sys::Win32::UI::{Shell::ShellExecuteW, WindowsAndMessaging::SW_SHOWNORMAL};
-        let wide = |s: &str| s.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
-        let verb = wide("open");
-        let url = wide(RELEASES);
-        let result = ShellExecuteW(
-            std::ptr::null_mut(),
-            verb.as_ptr(),
-            url.as_ptr(),
-            std::ptr::null(),
-            std::ptr::null(),
-            SW_SHOWNORMAL,
-        );
-        if result as isize <= 32 {
-            return Err("Could not open releases".into());
-        }
-        Ok(())
+fn trusted_asset_url(value: &str, name: &str) -> Result<url::Url, String> {
+    let url = url::Url::parse(value).map_err(|_| "Invalid download")?;
+    if url.scheme() != "https"
+        || url.host_str() != Some("github.com")
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.port().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+        || !url
+            .path()
+            .starts_with("/bitlukaa/Questro/releases/download/")
+        || !url.path().ends_with(&format!("/{name}"))
+    {
+        return Err("Invalid download".into());
     }
-    #[cfg(not(windows))]
-    Err("Opening releases is only supported on Windows".into())
+    Ok(url)
+}
+fn executable_metadata(release: &Value) -> Result<Value, String> {
+    let asset = release["assets"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .find(|asset| asset["name"] == "Questro.exe")
+        .ok_or("Update executable unavailable")?;
+    let url = trusted_asset_url(
+        asset["browser_download_url"]
+            .as_str()
+            .ok_or("Missing download")?,
+        "Questro.exe",
+    )?;
+    let hash = asset["digest"]
+        .as_str()
+        .and_then(|digest| digest.strip_prefix("sha256:"))
+        .filter(|hash| hash.len() == 64 && hash.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .ok_or("Missing update checksum")?;
+    let size = asset["size"]
+        .as_u64()
+        .filter(|size| (512..=64 * 1024 * 1024).contains(size))
+        .ok_or("Invalid update size")?;
+    Ok(json!({"binaryUrl":url.as_str(),"sha256":hash,"binarySize":size,"canInstall":true}))
+}
+pub fn stage(root: &std::path::Path) -> Result<Value, String> {
+    use sha2::{Digest, Sha256};
+    use std::io::Write;
+    let release = check();
+    if release["status"] != "available" || release["canInstall"] != true {
+        return Err("updates_unavailable".into());
+    }
+    let url = trusted_asset_url(
+        release["binaryUrl"].as_str().ok_or("Invalid download")?,
+        "Questro.exe",
+    )?;
+    let client = reqwest::blocking::Client::builder()
+        .timeout(Duration::from_secs(120))
+        .redirect(reqwest::redirect::Policy::custom(|attempt| {
+            if attempt.previous().len() > 3
+                || attempt.url().scheme() != "https"
+                || !matches!(
+                    attempt.url().host_str(),
+                    Some(
+                        "github.com"
+                            | "release-assets.githubusercontent.com"
+                            | "objects.githubusercontent.com"
+                    )
+                )
+            {
+                attempt.error("Untrusted update redirect")
+            } else {
+                attempt.follow()
+            }
+        }))
+        .user_agent(format!("Questro/{}", env!("CARGO_PKG_VERSION")))
+        .build()
+        .map_err(|error| error.to_string())?;
+    let mut response = client
+        .get(url)
+        .send()
+        .map_err(|_| "updates_download_failed")?
+        .error_for_status()
+        .map_err(|_| "updates_download_failed")?;
+    let expected = release["binarySize"]
+        .as_u64()
+        .ok_or("Invalid update size")?;
+    let mut bytes = Vec::new();
+    (&mut response)
+        .take(expected + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| "updates_download_failed")?;
+    let hash = format!("{:x}", Sha256::digest(&bytes));
+    if bytes.len() as u64 != expected
+        || hash
+            != release["sha256"]
+                .as_str()
+                .unwrap_or("")
+                .to_ascii_lowercase()
+        || !bytes.starts_with(b"MZ")
+    {
+        return Err("updates_checksum_failed".into());
+    }
+    let directory = root.join("data/updates");
+    std::fs::create_dir_all(&directory).map_err(|_| "updates_save_failed")?;
+    let source = directory.join("Questro-update.exe");
+    let partial = directory.join("download.partial");
+    let mut file = std::fs::File::create(&partial).map_err(|_| "updates_save_failed")?;
+    file.write_all(&bytes).map_err(|_| "updates_save_failed")?;
+    file.sync_all().map_err(|_| "updates_save_failed")?;
+    drop(file);
+    std::fs::rename(&partial, &source).map_err(|_| "updates_save_failed")?;
+    let target = std::env::current_exe().map_err(|_| "updates_save_failed")?;
+    let manifest = json!({"source":source,"target":target,"parentPid":std::process::id(),"sha256":hash,"version":release["latestVersion"],"restart":true});
+    crate::storage::save(&directory.join("install.json"), &manifest)?;
+    std::fs::write(
+        directory.join("install.ps1"),
+        include_str!("../../tools/install-update.ps1"),
+    )
+    .map_err(|_| "updates_save_failed")?;
+    Ok(json!({"version":release["latestVersion"],"ready":true}))
+}
+pub fn launch_installer(root: &std::path::Path) -> Result<(), String> {
+    let directory = root.join("data/updates");
+    let mut command = std::process::Command::new("powershell.exe");
+    command
+        .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"])
+        .arg(directory.join("install.ps1"))
+        .arg("-ManifestPath")
+        .arg(directory.join("install.json"));
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000);
+    }
+    command.spawn().map_err(|_| "updates_install_failed")?;
+    Ok(())
 }
 #[cfg(test)]
 mod tests {
     use super::*;
     fn release(version: &str) -> Value {
         json!({"tag_name":format!("v{version}"),"draft":false,"prerelease":false,"body":"New features","assets":[{"name":format!("Questro-{version}.zip"),"browser_download_url":format!("{RELEASES}/download/v{version}/Questro-{version}.zip")}]})
+    }
+    #[test]
+    fn executable_updates_require_a_trusted_url_digest_and_bounded_size() {
+        let mut value = release("99.0.0");
+        assert_eq!(parse_release(&value, "3.5.4").unwrap()["canInstall"], false);
+        value["assets"].as_array_mut().unwrap().push(json!({"name":"Questro.exe","browser_download_url":format!("{RELEASES}/download/v99.0.0/Questro.exe"),"digest":format!("sha256:{}","a".repeat(64)),"size":4096}));
+        assert_eq!(parse_release(&value, "3.5.4").unwrap()["canInstall"], true);
+        value["assets"][1]["digest"] = json!("sha256:invalid");
+        assert!(executable_metadata(&value).is_err());
+        value["assets"][1]["digest"] = json!(format!("sha256:{}", "a".repeat(64)));
+        value["assets"][1]["size"] = json!(65 * 1024 * 1024);
+        assert!(executable_metadata(&value).is_err());
+        value["assets"][1]["size"] = json!(4096);
+        value["assets"][1]["browser_download_url"] = json!("https://evil.example/Questro.exe");
+        assert!(executable_metadata(&value).is_err());
+        assert!(trusted_asset_url(
+            "https://github.com/another/repo/releases/download/v99/Questro.exe",
+            "Questro.exe"
+        )
+        .is_err());
     }
     #[test]
     fn numeric_versions_and_current_releases_are_compared_correctly() {

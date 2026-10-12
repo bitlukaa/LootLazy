@@ -1,5 +1,11 @@
 # Release history
 
+## 3.6.0 — October 12, 2026
+
+- Added Setup and portable download options.
+- Added in-app update downloads, verification, installation, and restart.
+- Simplified the Updates panel and clarified the Discord activity setting.
+
 ## 3.5.4 — October 12, 2026
 
 - Removed Sound Alerts and its preview control.

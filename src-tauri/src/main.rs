@@ -67,6 +67,7 @@ fn notify_desktop(title: String, body: String, window: tauri::WebviewWindow) {
         });
     }
 }
+static UPDATING: AtomicBool = AtomicBool::new(false);
 static CATALOG_REFRESH: Mutex<()> = Mutex::new(());
 static EXECUTABLE_LOOKUP: Mutex<Option<std::collections::HashMap<String, std::time::Instant>>> =
     Mutex::new(None);
@@ -82,9 +83,17 @@ fn refresh_game_catalog(state: &Shared) -> Result<(), String> {
         .apply_catalog_refresh(download)
 }
 #[tauri::command]
-async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Result<Value, String> {
+async fn api(
+    route: String,
+    body: Value,
+    state: tauri::State<'_, Shared>,
+    app: tauri::AppHandle,
+) -> Result<Value, String> {
     if !route.starts_with("/api/") || route.len() > 2000 {
         return Err("Invalid application route".into());
+    }
+    if UPDATING.load(Ordering::SeqCst) {
+        return Err("updates_busy".into());
     }
     let state = state.inner().clone();
     let log_root = state
@@ -99,9 +108,39 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
         match url.path() {
             "/api/updates" => return Ok(updates::info()),
             "/api/updates/check" => return Ok(updates::check()),
-            "/api/updates/open" => {
-                updates::open_releases()?;
-                return Ok(serde_json::json!({"success":true}));
+            "/api/updates/install" => {
+                let (root, busy) = {
+                    let backend = state.lock().map_err(|_| "Backend unavailable")?;
+                    (
+                        backend.root.clone(),
+                        backend.session.is_some()
+                            || backend.queue.active()
+                            || backend.quest_queue.active()
+                            || backend.variety.active()
+                            || backend.steam_idle.active(),
+                    )
+                };
+                if busy {
+                    return Err("updates_stop_sessions".into());
+                }
+                if UPDATING.swap(true, Ordering::SeqCst) {
+                    return Err("updates_busy".into());
+                }
+                let result = (|| {
+                    updates::stage(&root)?;
+                    updates::launch_installer(&root)?;
+                    state.lock().map_err(|_| "Backend unavailable")?.shutdown();
+                    let app = app.clone();
+                    std::thread::spawn(move || {
+                        std::thread::sleep(std::time::Duration::from_millis(350));
+                        app.exit(0);
+                    });
+                    Ok(serde_json::json!({"success":true,"restarting":true}))
+                })();
+                if result.is_err() {
+                    UPDATING.store(false, Ordering::SeqCst);
+                }
+                return result;
             }
             _ => {}
         }

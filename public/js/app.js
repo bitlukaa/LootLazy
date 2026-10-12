@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  if($('quest-search-clear'))$('quest-search-clear').onclick=()=>{if($('quest-search-input'))$('quest-search-input').value='';state.questSearchQuery='';$('quest-search-clear').hidden=true;renderQuests();};
  document.querySelectorAll('[data-quest-filter]').forEach(b=>b.onclick=()=>{state.questFilter=b.dataset.questFilter;document.querySelectorAll('[data-quest-filter]').forEach(el=>el.classList.toggle('active',el===b));renderQuests();});
  document.querySelectorAll('[data-theme-choice]').forEach(button=>button.onclick=event=>changeTheme(button.dataset.themeChoice,event));setSlot('settings-light-icon','sun');setSlot('settings-dark-icon','moon');setSlot('updates-refresh-icon','refresh');applyTheme(state.theme);document.documentElement.dataset.motion=state.motion?'full':'reduced';
- $('btn-check-updates').onclick=()=>loadUpdates(true);$('btn-open-releases').onclick=async()=>{try{await request('/api/updates/open',{});}catch{toast(t('open_release_error'),'error');}};
+ $('btn-check-updates').onclick=()=>loadUpdates(true);$('btn-install-update').onclick=installUpdate;
  let debounce;$('game-search-input').oninput=event=>{state.query=event.target.value.trim();clearTimeout(debounce);debounce=setTimeout(()=>fetchGames(),180);};$('game-search-input').onkeydown=event=>{if(event.key==='ArrowDown'){$('simulator-game-list').querySelector('button')?.focus();event.preventDefault();}};
  document.querySelectorAll('#view-simulator .duration-preset').forEach(button=>button.onclick=()=>{if(button.dataset.duration==='custom'){const h=Math.floor(state.durationMinutes/60),m=state.durationMinutes%60;$('duration-hours').value=h;$('duration-minutes').value=m;setDuration(state.durationMinutes,true);}else setDuration(Number(button.dataset.duration));});for(const id of ['duration-hours','duration-minutes'])$(id).oninput=()=>{try{setDuration(readDuration($('duration-hours'),$('duration-minutes')),true);}catch{state.durationValid=false;$('duration-error').hidden=false;$('duration-summary').textContent='—';renderSession();}};
  $('sim-executable-select').onchange=event=>{if(event.target.value==='___custom___'){document.querySelector('.custom-file-row').hidden=false;$('custom-exe-input').focus();$('save-override-btn').hidden=true;return;}document.querySelector('.custom-file-row').hidden=true;state.explicitExecutable=true;state.selectedExecutable=event.target.value;$('custom-exe-input').value=state.selectedExecutable;renderSelected();renderSession();};$('save-override-btn').onclick=saveExecutable;$('btn-toggle-sim').onclick=toggleSimulation;if($('btn-stop-sim'))$('btn-stop-sim').onclick=stopSimulation;
@@ -264,8 +264,8 @@ function renderUpdates(){
  const update=state.update;if(!update)return;const available=update.status==='available';
  $('updates-last-checked').textContent=update.checkedAt?dateText(update.checkedAt,true):'—';
  $('app-version').textContent='Questro '+(update.currentVersion||'');$('update-available-badge').hidden=!available;
- $('update-status').textContent=t(available?'update_available_version':update.status==='up_to_date'?'updates_current':update.status==='restricted'?'updates_preview':update.status==='offline'||update.status==='rate_limited'?'updates_unavailable':'updates_ready',{version:update.latestVersion||''});
- $('btn-open-releases').textContent=t(available?'get_update':'open_releases');
+ $('update-status').textContent=t(available?'update_available_version':update.status==='up_to_date'?'updates_current':['restricted','offline','rate_limited'].includes(update.status)?'updates_unavailable':'updates_ready',{version:update.latestVersion||''});
+ $('btn-install-update').hidden=!available||update.canInstall!==true;
 
 }
 
@@ -274,3 +274,5 @@ function renderUpdates(){
 
 
 
+
+async function installUpdate(){if(state.installingUpdate)return;state.installingUpdate=true;const button=$('btn-install-update');button.disabled=true;button.textContent=t('updates_downloading');try{await request('/api/updates/install',{});button.textContent=t('updates_restarting');}catch(error){const code=['updates_stop_sessions','updates_busy','updates_unavailable','updates_download_failed','updates_checksum_failed','updates_save_failed','updates_install_failed'].find(code=>String(error.message).includes(code));toast(t(code||'updates_install_failed'),'error');state.installingUpdate=false;button.disabled=false;button.textContent=t('install_update');}}

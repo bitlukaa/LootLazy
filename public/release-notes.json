@@ -1,11 +1,13 @@
 {
-  "version": "3.5.4",
+  "version": "3.6.0",
   "en": [
-    "Simplified Settings: sound alerts removed.",
-    "Completion notifications remain available."
+    "Setup and portable downloads.",
+    "Download and install available updates from Settings.",
+    "Simplified update controls and clarified Discord activity setting."
   ],
   "ar": [
-    "تبسيط الإعدادات وإزالة التنبيهات الصوتية.",
-    "إشعارات انتهاء الجلسات تظل متاحة."
+    "نسخة تثبيت ونسخة محمولة.",
+    "تنزيل التحديثات المتاحة وتثبيتها من الإعدادات.",
+    "تبسيط أدوات التحديث وتوضيح إعداد نشاط ديسكورد."
   ]
 }
