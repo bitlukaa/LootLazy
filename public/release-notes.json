@@ -1,13 +1,11 @@
 {
-  "version": "3.6.2",
+  "version": "3.6.3",
   "en": [
-    "Centered navigation with compact client status indicators.",
-    "Theme-colored Steam icon and refined light colors.",
-    "Cleaner empty states and more compact game rows."
+    "Published Lucide navigation icons and the Steam mark from Simple Icons.",
+    "Page-specific guidance and cleaner session placeholders."
   ],
   "ar": [
-    "تبويبات في المنتصف ومؤشرات حالة مختصرة.",
-    "أيقونة ستيم بألوان التطبيق وتحسين ألوان الوضع الفاتح.",
-    "تحسين حالة اختيار اللعبة وصفوف الألعاب."
+    "أيقونات Lucide جاهزة وشعار Steam من Simple Icons.",
+    "نصوص خاصة بكل صفحة وتحسين مساحة إعداد الجلسة."
   ]
 }

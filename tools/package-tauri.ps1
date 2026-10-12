@@ -1,4 +1,4 @@
-param([string]$OutputName='Questro-3.6.2',[switch]$UpdateExisting)
+param([string]$OutputName='Questro-3.6.3',[switch]$UpdateExisting)
 $ErrorActionPreference='Stop'
 if ($OutputName -notmatch '^Questro-\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?$') { throw 'Invalid package name.' }
 $projectRoot=Split-Path -Parent $PSScriptRoot

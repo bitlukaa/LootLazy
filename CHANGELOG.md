@@ -1,5 +1,10 @@
 # Release history
 
+## 3.6.3 — October 12, 2026
+
+- Replaced custom graphics with published Lucide and Simple Icons assets.
+- Added page-specific wording for game sessions, game lineups, Steam, preferences, and support.
+
 ## 3.6.2 — October 12, 2026
 
 - Centered the navigation and moved compact Discord/Steam statuses into the titlebar.
