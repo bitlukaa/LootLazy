@@ -1,5 +1,9 @@
 # Release history
 
+## 3.6.5 — October 12, 2026
+
+- Removed the unused Buy Me a Coffee option and centered the crypto support card.
+
 ## 3.6.4 — October 12, 2026
 
 - Refined support icons and removed duplicate branding.

@@ -83,8 +83,6 @@ Donation address:
 
 Make sure your sending network matches the network you intend to use.
 
-**Buy Me a Coffee:** coming soon. A creator-page link will be added when available.
-
 ## Community
 
 [Contributing](CONTRIBUTING.md) · [Community guidelines](CODE_OF_CONDUCT.md) · [Security policy](SECURITY.md)

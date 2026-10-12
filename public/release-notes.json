@@ -1,11 +1,9 @@
 {
-  "version": "3.6.4",
+  "version": "3.6.5",
   "en": [
-    "Refined support page with matching icons.",
-    "Crypto donation address with clear currency and network choices."
+    "Simplified support page with crypto donations only."
   ],
   "ar": [
-    "تحسين صفحة الدعم بأيقونات متناسقة.",
-    "عنوان تبرع رقمي مع اختيارات واضحة للعملة والشبكة."
+    "تبسيط صفحة الدعم لتبرعات الكريبتو فقط."
   ]
 }
