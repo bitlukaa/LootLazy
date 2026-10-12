@@ -91,7 +91,7 @@ If Questro makes things easier for you, your support helps make time for improve
 
 Donation address:
 
-`0xb71112d778780d7a586d9bd77e57df6f11192777`
+`0xcbd6fec2fb4acb31dc3dacac133ca364ccbe58d8`
 
 Make sure your sending network matches the network you intend to use.
 
