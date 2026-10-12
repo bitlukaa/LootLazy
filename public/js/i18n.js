@@ -1,6 +1,9 @@
 // Questro interface translations. Keep application logic and comments in English.
 const I18N = {
   "ar": {
+    "ready_to_start": "جاهز تبدأ؟",
+    "choose_game_session": "اختَر لعبة من القائمة لضبط جلستك.",
+    "select_game_hint": "اختَر لعبة للبدء",
     "install_update": "تنزيل وتثبيت",
     "updates_downloading": "جارٍ التنزيل…",
     "updates_restarting": "جارٍ إعادة التشغيل…",
@@ -292,6 +295,9 @@ const I18N = {
     "section_completed": "المهام المكتملة"
   },
   "en": {
+    "ready_to_start": "Ready to start?",
+    "choose_game_session": "Choose a game from the library to configure your session.",
+    "select_game_hint": "Select a game to begin",
     "install_update": "Download & install",
     "updates_downloading": "Downloading…",
     "updates_restarting": "Restarting…",

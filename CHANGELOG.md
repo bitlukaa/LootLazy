@@ -1,5 +1,11 @@
 # Release history
 
+## 3.6.2 — October 12, 2026
+
+- Centered the navigation and moved compact Discord/Steam statuses into the titlebar.
+- Matched the Steam icon to the app palette.
+- Refined empty session states, game rows, button interactions, and light-theme colors.
+
 ## 3.6.1 — October 12, 2026
 
 - Added matching icons to all main navigation tabs.

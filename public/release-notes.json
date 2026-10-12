@@ -1,11 +1,13 @@
 {
-  "version": "3.6.1",
+  "version": "3.6.2",
   "en": [
-    "Small matching icons across the main navigation.",
-    "Optimized Steam icon for a lighter interface."
+    "Centered navigation with compact client status indicators.",
+    "Theme-colored Steam icon and refined light colors.",
+    "Cleaner empty states and more compact game rows."
   ],
   "ar": [
-    "أيقونات صغيرة بمقاس موحّد في الشريط الرئيسي.",
-    "تخفيف حجم أيقونة ستيم."
+    "تبويبات في المنتصف ومؤشرات حالة مختصرة.",
+    "أيقونة ستيم بألوان التطبيق وتحسين ألوان الوضع الفاتح.",
+    "تحسين حالة اختيار اللعبة وصفوف الألعاب."
   ]
 }
