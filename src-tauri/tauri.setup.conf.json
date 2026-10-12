@@ -6,7 +6,8 @@
     ],
     "resources": {
       "../README.md": "README.md",
-      "../public/assets/THIRD-PARTY-NOTICES.txt": "THIRD-PARTY-NOTICES.txt"
+      "../public/assets/THIRD-PARTY-NOTICES.txt": "THIRD-PARTY-NOTICES.txt",
+      "../LICENSE": "LICENSE"
     },
     "windows": {
       "nsis": {
@@ -21,6 +22,7 @@
         "type": "downloadBootstrapper",
         "silent": true
       }
-    }
+    },
+    "licenseFile": "../LICENSE"
   }
 }

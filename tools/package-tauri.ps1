@@ -13,12 +13,13 @@ New-Item -ItemType Directory -Force -Path $output | Out-Null
 Copy-Item -LiteralPath $sourceExe -Destination (Join-Path $output 'Questro.exe')
 Copy-Item -LiteralPath (Join-Path $projectRoot 'public/assets/THIRD-PARTY-NOTICES.txt') -Destination $output
 Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination (Join-Path $output 'README.md')
+Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination (Join-Path $output 'LICENSE')
 $sourceHash=(Get-FileHash -LiteralPath $sourceExe -Algorithm SHA256).Hash
 $packageHash=(Get-FileHash -LiteralPath (Join-Path $output 'Questro.exe') -Algorithm SHA256).Hash
 if ($sourceHash -ne $packageHash) { throw 'Packaged executable does not match the tested build.' }
 $archive=Join-Path $releasesRoot "$OutputName.zip"
 if ((Test-Path -LiteralPath $archive) -and !$UpdateExisting) { throw 'Archive already exists.' }
-$payloadNames=@('Questro.exe','README.md','THIRD-PARTY-NOTICES.txt')
+$payloadNames=@('Questro.exe','README.md','LICENSE','THIRD-PARTY-NOTICES.txt')
 $payloadFiles=$payloadNames|ForEach-Object {Join-Path $output $_}
 Compress-Archive -LiteralPath $payloadFiles -DestinationPath $archive -CompressionLevel Optimal -Force
 $folderBytes=($payloadFiles|ForEach-Object {(Get-Item -LiteralPath $_).Length}|Measure-Object -Sum).Sum

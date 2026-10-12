@@ -30,4 +30,5 @@ jobs:
             releases/*-Setup.exe
             dist/Questro-Tauri/Questro.exe
             dist/Questro-Tauri/README.md
+            dist/Questro-Tauri/LICENSE
             dist/Questro-Tauri/THIRD-PARTY-NOTICES.txt

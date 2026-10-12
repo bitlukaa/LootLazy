@@ -27,6 +27,7 @@ catch {
 }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'public/assets/THIRD-PARTY-NOTICES.txt') -Destination $output
 Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $output
+Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination $output
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
 if (Test-Path -LiteralPath $compiler) {
   & $compiler /nologo /target:winexe /r:System.Windows.Forms.dll "/win32icon:$(Join-Path $projectRoot 'Questro.ico')" "/out:$(Join-Path $projectRoot 'Questro.exe')" (Join-Path $projectRoot 'src/Launcher.cs')

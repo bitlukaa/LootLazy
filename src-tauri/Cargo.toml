@@ -3,6 +3,7 @@ name = "questro"
 version = "3.6.0"
 edition = "2021"
 description = "Questro portable desktop application"
+license = "MIT"
 build = "build.rs"
 
 [features]
