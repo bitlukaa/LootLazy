@@ -16,8 +16,8 @@ Never send passwords, account tokens, or unredacted private diagnostics.
 
 ## Account safety
 
-Questro does not request Discord account credentials or automatically accept quests or claim rewards. This policy does not guarantee that platform use will be free from account restrictions or bans.
+LootLazy does not request Discord account credentials or automatically accept quests or claim rewards. This policy does not guarantee that platform use will be free from account restrictions or bans.
 
 ## Third-party components
 
-Questro includes third-party components with their own licenses. Their notices are preserved in distributed packages.
+LootLazy includes third-party components with their own licenses. Their notices are preserved in distributed packages.

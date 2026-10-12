@@ -1,16 +1,16 @@
-# Contributing to Questro
+# Contributing to LootLazy
 
 Bug reports, usability feedback, and focused improvements are welcome.
 
 ## Report an issue
 
-Include your Questro version, Windows version, steps to reproduce the problem, and what you expected to happen. Screenshots are helpful. Remove personal information before sharing logs or screenshots.
+Include your LootLazy version, Windows version, steps to reproduce the problem, and what you expected to happen. Screenshots are helpful. Remove personal information before sharing logs or screenshots.
 
 Never include passwords, account tokens, payment details, or private account data. For security issues, follow [SECURITY.md](SECURITY.md).
 
 ## Suggest a feature
 
-Describe the problem it solves and how it fits the existing interface. Questro focuses on local game sessions and manual quest controls; proposals should preserve that approach.
+Describe the problem it solves and how it fits the existing interface. LootLazy focuses on local game sessions and manual quest controls; proposals should preserve that approach.
 
 ## Submit a change
 
@@ -40,6 +40,6 @@ Install Node.js 22 or later and run `npm ci --ignore-scripts`, `npx playwright i
 
 Initialize the local key once with `tools/init-update-key.ps1`. It is protected by Windows DPAPI for the current user under LOCALAPPDATA/QuestroSigning, outside this repository. Only `src-tauri/update-public-key.hex` belongs in source control. Preserve the protected key and the Windows profile needed to recover it; never rotate the embedded public key casually or upload the private key.
 
-After the final build, run `tools/sign-release.ps1 -BinaryPath releases/Questro-<version>/Questro.exe`. Publish the resulting file with the exact asset name `Questro.exe.sig` alongside `Questro.exe` and the portable ZIP. The signature binds the version, SHA256 and file size. CI artifacts are development builds and are not automatically signed or published.
+After the final build, run `tools/sign-release.ps1 -BinaryPath releases/LootLazy-<version>/LootLazy.exe`. Publish the resulting file with the exact asset name `LootLazy.exe.sig` alongside `LootLazy.exe` and the portable ZIP. The signature binds the version, SHA256 and file size. CI artifacts are development builds and are not automatically signed or published.
 
-Older clients do not enforce the new signature policy until they install version 3.6.8 or later. Windows Authenticode signing of Questro itself is separate and still requires an appropriate publisher certificate. Steam SDK verification uses the installed SDK publisher signature and does not sign or modify the game.
+Older clients do not enforce the new signature policy until they install version 3.6.8 or later. Windows Authenticode signing of LootLazy itself is separate and still requires an appropriate publisher certificate. Steam SDK verification uses the installed SDK publisher signature and does not sign or modify the game.

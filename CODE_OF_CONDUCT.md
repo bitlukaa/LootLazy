@@ -1,6 +1,6 @@
-# Questro Community Guidelines
+# LootLazy Community Guidelines
 
-Help make Questro a welcoming place for feedback and collaboration.
+Help make LootLazy a welcoming place for feedback and collaboration.
 
 - Treat contributors and users with respect.
 - Discuss problems and proposed changes constructively.
