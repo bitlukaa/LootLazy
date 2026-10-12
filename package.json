@@ -1,7 +1,7 @@
 {
-  "name": "questro",
-  "version": "3.6.8",
-  "description": "Questro",
+  "name": "lootlazy",
+  "version": "3.6.9",
+  "description": "LootLazy",
   "scripts": {
     "start": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/start-tauri.ps1",
     "app": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/start-tauri.ps1",
@@ -17,9 +17,9 @@
     "game-simulator",
     "discord-quests",
     "executable-resolver",
-    "questro"
+    "lootlazy"
   ],
-  "author": "Questro",
+  "author": "LootLazy",
   "license": "MIT",
   "devDependencies": {
     "playwright": "1.56.1"

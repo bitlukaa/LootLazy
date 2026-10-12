@@ -4,8 +4,8 @@ use std::{
     sync::{Mutex, OnceLock},
     time::{Duration, Instant},
 };
-const RELEASES: &str = "https://github.com/bitlukaa/Questro/releases";
-const ENDPOINT: &str = "https://api.github.com/repos/bitlukaa/Questro/releases/latest";
+const RELEASES: &str = "https://github.com/bitlukaa/LootLazy/releases";
+const ENDPOINT: &str = "https://api.github.com/repos/bitlukaa/LootLazy/releases/latest";
 static CACHE: OnceLock<Mutex<Option<(Instant, Value)>>> = OnceLock::new();
 pub fn info() -> Value {
     json!({"currentVersion":env!("CARGO_PKG_VERSION"),"currentNotes":serde_json::from_str::<Value>(include_str!("../../public/release-notes.json")).unwrap_or(json!({})),"status":"idle","releasesUrl":RELEASES})
@@ -22,13 +22,15 @@ fn parse_release(release: &Value, current: &str) -> Result<Value, String> {
     if !version.pre.is_empty() {
         return Err("Unstable release".into());
     }
-    let expected = format!("Questro-{version}.zip");
+    let current_name = format!("LootLazy-{version}.zip");
+    let legacy_name = format!("Questro-{version}.zip");
     let asset = release["assets"]
         .as_array()
         .into_iter()
         .flatten()
-        .find(|a| a["name"] == expected)
+        .find(|a| a["name"] == current_name || a["name"] == legacy_name)
         .ok_or("Portable release unavailable")?;
+    let expected = asset["name"].as_str().ok_or("Missing asset name")?;
     let url = url::Url::parse(
         asset["browser_download_url"]
             .as_str()
@@ -42,9 +44,12 @@ fn parse_release(release: &Value, current: &str) -> Result<Value, String> {
         || url.port().is_some()
         || url.query().is_some()
         || url.fragment().is_some()
-        || !url
+        || !(url
             .path()
-            .starts_with("/bitlukaa/Questro/releases/download/")
+            .starts_with("/bitlukaa/LootLazy/releases/download/")
+            || url
+                .path()
+                .starts_with("/bitlukaa/Questro/releases/download/"))
         || !url.path().ends_with(&format!("/{expected}"))
     {
         return Err("Invalid download".into());
@@ -59,7 +64,7 @@ fn fetch() -> Result<Value, String> {
     let client = reqwest::blocking::Client::builder()
         .timeout(Duration::from_secs(10))
         .redirect(reqwest::redirect::Policy::none())
-        .user_agent(format!("Questro/{}", env!("CARGO_PKG_VERSION")))
+        .user_agent(format!("LootLazy/{}", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|e| e.to_string())?;
     let mut response = client
@@ -114,10 +119,15 @@ fn trusted_asset_url(value: &str, name: &str) -> Result<url::Url, String> {
         || url.port().is_some()
         || url.query().is_some()
         || url.fragment().is_some()
-        || !url
+        || !(url
             .path()
-            .starts_with("/bitlukaa/Questro/releases/download/")
-        || !url.path().ends_with(&format!("/{name}"))
+            .starts_with("/bitlukaa/LootLazy/releases/download/")
+            || url
+                .path()
+                .starts_with("/bitlukaa/Questro/releases/download/"))
+        || !(url.path().ends_with(&format!("/{name}"))
+            || (name == "Questro.exe" && url.path().ends_with("/LootLazy.exe"))
+            || (name == "Questro.exe.sig" && url.path().ends_with("/LootLazy.exe.sig")))
     {
         return Err("Invalid download".into());
     }
@@ -128,7 +138,7 @@ fn executable_metadata(release: &Value) -> Result<Value, String> {
         .as_array()
         .into_iter()
         .flatten()
-        .find(|asset| asset["name"] == "Questro.exe")
+        .find(|asset| asset["name"] == "LootLazy.exe" || asset["name"] == "Questro.exe")
         .ok_or("Update executable unavailable")?;
     let url = trusted_asset_url(
         asset["browser_download_url"]
@@ -149,7 +159,7 @@ fn executable_metadata(release: &Value) -> Result<Value, String> {
         .as_array()
         .into_iter()
         .flatten()
-        .find(|asset| asset["name"] == "Questro.exe.sig")
+        .find(|asset| asset["name"] == "LootLazy.exe.sig" || asset["name"] == "Questro.exe.sig")
         .ok_or("Signed update unavailable")?;
     let signature_url = trusted_asset_url(
         signature["browser_download_url"]
@@ -197,7 +207,7 @@ pub fn stage(root: &std::path::Path) -> Result<Value, String> {
                 attempt.follow()
             }
         }))
-        .user_agent(format!("Questro/{}", env!("CARGO_PKG_VERSION")))
+        .user_agent(format!("LootLazy/{}", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|error| error.to_string())?;
     let mut response = client
@@ -288,6 +298,24 @@ mod tests {
     use super::*;
     fn release(version: &str) -> Value {
         json!({"tag_name":format!("v{version}"),"draft":false,"prerelease":false,"body":"New features","assets":[{"name":format!("Questro-{version}.zip"),"browser_download_url":format!("{RELEASES}/download/v{version}/Questro-{version}.zip")}]})
+    }
+    #[test]
+    fn renamed_release_assets_keep_legacy_compatibility() {
+        let mut value = release("99.0.0");
+        value["assets"][0]["name"] = json!("LootLazy-99.0.0.zip");
+        value["assets"][0]["browser_download_url"] =
+            json!(format!("{RELEASES}/download/v99.0.0/LootLazy-99.0.0.zip"));
+        value["assets"].as_array_mut().unwrap().extend([
+            json!({"name":"LootLazy.exe","browser_download_url":format!("{RELEASES}/download/v99.0.0/LootLazy.exe"),"digest":format!("sha256:{}","a".repeat(64)),"size":4096}),
+            json!({"name":"LootLazy.exe.sig","browser_download_url":format!("{RELEASES}/download/v99.0.0/LootLazy.exe.sig"),"size":300})
+        ]);
+        assert_eq!(parse_release(&value, "3.6.8").unwrap()["canInstall"], true);
+        assert!(trusted_asset_url(
+            "https://github.com/bitlukaa/LootLazy-other/releases/download/v99/LootLazy.exe",
+            "Questro.exe"
+        )
+        .is_err());
+        assert!(parse_release(&release("3.6.8"), "3.6.9").is_ok());
     }
     #[test]
     fn executable_updates_require_a_trusted_url_digest_and_bounded_size() {

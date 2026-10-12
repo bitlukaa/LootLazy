@@ -1909,6 +1909,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
+name = "lootlazy"
+version = "3.6.9"
+dependencies = [
+ "chrono",
+ "ed25519-dalek",
+ "rand",
+ "reqwest",
+ "semver",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "tauri-build",
+ "tokio",
+ "url",
+ "webview2-com",
+ "windows-core",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "markup5ever"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2606,27 +2627,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "questro"
-version = "3.6.8"
-dependencies = [
- "chrono",
- "ed25519-dalek",
- "rand",
- "reqwest",
- "semver",
- "serde",
- "serde_json",
- "sha2",
- "tauri",
- "tauri-build",
- "tokio",
- "url",
- "webview2-com",
- "windows-core",
- "windows-sys 0.61.2",
 ]
 
 [[package]]

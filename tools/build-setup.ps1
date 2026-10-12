@@ -14,7 +14,7 @@ $source=Get-ChildItem -LiteralPath (Join-Path $env:CARGO_TARGET_DIR 'release/bun
 if(!$source){throw 'Setup file not found'}
 $releases=Join-Path $projectRoot 'releases'
 New-Item -ItemType Directory -Force -Path $releases | Out-Null
-$destination=Join-Path $releases "Questro-$version-Setup.exe"
+$destination=Join-Path $releases "LootLazy-$version-Setup.exe"
 Copy-Item -LiteralPath $source.FullName -Destination $destination -Force
 Write-Output "Setup ready: $destination"
 }finally{Pop-Location}

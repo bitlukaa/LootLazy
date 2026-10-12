@@ -23,3 +23,17 @@ test('quest refresh applies its one-minute manual cooldown at the boundary',asyn
  now++;await fn(true,false);assert.deepEqual(routes,['/api/quests?refresh=true']);assert.equal(context.lastRealQuestFetch,now);assert.equal(saved[0][0],'questro_last_quest_fetch');
  await fn(true,false);assert.equal(routes.length,1);
 });
+test('quest refresh toasts quests_current when existing quests are unchanged',async()=>{
+ const start=source.indexOf('async function loadQuests('),end=source.indexOf('async function playQuest(',start);assert.ok(start>=0&&end>start);
+ const messages=[];const context={state:{quests:[{id:'100',kind:'play',durationSeconds:900}]},questsBusy:false,lastRealQuestFetch:0,lastQuestRefresh:0,$:()=>({}),busy:()=>{},Date:{now:()=>2000000,parse:Date.parse},setTimeout:cb=>cb(),renderQuests:()=>{},trackQuestUpdates:()=>{},questMatches:()=>false,localStorage:{setItem:()=>{}},toast:value=>messages.push(value),number:String,t:key=>key,request:async()=>{return {quests:[{id:'100',kind:'play',durationSeconds:900}],last_synced:new Date().toISOString()};}};
+ const fn=vm.runInNewContext(source.slice(start,end)+';loadQuests',context);
+ await fn(true,false);
+ assert.deepEqual(messages,['quests_current']);
+});
+test('quest refresh toasts quests_new_found when new quests arrive',async()=>{
+ const start=source.indexOf('async function loadQuests('),end=source.indexOf('async function playQuest(',start);assert.ok(start>=0&&end>start);
+ const messages=[];const context={state:{quests:[{id:'100',kind:'play',durationSeconds:900}]},questsBusy:false,lastRealQuestFetch:0,lastQuestRefresh:0,$:()=>({}),busy:()=>{},Date:{now:()=>2000000,parse:Date.parse},setTimeout:cb=>cb(),renderQuests:()=>{},trackQuestUpdates:()=>{},questMatches:()=>false,localStorage:{setItem:()=>{}},toast:value=>messages.push(value),number:String,t:key=>key,request:async()=>{return {quests:[{id:'100',kind:'play',durationSeconds:900},{id:'200',kind:'play',durationSeconds:900}],last_synced:new Date().toISOString()};}};
+ const fn=vm.runInNewContext(source.slice(start,end)+';loadQuests',context);
+ await fn(true,false);
+ assert.deepEqual(messages,['quests_new_found']);
+});

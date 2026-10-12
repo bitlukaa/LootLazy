@@ -1,8 +1,8 @@
 [package]
-name = "questro"
-version = "3.6.8"
+name = "lootlazy"
+version = "3.6.9"
 edition = "2021"
-description = "Questro portable desktop application"
+description = "LootLazy portable desktop application"
 license = "MIT"
 build = "build.rs"
 

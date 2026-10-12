@@ -16,7 +16,7 @@
         "languages": [
           "English"
         ],
-        "startMenuFolder": "Questro"
+        "startMenuFolder": "LootLazy"
       },
       "webviewInstallMode": {
         "type": "downloadBootstrapper",

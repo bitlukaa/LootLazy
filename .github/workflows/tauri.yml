@@ -39,10 +39,10 @@ jobs:
         run: ./tools/build-setup.ps1
       - uses: actions/upload-artifact@v4
         with:
-          name: Questro-Tauri-Windows
+          name: LootLazy-Windows
           path: |
             releases/*-Setup.exe
-            dist/Questro-Tauri/Questro.exe
+            dist/Questro-Tauri/LootLazy.exe
             dist/Questro-Tauri/README.md
             dist/Questro-Tauri/LICENSE
             dist/Questro-Tauri/THIRD-PARTY-NOTICES.txt

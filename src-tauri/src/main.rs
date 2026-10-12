@@ -81,7 +81,7 @@ fn notify_desktop(title: String, body: String, window: tauri::WebviewWindow) {
                  $s.Item(0).AppendChild($t.CreateTextNode('{}')) | Out-Null; \
                  $s.Item(1).AppendChild($t.CreateTextNode('{}')) | Out-Null; \
                  $n = [Windows.UI.Notifications.ToastNotification]::new($t); \
-                 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Questro').Show($n)",
+                 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('LootLazy').Show($n)",
                 title.replace('\'', "''"),
                 body.replace('\'', "''")
             );
@@ -315,7 +315,7 @@ fn single_instance() -> bool {
             System::Threading::CreateMutexW,
             UI::WindowsAndMessaging::{FindWindowW, SetForegroundWindow, ShowWindow, SW_RESTORE},
         };
-        let name: Vec<u16> = "Local\\QuestroTauriPortable"
+        let name: Vec<u16> = "Local\\LootLazyPortable"
             .encode_utf16()
             .chain(Some(0))
             .collect();
@@ -324,7 +324,7 @@ fn single_instance() -> bool {
             return false;
         }
         if GetLastError() == ERROR_ALREADY_EXISTS {
-            let title: Vec<u16> = "Questro".encode_utf16().chain(Some(0)).collect();
+            let title: Vec<u16> = "LootLazy".encode_utf16().chain(Some(0)).collect();
             let win = FindWindowW(std::ptr::null(), title.as_ptr());
             if !win.is_null() {
                 ShowWindow(win, SW_RESTORE);
@@ -380,7 +380,7 @@ fn main() {
     }
     let root = root();
     let temp = root.join("data/temp");
-    std::fs::create_dir_all(&temp).expect("Questro folder must be writable");
+    std::fs::create_dir_all(&temp).expect("LootLazy folder must be writable");
     for key in ["TEMP", "TMP", "TMPDIR"] {
         std::env::set_var(key, &temp);
     }
@@ -404,7 +404,7 @@ fn main() {
     if !isolated_ui_test && !single_instance() {
         return;
     }
-    let mut backend = backend::Backend::new(root.clone()).expect("Cannot load Questro data");
+    let mut backend = backend::Backend::new(root.clone()).expect("Cannot load LootLazy data");
     if isolated_ui_test {
         backend.disable_presence_for_diagnostics();
     }
@@ -499,7 +499,7 @@ fn main() {
             let start_minimized = std::env::args().any(|a| a == "--minimized");
             let mut builder =
                 WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-                    .title("Questro")
+                    .title("LootLazy")
                     .inner_size(1100., 750.)
                     .min_inner_size(800., 600.)
                     .decorations(false)
@@ -527,13 +527,13 @@ fn main() {
                 menu::{Menu, MenuItem},
                 tray::TrayIconBuilder,
             };
-            let show = MenuItem::with_id(app, "show", "Show Questro", true, None::<&str>)?;
+            let show = MenuItem::with_id(app, "show", "Show LootLazy", true, None::<&str>)?;
             let exit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &exit])?;
             TrayIconBuilder::new()
                 .icon(tauri::image::Image::from_app_icon_resource(32)?)
                 .menu(&menu)
-                .tooltip("Questro")
+                .tooltip("LootLazy")
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => app.exit(0),
                     "show" => {
@@ -566,7 +566,7 @@ fn main() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("Questro startup failed");
+        .expect("LootLazy startup failed");
     app.run(move |_app, event| {
         if matches!(
             event,

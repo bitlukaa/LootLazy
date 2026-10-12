@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Questro",
-  "version": "3.6.8",
-  "identifier": "com.questro.desktop",
+  "productName": "LootLazy",
+  "version": "3.6.9",
+  "identifier": "com.lootlazy.desktop",
   "build": {
     "frontendDist": "../public"
   },
@@ -16,7 +16,7 @@
   "bundle": {
     "active": false,
     "icon": [
-      "../Questro.ico"
+      "../LootLazy.ico"
     ]
   }
 }

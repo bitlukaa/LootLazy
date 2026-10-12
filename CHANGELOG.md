@@ -1,5 +1,12 @@
 # Release history
 
+## 3.6.9 — October 12, 2026
+
+- Rename application, native window, tray controls, package metadata and distribution assets to LootLazy.
+- Accept the renamed release repository and legacy asset names while preserving signature verification.
+- Mark remaining-card tracking as an inactive preview and display unknown counts without implying zero.
+- Refresh the four interface screenshots and publication instructions.
+
 ## 3.6.8 — October 12, 2026
 
 - Confine helper writes to the games subtree, including dot and reserved game names.

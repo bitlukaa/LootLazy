@@ -16,9 +16,10 @@ New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Tauri build failed.' }
 $output = Join-Path $projectRoot 'dist/Questro-Tauri'
 New-Item -ItemType Directory -Force -Path $output | Out-Null
-$builtBinary = Join-Path $env:CARGO_TARGET_DIR 'release/questro.exe'
+$builtBinary = Join-Path $env:CARGO_TARGET_DIR 'release/lootlazy.exe'
 try {
-  Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $output 'Questro.exe')
+  Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $output 'LootLazy.exe') -Force
+  Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $output 'Questro.exe') -Force
   $staged=Join-Path $output 'Questro.exe.pending'
   if (Test-Path -LiteralPath $staged) { Remove-Item -LiteralPath $staged -Force }
 }
@@ -31,7 +32,14 @@ Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $output
 Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination $output
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
 if (Test-Path -LiteralPath $compiler) {
-  & $compiler /nologo /target:winexe /r:System.Windows.Forms.dll "/win32icon:$(Join-Path $projectRoot 'Questro.ico')" "/out:$(Join-Path $projectRoot 'Questro.exe')" (Join-Path $projectRoot 'src/Launcher.cs')
+  & $compiler /nologo /target:winexe /r:System.Windows.Forms.dll "/win32icon:$(Join-Path $projectRoot 'LootLazy.ico')" "/out:$(Join-Path $projectRoot 'LootLazy.exe')" (Join-Path $projectRoot 'src/Launcher.cs')
+  if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed.' }
+  Copy-Item -LiteralPath (Join-Path $projectRoot 'LootLazy.exe') -Destination (Join-Path $projectRoot 'Questro.exe') -Force
+  $parentDir = Split-Path -Parent $projectRoot
+  if (Test-Path -LiteralPath $parentDir) {
+    Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $parentDir 'LootLazy.exe') -Force
+    Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $parentDir 'Questro.exe') -Force
+  }
   if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed.' }
 }
 # Portable user data is never replaced by a rebuild.

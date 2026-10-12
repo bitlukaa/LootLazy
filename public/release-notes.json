@@ -1,5 +1,1 @@
-{
- "version":"3.6.8",
- "en":["Confined session helpers to the games folder and rebuilt the helper from source.","Updates now require an independent publisher signature.","Steam runtimes must pass Valve publisher verification before loading.","Improved artwork filtering and reproducible frontend checks."],
- "ar":["حصر ملفات مساعد التشغيل داخل مجلد الألعاب وإعادة بنائه من المصدر.","التحديثات تتطلب توقيعًا مستقلًا من الناشر.","التحقق من توقيع Valve لمكتبة Steam قبل تحميلها.","تحسين فلترة صور الألعاب واختبارات الواجهة."]
-}
+{"version":"3.6.9","en":["Renamed the application to LootLazy.","Fixed renamed GitHub release validation with legacy asset compatibility.","Remaining-card tracking is clearly marked as an inactive preview."],"ar":["تغيير اسم التطبيق إلى LootLazy.","إصلاح روابط التحديث مع دعم الملفات القديمة.","توضيح أن متابعة البطاقات قيد التجهيز."]}

@@ -17,3 +17,6 @@ releases/
 *.dpapi
 *.pk8
 *.private-key
+
+# Generated renamed launcher
+LootLazy.exe

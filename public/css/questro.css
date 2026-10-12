@@ -286,3 +286,25 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
   cursor: default !important;
   opacity: 0.8 !important;
 }
+
+/* Connections and privacy status styling */
+.connections-settings { margin-top: 24px; padding: 24px; }
+.connections-heading { margin-bottom: 20px; }
+.connections-heading h2 { font-size: 16px; font-weight: 650; }
+.connections-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.connection-card { border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: var(--surface-2); display: flex; flex-direction: column; gap: 12px; transition: border-color .15s, box-shadow .15s; }
+.connection-card:hover { border-color: var(--accent); }
+.connection-card-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.connection-card-title { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 650; }
+.connection-card-icon { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+.connection-card-desc { font-size: 12px; line-height: 1.7; margin: 0; }
+.status-pill.status-pill-session { background: hsl(var(--questro-primary)/.1); color: var(--accent); border-color: hsl(var(--questro-primary)/.25); }
+
+/* Steam Trading Cards panel styling */
+.steam-cards-panel { margin-top: 24px; padding: 24px; }
+.cards-heading-title { display: flex; align-items: center; gap: 10px; }
+.cards-panel-intro { font-size: 12px; margin-top: 6px; margin-bottom: 16px; line-height: 1.6; }
+.cards-empty-state { padding: 24px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; background: var(--surface-2); }
+.cards-empty-state p { margin: 0; font-size: 12px; line-height: 1.7; }
+.cards-eligible-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.card-drop-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); font-size: 12px; }
