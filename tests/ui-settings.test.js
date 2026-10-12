@@ -1,0 +1,11 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const vm=require('node:vm');
+const fs=require('node:fs');
+const path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../public/js/app.js'),'utf8');
+function run(name,context){const line=source.split(/\r?\n/).find(line=>line.startsWith('function '+name+'(')||line.startsWith('async function '+name+'('));assert.ok(line,name);return vm.runInNewContext(line+';'+name,context);}
+test('failed settings save restores the switch and releases it',async()=>{const control={disabled:false,getAttribute:()=> 'false'};const values=[];const messages=[];const fn=run('setSettingChoice',{document:{querySelector:()=>control},updateToggle:(key,value)=>values.push(value),request:async()=>{throw Error('disk full');},loadSettings:async()=>{},toast:value=>messages.push(value),t:key=>key});await fn('sound_alerts',true);assert.deepEqual(values,[true,false]);assert.equal(control.disabled,false);assert.deepEqual(messages,['settings_error']);});
+test('successful settings save reloads persisted values',async()=>{const control={disabled:false,getAttribute:()=> 'false'};let loads=0;const fn=run('setSettingChoice',{document:{querySelector:()=>control},updateToggle:()=>{},request:async()=>({}),loadSettings:async()=>{loads++;},toast:()=>{},t:key=>key});await fn('sound_alerts',true);assert.equal(loads,1);assert.equal(control.disabled,false);});
+test('manual refresh always reaches the backend even immediately after a refresh',async()=>{const routes=[];const state={};const fn=run('refreshCatalog',{state,$:()=>({}),busy:()=>{},request:async route=>{routes.push(route);return {changed:false,count:50};},lastRealCatalogFetch:Date.now(),localStorage:{setItem:()=>{}},loadStats:async()=>{},fetchGames:async()=>{},toast:()=>{},t:key=>key});await fn({},false);assert.deepEqual(routes,['/api/refresh-catalog']);assert.equal(state.catalogBusy,false);});
+test('session diagnostics show errors without asserting game detection',()=>{const fn=run('activityProblem',{errorText:value=>value});assert.equal(fn({presence:{state:'unavailable'}}),'unavailable');assert.equal(fn({presence:{state:'rejected'}}),'rejected');assert.equal(fn({presence:{state:'ready'}}),null);});

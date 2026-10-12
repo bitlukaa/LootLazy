@@ -148,7 +148,7 @@ impl Resolver {
         answer(vec![], "unresolved", false)
     }
 }
-fn detected_roots() -> Vec<PathBuf> {
+pub fn detected_roots() -> Vec<PathBuf> {
     let mut roots: Vec<PathBuf> = [
         "C:/Program Files (x86)/Steam",
         "C:/Program Files/Steam",

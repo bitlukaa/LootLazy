@@ -1,6 +1,6 @@
 [package]
 name = "questro"
-version = "3.3.0"
+version = "3.5.2"
 edition = "2021"
 description = "Questro portable desktop application"
 build = "build.rs"
@@ -23,7 +23,7 @@ rand = "0.9"
 sha2 = "0.10"
 url = "2"
 tokio = { version = "1", features = ["net", "io-util", "time", "rt"] }
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_Security", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_System_Diagnostics_ToolHelp", "Win32_System_LibraryLoader", "Win32_Security", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell"] }
 
 [profile.release]
 opt-level = "s"

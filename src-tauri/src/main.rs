@@ -6,6 +6,9 @@ mod executables;
 mod feed;
 mod metadata;
 mod presence;
+mod rotation;
+mod steam_client;
+mod steam_store;
 mod storage;
 mod updates;
 use serde_json::Value;
@@ -102,7 +105,15 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
             }
             _ => {}
         }
-        if ["/api/refresh-catalog", "/api/games", "/api/catalog-stats"].contains(&url.path()) {
+        if [
+            "/api/refresh-catalog",
+            "/api/games",
+            "/api/catalog-stats",
+            "/api/variety/shuffle",
+            "/api/steam/games",
+        ]
+        .contains(&url.path())
+        {
             let _refresh = CATALOG_REFRESH.lock().map_err(|_| "Catalog unavailable")?;
             let missing = state
                 .lock()
@@ -111,6 +122,21 @@ async fn api(route: String, body: Value, state: tauri::State<'_, Shared>) -> Res
                 .is_empty();
             if missing || url.path() == "/api/refresh-catalog" {
                 refresh_game_catalog(&state)?;
+            }
+        }
+        if url.path() == "/api/steam/games" {
+            let query = url
+                .query_pairs()
+                .find(|(key, _)| key == "q")
+                .map(|(_, value)| value.into_owned())
+                .unwrap_or_default();
+            if !query.trim().is_empty() {
+                if let Ok(games) = steam_store::search(&query) {
+                    state
+                        .lock()
+                        .map_err(|_| "Backend unavailable")?
+                        .remember_steam_search(games);
+                }
             }
         }
         if url.path() == "/api/quests"
@@ -245,6 +271,13 @@ fn single_instance() -> bool {
     true
 }
 fn main() {
+    let arguments: Vec<String> = std::env::args().collect();
+    if arguments
+        .get(1)
+        .is_some_and(|a| a == "--steam-session-worker")
+    {
+        std::process::exit(rotation::worker(&arguments));
+    }
     let root = root();
     let temp = root.join("data/temp");
     std::fs::create_dir_all(&temp).expect("Questro folder must be writable");

@@ -53,7 +53,12 @@ pub fn validated(value: &str) -> Result<url::Url, String> {
                 && ["app-icons", "app-assets", "quests"].contains(&parts[1])
                 && crate::storage::id(parts[2]).is_ok()
         }
-        Some("shared.akamai.steamstatic.com") => {
+        Some(
+            "shared.akamai.steamstatic.com"
+            | "shared.fastly.steamstatic.com"
+            | "cdn.akamai.steamstatic.com"
+            | "cdn.cloudflare.steamstatic.com",
+        ) => {
             parts.len() >= 6
                 && parts[1..4] == ["store_item_assets", "steam", "apps"]
                 && parts[4].bytes().all(|b| b.is_ascii_digit())

@@ -10,6 +10,13 @@ use std::{
 fn text(v: &Value, key: &str) -> String {
     v[key].as_str().unwrap_or("").to_string()
 }
+fn has_discord_artwork(game: &Value) -> bool {
+    ["icon_hash", "cover_image_hash"].iter().any(|key| {
+        game[*key]
+            .as_str()
+            .is_some_and(|hash| hash.len() >= 16 && hash.bytes().all(|b| b.is_ascii_hexdigit()))
+    })
+}
 fn stamp() -> String {
     Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
 }
@@ -75,10 +82,15 @@ pub struct Backend {
     quest_progress: Value,
     progress_warning: Option<String>,
     progress_saved_at: Instant,
+    queue_saved_at: Instant,
     last_tick_at: Instant,
     cache_cleanup_at: Instant,
     pub last_finished: Option<Value>,
     pub discord_mock: Option<bool>,
+    pub variety: crate::rotation::Rotation,
+    pub steam_idle: crate::rotation::SteamIdle,
+    steam_runtime: Option<PathBuf>,
+    steam_search: Vec<Value>,
 }
 impl Backend {
     pub fn new(root: PathBuf) -> Result<Self, String> {
@@ -130,6 +142,9 @@ impl Backend {
             })
             .take(30)
             .collect();
+        if !queue.items.is_empty() {
+            queue.phase = "paused".into();
+        }
         let saved_progress = read("quest_progress.json", json!({}));
         let learned = read("executable_metadata.json", json!({}));
         let mut quest_queue = Queue::new();
@@ -201,6 +216,16 @@ impl Backend {
                 .filter(Value::is_object)
                 .take(50)
                 .collect(),
+            variety: crate::rotation::Rotation::new(root.join("data/variety_queue.json")),
+            steam_idle: crate::rotation::SteamIdle::new(&root),
+            steam_runtime: None,
+            steam_search: read("steam_search.json", json!([]))
+                .as_array()
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .take(400)
+                .collect(),
             root,
             queue,
             quest_queue,
@@ -216,6 +241,7 @@ impl Backend {
                 json!({})
             },
             progress_saved_at: Instant::now(),
+            queue_saved_at: Instant::now(),
             progress_warning: None,
             last_tick_at: Instant::now(),
             cache_cleanup_at: Instant::now(),
@@ -251,7 +277,31 @@ impl Backend {
         storage::save(&self.root.join("data").join(name), data)
     }
     fn save_queue(&self) -> Result<(), String> {
-        self.save("queue.json",&json!({"items":self.queue.items.iter().filter(|v|!["completed","cancelled"].contains(&text(v,"state").as_str())).map(|v|{let mut v=v.clone();v.as_object_mut().unwrap().remove("state");v}).collect::<Vec<_>>(),"automatic":true}))
+        let items: Vec<Value> = self
+            .queue
+            .items
+            .iter()
+            .filter(|item| !["completed", "cancelled"].contains(&text(item, "state").as_str()))
+            .map(|item| {
+                let mut saved = item.clone();
+                if self.queue.phase == "running"
+                    && self
+                        .queue
+                        .items
+                        .get(self.queue.index)
+                        .map(|current| current["id"] == item["id"])
+                        .unwrap_or(false)
+                {
+                    if let Some(session) = &self.session {
+                        saved["resumeElapsedSeconds"] = json!(self.elapsed_seconds(session));
+                        saved["resumeCountedSeconds"] = session["resumeBaselineSeconds"].clone();
+                    }
+                }
+                saved["state"] = json!("paused");
+                saved
+            })
+            .collect();
+        self.save("queue.json", &json!({"items":items,"automatic":true}))
     }
     fn save_quest_queue(&self) -> Result<(), String> {
         let items: Vec<Value> = self
@@ -373,7 +423,9 @@ impl Backend {
         let live = self
             .session
             .as_ref()
-            .map(|s| self.elapsed_seconds(s))
+            .map(|s| {
+                (self.elapsed_seconds(s) - s["resumeBaselineSeconds"].as_i64().unwrap_or(0)).max(0)
+            })
             .unwrap_or(0);
         stored + live
     }
@@ -408,7 +460,7 @@ impl Backend {
                 }
             }
         }
-        json!({"discordConnected":discord_connected,"simulation":{"active":session.is_some(),"session":session},"queue":self.queue.status(),"questQueue":self.quest_queue.status(),"storageWarning":self.progress_warning,"lastFinished":self.last_finished,"totalPlaytimeSeconds":self.total_playtime_seconds()})
+        json!({"discordConnected":discord_connected,"steamRunning":crate::steam_client::running(),"steamConnected":self.steam_idle.items.iter().any(|item|item["state"]=="running"),"simulation":{"active":session.is_some(),"session":session},"queue":self.queue.status(),"questQueue":self.quest_queue.status(),"storageWarning":self.progress_warning,"lastFinished":self.last_finished,"totalPlaytimeSeconds":self.total_playtime_seconds(),"steamPlaytimeSeconds":self.steam_idle.total_seconds(),"variety":self.variety.status(),"steamIdle":{"rotation":self.steam_idle.status(),"runtimeReady":self.steam_runtime.is_some()}})
     }
     fn elapsed_seconds(&self, session: &Value) -> i64 {
         session["elapsedBeforeSegment"].as_i64().unwrap_or(0)
@@ -517,6 +569,50 @@ impl Backend {
         self.root.join("games")
     }
     fn start_process(&mut self, item: &Value) -> Result<(), String> {
+        if item["syncSteam"] != true {
+            return self.start_game_process(item);
+        }
+        let game = self
+            .game(&text(item, "appId"))
+            .ok_or("steam_sync_unavailable")?;
+        let steam_id = game["third_party_skus"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|sku| {
+                sku["distributor"] == "steam"
+                    && sku["id"].as_str().is_some_and(|id| {
+                        !id.is_empty() && id.len() <= 10 && id.bytes().all(|b| b.is_ascii_digit())
+                    })
+            })
+            .and_then(|sku| sku["id"].as_str())
+            .ok_or("steam_sync_unavailable")?
+            .to_string();
+        if self.steam_idle.items.iter().any(|entry| {
+            entry["steamId"] == steam_id
+                && ["starting", "running"].contains(&text(entry, "state").as_str())
+        }) {
+            return Err("steam_sync_already_running".into());
+        }
+        self.refresh_steam_runtime();
+        let dll = self.steam_runtime.clone().ok_or("steam_runtime_missing")?;
+        crate::steam_client::ensure_open()?;
+        self.start_game_process(item)?;
+        let mut steam_game = game;
+        steam_game["steamId"] = json!(steam_id);
+        steam_game["id"] = json!(steam_id);
+        if let Err(error) = self.steam_idle.start(&self.root, &dll, &steam_game, 0) {
+            let _ = self.stop_process("sync_start_failed");
+            return Err(error);
+        }
+        if let Some(session) = self.session.as_mut() {
+            session["pairedSteamId"] = json!(steam_id);
+            session["timerWaiting"] = json!(true);
+        }
+        self.started_at = None;
+        Ok(())
+    }
+    fn start_game_process(&mut self, item: &Value) -> Result<(), String> {
         if self.session.is_some() {
             return Err("A game is already running".into());
         }
@@ -590,10 +686,17 @@ impl Backend {
         let destination = Some(target.to_string_lossy().to_string());
         let activity = item["activityEnabled"] != false && auto_rpc;
         let mut s = json!({"appId":id,"questId":item["questId"],"questImage":item["questImage"],"gameName":item["gameName"],"executableName":exe,"executablePath":destination,"iconHash":item["iconHash"],"pid":child.as_ref().map(Child::id).unwrap_or(std::process::id()),"startTime":Utc::now().timestamp_millis(),"targetDurationSeconds":if duration>0.0{Some((duration*60.0).round() as i64)}else{None},"mode":if child.is_some(){if activity{"process_and_rpc"}else{"process_only"}}else{"rpc_only"}});
-        s["elapsedBeforeSegment"] = json!(item["resumeElapsedSeconds"]
+        let resume = item["resumeElapsedSeconds"].as_i64().unwrap_or(0).max(0);
+        let resume = if duration > 0.0 {
+            resume.min(((duration * 60.0).round() as i64).saturating_sub(1))
+        } else {
+            resume
+        };
+        s["elapsedBeforeSegment"] = json!(resume);
+        s["resumeBaselineSeconds"] = json!(item["resumeCountedSeconds"]
             .as_i64()
-            .unwrap_or(0)
-            .clamp(0, self.quest_target_duration_seconds().saturating_sub(1)));
+            .unwrap_or(resume)
+            .clamp(0, resume));
         s["timerWaiting"] = json!(self.allow_rpc && auto_rpc);
         self.child = child;
         self.session = Some(s.clone());
@@ -620,6 +723,9 @@ impl Backend {
         self.child = None;
         self.presence.stop();
         if let Some(mut session) = self.session.take() {
+            if let Some(id) = session["pairedSteamId"].as_str() {
+                let _ = self.steam_idle.pause(Some(id));
+            }
             let image = session["questImage"].as_str().map(str::to_string);
             self.prune_quest_cache(&image.into_iter().collect::<Vec<_>>());
             let duration = self.elapsed_seconds(&session);
@@ -627,7 +733,10 @@ impl Backend {
                 let cur = self.overrides["stats"]["total_playtime_seconds"]
                     .as_i64()
                     .unwrap_or(0);
-                self.overrides["stats"]["total_playtime_seconds"] = json!(cur + duration);
+                self.overrides["stats"]["total_playtime_seconds"] = json!(
+                    cur + (duration - session["resumeBaselineSeconds"].as_i64().unwrap_or(0))
+                        .max(0)
+                );
                 let _ = self.save("questro_overrides.json", &self.overrides);
             }
             self.started_at = None;
@@ -637,7 +746,7 @@ impl Backend {
             session["playedAt"] = json!(stamp());
             session["reason"] = json!(reason);
             let quest = text(&session, "questId");
-            if reason == "idle_timeout" {
+            if ["idle_timeout", "variety_completed"].contains(&reason) {
                 self.last_finished = Some(json!({
                     "gameName": session["gameName"],
                     "questId": quest,
@@ -841,6 +950,41 @@ impl Backend {
                     } else {
                         true
                     }));
+            let paired_id = self
+                .session
+                .as_ref()
+                .and_then(|session| session["pairedSteamId"].as_str())
+                .map(str::to_string);
+            let steam_ready = if let Some(id) = &paired_id {
+                let paired = self
+                    .steam_idle
+                    .items
+                    .iter()
+                    .find(|entry| entry["steamId"] == *id);
+                if paired.is_none()
+                    || paired.is_some_and(|entry| {
+                        ["error", "paused", "completed"].contains(&text(entry, "state").as_str())
+                    })
+                {
+                    let error = paired
+                        .map(|entry| text(entry, "error"))
+                        .filter(|error| !error.is_empty())
+                        .unwrap_or("steam_connection_lost".into());
+                    if self.queue.active() {
+                        let _ = self.pause_game_queue();
+                        self.queue.error = Some(error);
+                    } else {
+                        let _ = self.stop_process("sync_connection_lost");
+                        self.queue.error = Some(error);
+                    }
+                    self.queue.phase = "error".into();
+                    return;
+                }
+                paired.is_some_and(|entry| entry["state"] == "running")
+            } else {
+                true
+            };
+            let ready = ready && steam_ready;
             let is_quest = self
                 .session
                 .as_ref()
@@ -969,6 +1113,12 @@ impl Backend {
             self.quest_queue.items.len(),
         );
         self.tick_inner();
+        if self.queue.active() && self.queue_saved_at.elapsed() >= Duration::from_secs(5) {
+            let _ = self.save_queue();
+            self.queue_saved_at = Instant::now();
+        }
+        self.tick_variety();
+        self.steam_idle.tick();
         if before
             != (
                 self.quest_queue.phase.clone(),
@@ -1080,7 +1230,7 @@ impl Backend {
         } else {
             &mut self.queue
         };
-        if q.active() {
+        if q.active() || (!quest && q.phase == "paused" && !q.items.is_empty()) {
             if q.items.len() >= 30 {
                 return Err("Maximum 30 games".into());
             }
@@ -1165,7 +1315,329 @@ impl Backend {
         stopped?;
         saved
     }
+    fn start_variety(&mut self) -> Result<(), String> {
+        if self.session.is_some() || self.queue.active() || self.quest_queue.active() {
+            return Err("A game is already running".into());
+        }
+        let mut item = self.variety.prepare()?;
+        if let Some(game) = self.game(&text(&item, "appId")) {
+            item["executableName"] = self.resolve(&game)["primaryExecutable"].clone();
+        } else {
+            self.variety.fail("Game is not in the catalog");
+            return Err("Game is not in the catalog".into());
+        }
+        item["durationMinutes"] = json!(0);
+        match self.start_process(&item) {
+            Ok(()) => {
+                if let Some(s) = self.session.as_mut() {
+                    s["varietySession"] = json!(true);
+                }
+                self.variety.running();
+                Ok(())
+            }
+            Err(e) => {
+                self.variety.fail(&e);
+                Err(e)
+            }
+        }
+    }
+    fn tick_variety(&mut self) {
+        if self.variety.suspended() {
+            if let Some(session) = self.session.as_mut() {
+                session["elapsedBeforeSegment"] = json!(self.variety.elapsed());
+            }
+            self.started_at = None;
+            let _ = self.stop_process("variety_suspended");
+            return;
+        }
+        if self.variety.phase() == "running" {
+            if !self
+                .session
+                .as_ref()
+                .is_some_and(|s| s["varietySession"] == true)
+            {
+                self.variety.fail("process_ended_early");
+                return;
+            }
+            if self.variety.remaining() == 0 {
+                if let Err(e) = self.stop_process("variety_completed") {
+                    self.variety.fail(&e);
+                    return;
+                }
+                match self.variety.complete() {
+                    Ok(true) => {
+                        if let Err(e) = self.start_variety() {
+                            self.variety.fail(&e);
+                        }
+                    }
+                    Ok(false) => {}
+                    Err(e) => self.variety.fail(&e),
+                }
+            }
+        }
+        self.variety.checkpoint();
+        if self.variety.phase() == "error"
+            && self
+                .session
+                .as_ref()
+                .is_some_and(|s| s["varietySession"] == true)
+        {
+            let _ = self.stop_process("variety_error");
+        }
+    }
+    fn shuffle_variety(&mut self, body: &Value) -> Result<Value, String> {
+        use rand::seq::SliceRandom;
+        let count = body["count"].as_u64().unwrap_or(100) as usize;
+        if !(1..=crate::rotation::MAX_ITEMS).contains(&count) {
+            return Err("Choose between 1 and 500 games".into());
+        }
+        let duration = crate::rotation::minutes(body["durationMinutes"].as_u64().unwrap_or(10))?;
+        if self.variety.active() {
+            return Err("A game is already running".into());
+        }
+        let previous: std::collections::HashSet<_> = self.variety.data["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|i| i["id"].as_str())
+            .collect();
+        let mut seen = std::collections::HashSet::new();
+        let all: Vec<_> = self
+            .catalog
+            .iter()
+            .filter(|g| {
+                g["type"].as_i64().unwrap_or(1) == 1
+                    && has_discord_artwork(g)
+                    && storage::id(&text(g, "id")).is_ok()
+                    && seen.insert(text(g, "id"))
+            })
+            .collect();
+        let mut pool: Vec<_> = all
+            .iter()
+            .filter(|g| !previous.contains(g["id"].as_str().unwrap_or("")))
+            .copied()
+            .collect();
+        if pool.len() < count {
+            pool = all;
+        }
+        pool.shuffle(&mut rand::rng());
+        let pool: Vec<Value> = pool
+            .into_iter()
+            .take(crate::rotation::MAX_ITEMS)
+            .map(|g| crate::rotation::item(g, duration))
+            .collect();
+        let items = pool.iter().take(count).cloned().collect();
+        self.variety.replace(items)?;
+        self.variety.data["pool"] = json!(pool);
+        self.variety.data["defaultMinutes"] = json!(duration);
+        self.variety.save()?;
+        Ok(self.variety.status())
+    }
+    fn refresh_variety_cards(&mut self) -> Result<(), String> {
+        if self.variety.active() {
+            return Ok(());
+        }
+        let count = self.variety.data["items"].as_array().unwrap().len();
+        if count == 0 {
+            return Ok(());
+        }
+        let pictures: std::collections::HashMap<String, (Value, Value)> = self
+            .catalog
+            .iter()
+            .map(|g| {
+                (
+                    text(g, "id"),
+                    (g["icon_hash"].clone(), g["cover_image_hash"].clone()),
+                )
+            })
+            .collect();
+        for field in ["items", "pool"] {
+            if let Some(items) = self.variety.data[field].as_array_mut() {
+                for item in items {
+                    if let Some((icon, cover)) = pictures.get(&text(item, "appId")) {
+                        item["icon_hash"] = icon.clone();
+                        item["cover_image_hash"] = cover.clone();
+                    }
+                }
+            }
+        }
+        let minutes = self.variety.data["defaultMinutes"].as_u64().unwrap_or(10);
+        for field in ["items", "pool"] {
+            if let Some(items) = self.variety.data[field].as_array_mut() {
+                for item in items {
+                    item["durationMinutes"] = json!(minutes);
+                }
+            }
+        }
+        self.resize_variety(&json!({"count":count}))
+    }
+    fn sync_variety_pool(&mut self) {
+        let items = self.variety.data["items"].as_array().unwrap().clone();
+        if let Some(pool) = self.variety.data["pool"].as_array_mut() {
+            for item in items {
+                if let Some(saved) = pool.iter_mut().find(|g| g["id"] == item["id"]) {
+                    *saved = item;
+                }
+            }
+        }
+    }
+    fn resize_variety(&mut self, body: &Value) -> Result<(), String> {
+        let count = body["count"].as_u64().unwrap_or(0) as usize;
+        if !(1..=crate::rotation::MAX_ITEMS).contains(&count) {
+            return Err("Choose between 1 and 500 games".into());
+        }
+        if self.variety.active() {
+            return Err("A game is already running".into());
+        }
+        self.variety.data["items"]
+            .as_array_mut()
+            .unwrap()
+            .retain(has_discord_artwork);
+        self.sync_variety_pool();
+        let mut pool = self.variety.data["pool"]
+            .as_array()
+            .cloned()
+            .unwrap_or_else(|| self.variety.data["items"].as_array().unwrap().clone());
+        pool.retain(has_discord_artwork);
+        let duration = self.variety.data["defaultMinutes"].as_u64().unwrap_or(10);
+        let mut seen: std::collections::HashSet<String> =
+            pool.iter().map(|i| text(i, "id")).collect();
+        if pool.len() < count {
+            use rand::seq::SliceRandom;
+            let mut more: Vec<_> = self
+                .catalog
+                .iter()
+                .filter(|g| {
+                    g["type"].as_i64().unwrap_or(1) == 1
+                        && storage::id(&text(g, "id")).is_ok()
+                        && seen.insert(text(g, "id"))
+                })
+                .collect();
+            more.shuffle(&mut rand::rng());
+            pool.extend(
+                more.into_iter()
+                    .take(count - pool.len())
+                    .map(|g| crate::rotation::item(g, duration)),
+            );
+        }
+        let mut items = Vec::new();
+        for current in self.variety.data["items"].as_array().unwrap() {
+            if items.len() < count {
+                items.push(current.clone());
+            }
+        }
+        let mut chosen: std::collections::HashSet<String> =
+            items.iter().map(|g| text(g, "id")).collect();
+        for item in &pool {
+            if items.len() >= count {
+                break;
+            }
+            if chosen.insert(text(item, "id")) {
+                items.push(item.clone());
+            }
+        }
+        self.variety.replace(items)?;
+        self.variety.data["pool"] = json!(pool);
+        self.variety.data["defaultMinutes"] = json!(duration);
+        self.variety.save()
+    }
+    pub fn remember_steam_search(&mut self, games: Vec<Value>) {
+        for game in games {
+            if let Some(old) = self
+                .steam_search
+                .iter_mut()
+                .find(|g| g["steamId"] == game["steamId"])
+            {
+                *old = game;
+            } else {
+                self.steam_search.push(game);
+            }
+        }
+        if self.steam_search.len() > 400 {
+            self.steam_search.drain(..self.steam_search.len() - 400);
+        }
+        let _ = self.save("steam_search.json", &json!(self.steam_search));
+    }
+    fn refresh_steam_runtime(&mut self) {
+        if self.steam_runtime.as_ref().is_some_and(|p| p.is_file()) {
+            return;
+        }
+        let extra: Vec<PathBuf> = self.overrides["settings"]["steam_paths"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|v| v.as_str().map(PathBuf::from))
+            .collect();
+        self.steam_runtime = crate::rotation::discover_runtime(&crate::rotation::libraries(&extra));
+    }
+    fn steam_games(&self) -> Vec<Value> {
+        let extra: Vec<PathBuf> = self.overrides["settings"]["steam_paths"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|v| v.as_str().map(PathBuf::from))
+            .collect();
+        let mut games = crate::rotation::installed_games(&crate::rotation::libraries(&extra));
+        let mut seen: std::collections::HashSet<String> = games
+            .iter()
+            .filter_map(|g| g["steamId"].as_str().map(str::to_string))
+            .collect();
+        for item in &self.steam_idle.items {
+            if seen.insert(text(item, "steamId")) {
+                let mut game = item.clone();
+                game["name"] = item["gameName"].clone();
+                game["installed"] = json!(false);
+                games.push(game);
+            }
+        }
+        for game in &self.steam_search {
+            if seen.insert(text(game, "steamId")) {
+                games.push(game.clone());
+            }
+        }
+        for game in &self.catalog {
+            for sku in game["third_party_skus"].as_array().into_iter().flatten() {
+                if sku["distributor"] == "steam" {
+                    if let Some(id) = sku["id"].as_str().filter(|id| {
+                        !id.is_empty() && id.len() <= 10 && id.bytes().all(|b| b.is_ascii_digit())
+                    }) {
+                        if seen.insert(id.to_string()) {
+                            let mut game = game.clone();
+                            game["steamId"] = json!(id);
+                            game["id"] = json!(id);
+                            game["installed"] = json!(false);
+                            games.push(game);
+                        }
+                    }
+                }
+            }
+        }
+        games
+    }
+    fn pause_game_queue(&mut self) -> Result<(), String> {
+        if !self.queue.active() {
+            return Ok(());
+        }
+        if self.queue.phase == "running" {
+            if let Some(session) = &self.session {
+                let elapsed = self.elapsed_seconds(session);
+                if let Some(item) = self.queue.items.get_mut(self.queue.index) {
+                    item["resumeElapsedSeconds"] = json!(elapsed);
+                    item["resumeCountedSeconds"] = json!(elapsed);
+                    item["state"] = json!("paused");
+                }
+            }
+            self.stop_process("queue_paused")?;
+        }
+        self.queue.phase = "paused".into();
+        self.queue.waiting = None;
+        self.queue.wait_deadline = None;
+        self.save_queue()
+    }
     pub fn shutdown(&mut self) {
+        let _ = self.pause_game_queue();
+        let _ = self.variety.pause();
+        let _ = self.steam_idle.pause(None);
         self.queue.waiting = None;
         self.queue.wait_deadline = None;
         self.quest_queue.waiting = None;
@@ -1244,7 +1716,171 @@ impl Backend {
             parsed.query_pairs().into_owned().collect();
         let get = |key: &str| query.get(key).map(String::as_str).unwrap_or("");
         let post = !body.is_null();
+        if self.variety.active()
+            && [
+                "/api/play",
+                "/api/quests/start",
+                "/api/quests/resume-queue",
+                "/api/queue/start",
+            ]
+            .contains(&parsed.path())
+        {
+            return Err("A game is already running".into());
+        }
+        if self.variety.active() && ["/api/stop-current", "/api/stop"].contains(&parsed.path()) {
+            self.variety.pause()?;
+            self.stop_process("variety_paused")?;
+            return Ok(self.action_status());
+        }
         match parsed.path() {
+            "/api/variety" => {
+                self.refresh_variety_cards()?;
+                Ok(self.variety.status())
+            }
+            "/api/variety/shuffle" => self.shuffle_variety(&body),
+            "/api/variety/resize" => {
+                self.resize_variety(&body)?;
+                Ok(self.variety.status())
+            }
+            "/api/variety/start" => {
+                self.start_variety()?;
+                Ok(self.variety.status())
+            }
+            "/api/variety/pause" | "/api/variety/stop" => {
+                if self.variety.active() {
+                    self.variety.pause()?;
+                    self.stop_process("variety_paused")?;
+                }
+                Ok(self.variety.status())
+            }
+            "/api/variety/items" => {
+                self.variety.edit(&body)?;
+                self.sync_variety_pool();
+                self.variety.save()?;
+                Ok(self.variety.status())
+            }
+            "/api/variety/duration" => {
+                let minutes =
+                    crate::rotation::minutes(body["durationMinutes"].as_u64().unwrap_or(0))?;
+                let index = self.variety.index();
+                let active = self.variety.active();
+                for (i, item) in self.variety.data["items"]
+                    .as_array_mut()
+                    .unwrap()
+                    .iter_mut()
+                    .enumerate()
+                {
+                    if item["state"] != "completed" && (!active || i > index) {
+                        item["durationMinutes"] = json!(minutes);
+                        item["elapsedSeconds"] = json!(0);
+                    }
+                }
+                self.variety.data["defaultMinutes"] = json!(minutes);
+                self.sync_variety_pool();
+                if let Some(pool) = self.variety.data["pool"].as_array_mut() {
+                    for item in pool {
+                        if item["state"] != "completed" {
+                            item["durationMinutes"] = json!(minutes);
+                        }
+                    }
+                }
+                self.variety.save()?;
+                Ok(self.variety.status())
+            }
+            "/api/steam/status" => Ok(
+                json!({"rotation":self.steam_idle.status(),"runtimeReady":self.steam_runtime.is_some()}),
+            ),
+            "/api/steam/games" => {
+                self.refresh_steam_runtime();
+                let query = get("q").to_lowercase();
+                let games = self.steam_games();
+                let games: Vec<_> = games
+                    .into_iter()
+                    .filter(|g| {
+                        if query.is_empty() {
+                            g["installed"] == true
+                        } else {
+                            text(g, "name").to_lowercase().contains(&query)
+                                || text(g, "steamId") == query
+                        }
+                    })
+                    .collect();
+                Ok(
+                    json!({"total":games.len(),"games":games.into_iter().take(50).collect::<Vec<_>>(),"runtimeReady":self.steam_runtime.is_some()}),
+                )
+            }
+            "/api/steam/start" => {
+                self.refresh_steam_runtime();
+                let dll = self.steam_runtime.clone().ok_or("steam_runtime_missing")?;
+                crate::steam_client::ensure_open()?;
+                let sessions: Vec<(String, u64)> =
+                    if let Some(sessions) = body["sessions"].as_array() {
+                        if sessions.len() > 32 {
+                            return Err("steam_session_limit".into());
+                        }
+                        sessions
+                            .iter()
+                            .map(|item| {
+                                Ok((
+                                    item["steamId"]
+                                        .as_str()
+                                        .ok_or("Invalid Steam game")?
+                                        .to_string(),
+                                    item["durationMinutes"]
+                                        .as_u64()
+                                        .filter(|n| *n <= 1440)
+                                        .ok_or("Invalid duration")?,
+                                ))
+                            })
+                            .collect::<Result<_, String>>()?
+                    } else {
+                        let duration = body["durationMinutes"]
+                            .as_u64()
+                            .filter(|n| *n <= 1440)
+                            .ok_or("Invalid duration")?;
+                        if let Some(ids) = body["steamIds"].as_array() {
+                            if ids.len() > 32 {
+                                return Err("steam_session_limit".into());
+                            }
+                            ids.iter()
+                                .map(|id| {
+                                    id.as_str()
+                                        .map(|id| (id.to_string(), duration))
+                                        .ok_or("Invalid Steam game".to_string())
+                                })
+                                .collect::<Result<_, _>>()?
+                        } else {
+                            vec![(text(&body, "steamId"), duration)]
+                        }
+                    };
+                if sessions.is_empty() {
+                    return Err("No games selected".into());
+                }
+                let games = self.steam_games();
+                let selected: Vec<(Value, u64)> = sessions
+                    .iter()
+                    .map(|(id, duration)| {
+                        games
+                            .iter()
+                            .find(|game| game["steamId"] == id.as_str())
+                            .cloned()
+                            .map(|game| (game, *duration))
+                            .ok_or("Steam game not found".to_string())
+                    })
+                    .collect::<Result<_, _>>()?;
+                for (game, duration) in selected {
+                    self.steam_idle.start(&self.root, &dll, &game, duration)?;
+                }
+                Ok(self.steam_idle.status())
+            }
+            "/api/steam/pause" => {
+                self.steam_idle.pause(body["steamId"].as_str())?;
+                Ok(self.steam_idle.status())
+            }
+            "/api/steam/stop" => {
+                self.steam_idle.stop(body["steamId"].as_str())?;
+                Ok(self.steam_idle.status())
+            }
             "/api/status" => Ok(self.status()),
             "/api/queue" => Ok(self.queue.status()),
             "/api/history" => Ok(json!({"history":self.history})),
@@ -1311,6 +1947,7 @@ impl Backend {
                     s["sound_alerts"] = json!(s["sound_alerts"].as_bool().unwrap_or(true));
                     s["quest_duration_seconds"] = json!(self.quest_target_duration_seconds());
                     s["total_playtime_seconds"] = json!(self.total_playtime_seconds());
+                    s["steam_playtime_seconds"] = json!(self.steam_idle.total_seconds());
                     s["active_steam_library"] =
                         json!(self.active_steam_library().to_string_lossy().to_string());
                     return Ok(s);
@@ -1347,7 +1984,7 @@ impl Backend {
                     let min_enabled = proposed["settings"]["start_minimized"]
                         .as_bool()
                         .unwrap_or(false);
-                    set_startup_enabled(run_enabled, min_enabled);
+                    set_startup_enabled(run_enabled, min_enabled)?;
                 }
                 if let Some(paths) = body.get("steam_paths") {
                     let list = paths.as_array().ok_or("Invalid Steam folders")?;
@@ -1362,7 +1999,20 @@ impl Backend {
                     }
                     proposed["settings"]["steam_paths"] = paths.clone();
                 }
-                self.save("questro_overrides.json", &proposed)?;
+                if let Err(error) = self.save("questro_overrides.json", &proposed) {
+                    if body.get("run_on_startup").is_some() || body.get("start_minimized").is_some()
+                    {
+                        let _ = set_startup_enabled(
+                            self.overrides["settings"]["run_on_startup"]
+                                .as_bool()
+                                .unwrap_or(false),
+                            self.overrides["settings"]["start_minimized"]
+                                .as_bool()
+                                .unwrap_or(false),
+                        );
+                    }
+                    return Err(error);
+                }
                 self.overrides = proposed;
                 self.executable_resolver.clear_local();
                 let saved_pref = self.overrides["settings"]["run_on_startup"]
@@ -1409,7 +2059,7 @@ impl Backend {
                         .game(&text(&body, "appId"))
                         .ok_or("Game is not in the catalog")?;
                     let resolution = self.resolve(&game);
-                    json!({"appId":game["id"],"gameName":game["name"],"executableName":if body["executableAutomatic"]==true{resolution["primaryExecutable"].clone()}else{body["executableName"].as_str().filter(|s|!s.is_empty()).map(json_value).unwrap_or(resolution["primaryExecutable"].clone())},"durationMinutes":body["durationMinutes"],"iconHash":game["icon_hash"]})
+                    json!({"appId":game["id"],"gameName":game["name"],"executableName":if body["executableAutomatic"]==true{resolution["primaryExecutable"].clone()}else{body["executableName"].as_str().filter(|s|!s.is_empty()).map(json_value).unwrap_or(resolution["primaryExecutable"].clone())},"durationMinutes":body["durationMinutes"],"iconHash":game["icon_hash"],"syncSteam":body["syncSteam"]==true})
                 };
                 if item["durationMinutes"].as_f64() == Some(0.0) {
                     if self.queue.active() {
@@ -1436,6 +2086,10 @@ impl Backend {
             }
             "/api/queue/cancel" => {
                 self.cancel_queue(false)?;
+                Ok(self.action_status())
+            }
+            "/api/queue/pause" => {
+                self.pause_game_queue()?;
                 Ok(self.action_status())
             }
             "/api/queue/start" => {
@@ -1716,7 +2370,7 @@ fn is_startup_enabled(fallback: bool) -> bool {
     fallback
 }
 #[cfg(windows)]
-fn set_startup_enabled(enable: bool, minimized: bool) {
+fn set_startup_enabled(enable: bool, minimized: bool) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
     if enable {
         if let Ok(exe) = std::env::current_exe() {
@@ -1726,7 +2380,7 @@ fn set_startup_enabled(enable: bool, minimized: bool) {
             } else {
                 format!("\"{exe_str}\"")
             };
-            let _ = Command::new("reg")
+            let result = Command::new("reg")
                 .args([
                     "add",
                     "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
@@ -1739,10 +2393,19 @@ fn set_startup_enabled(enable: bool, minimized: bool) {
                     "/f",
                 ])
                 .creation_flags(0x08000000)
-                .status();
+                .status()
+                .map_err(|_| "Could not update Windows startup")?;
+            if !result.success() {
+                return Err("Could not update Windows startup".into());
+            }
+        } else {
+            return Err("Could not locate Questro executable".into());
         }
     } else {
-        let _ = Command::new("reg")
+        if !is_startup_enabled(false) {
+            return Ok(());
+        }
+        let result = Command::new("reg")
             .args([
                 "delete",
                 "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
@@ -1751,11 +2414,18 @@ fn set_startup_enabled(enable: bool, minimized: bool) {
                 "/f",
             ])
             .creation_flags(0x08000000)
-            .status();
+            .status()
+            .map_err(|_| "Could not update Windows startup")?;
+        if !result.success() {
+            return Err("Could not update Windows startup".into());
+        }
     }
+    Ok(())
 }
 #[cfg(not(windows))]
-fn set_startup_enabled(_enable: bool, _minimized: bool) {}
+fn set_startup_enabled(_enable: bool, _minimized: bool) -> Result<(), String> {
+    Ok(())
+}
 const MAX_JSON_BYTES: u64 = 32 * 1024 * 1024;
 fn read_json(reader: impl std::io::Read, limit: u64) -> Result<Value, String> {
     use std::io::Read;
@@ -1875,6 +2545,192 @@ mod tests {
         f.0.session = None;
         f.0.prune_quest_cache(&[]);
         assert!(!path.exists());
+    }
+    #[test]
+    fn variety_shuffle_supports_custom_counts_without_repeating_the_previous_selection() {
+        let mut f = Fixture::new();
+        f.0.catalog=(0..600).map(|n|json!({"id":(100000+n).to_string(),"name":format!("Game {n}"),"type":1,"icon_hash":"0123456789abcdef0123456789abcdef"})).collect();
+        let first =
+            f.0.route(
+                "/api/variety/shuffle",
+                json!({"count":100,"durationMinutes":10}),
+            )
+            .unwrap();
+        assert_eq!(first["items"].as_array().unwrap().len(), 100);
+        let ids: std::collections::HashSet<String> = first["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|i| text(i, "id"))
+            .collect();
+        assert_eq!(ids.len(), 100);
+        let second =
+            f.0.route(
+                "/api/variety/shuffle",
+                json!({"count":137,"durationMinutes":7}),
+            )
+            .unwrap();
+        assert_eq!(second["items"].as_array().unwrap().len(), 137);
+        assert!(second["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|i| !ids.contains(&text(i, "id")) && i["durationMinutes"] == 7));
+        assert!(f
+            .0
+            .route(
+                "/api/variety/shuffle",
+                json!({"count":501,"durationMinutes":10})
+            )
+            .is_err());
+        f.0.variety.prepare().unwrap();
+        assert!(f
+            .0
+            .route(
+                "/api/variety/shuffle",
+                json!({"count":10,"durationMinutes":10})
+            )
+            .is_err());
+    }
+    #[test]
+    fn steam_titles_use_unique_steam_ids_instead_of_discord_ids() {
+        let mut f = Fixture::new();
+        f.0.catalog = vec![
+            json!({"id":"123456","name":"First","third_party_skus":[{"distributor":"steam","id":"999999001"}]}),
+            json!({"id":"123456","name":"Second","third_party_skus":[{"distributor":"steam","id":"999999002"}]}),
+        ];
+        let games = f.0.steam_games();
+        let games: Vec<_> = games
+            .into_iter()
+            .filter(|g| ["999999001", "999999002"].contains(&g["steamId"].as_str().unwrap_or("")))
+            .collect();
+        assert_eq!(games.len(), 2);
+        assert_ne!(games[0]["id"], games[1]["id"]);
+    }
+    #[test]
+    fn variety_resize_keeps_games_order_and_individual_durations() {
+        let mut f = Fixture::new();
+        f.0.catalog=(0..600).map(|n|json!({"id":(100000+n).to_string(),"name":format!("Game {n}"),"type":1,"icon_hash":"0123456789abcdef0123456789abcdef"})).collect();
+        let first =
+            f.0.route(
+                "/api/variety/shuffle",
+                json!({"count":100,"durationMinutes":10}),
+            )
+            .unwrap();
+        let id = first["items"][0]["id"].clone();
+        f.0.route(
+            "/api/variety/items",
+            json!({"action":"duration","id":id,"durationMinutes":7}),
+        )
+        .unwrap();
+        let ten =
+            f.0.route("/api/variety/resize", json!({"count":10}))
+                .unwrap();
+        assert_eq!(ten["items"].as_array().unwrap().len(), 10);
+        let fifty =
+            f.0.route("/api/variety/resize", json!({"count":50}))
+                .unwrap();
+        for n in 0..50 {
+            assert_eq!(fifty["items"][n]["id"], first["items"][n]["id"]);
+        }
+        assert_eq!(fifty["items"][0]["durationMinutes"], 7);
+    }
+    #[test]
+    fn variety_uses_only_discord_artwork_and_one_shared_duration() {
+        let mut f = Fixture::new();
+        f.0.catalog = vec![
+            json!({"id":"100001","name":"Discord image","icon_hash":"0123456789abcdef0123456789abcdef"}),
+            json!({"id":"100002","name":"Cover image","cover_image_hash":"abcdef0123456789abcdef0123456789"}),
+            json!({"id":"100003","name":"Steam only","third_party_skus":[{"distributor":"steam","id":"730"}]}),
+        ];
+        let chosen =
+            f.0.route(
+                "/api/variety/shuffle",
+                json!({"count":10,"durationMinutes":12}),
+            )
+            .unwrap();
+        assert_eq!(chosen["items"].as_array().unwrap().len(), 2);
+        assert!(chosen["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(has_discord_artwork));
+        f.0.route("/api/variety/duration", json!({"durationMinutes":20}))
+            .unwrap();
+        assert!(f.0.variety.data["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|i| i["durationMinutes"] == 20));
+        assert!(f.0.variety.data["pool"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|i| i["durationMinutes"] == 20));
+    }
+    #[test]
+    fn game_queue_pause_restores_progress_without_double_counting() {
+        let mut f = Fixture::new();
+        f.0.append(item("123456", 60.0, false), false).unwrap();
+        f.0.append(item("234567", 15.0, false), false).unwrap();
+        f.0.session.as_mut().unwrap()["elapsedBeforeSegment"] = json!(1200);
+        f.0.route("/api/queue/pause", json!({})).unwrap();
+        assert!(f.0.session.is_none());
+        assert_eq!(f.0.queue.phase, "paused");
+        let mut restored = Backend::new(f.0.root.clone()).unwrap();
+        restored.allow_rpc = false;
+        assert_eq!(restored.queue.items.len(), 2);
+        assert_eq!(restored.queue.phase, "paused");
+        let total = restored.total_playtime_seconds();
+        restored.route("/api/queue/start", json!({})).unwrap();
+        assert_eq!(
+            restored.session.as_ref().unwrap()["elapsedBeforeSegment"],
+            1200
+        );
+        assert!(restored.total_playtime_seconds() <= total + 1);
+        restored.shutdown();
+    }
+    #[test]
+    fn shutdown_preserves_queue_and_adding_a_game_does_not_replace_it() {
+        let mut f = Fixture::new();
+        f.0.append(item("123456", 30.0, false), false).unwrap();
+        f.0.session.as_mut().unwrap()["elapsedBeforeSegment"] = json!(75);
+        f.0.shutdown();
+        let mut restored = Backend::new(f.0.root.clone()).unwrap();
+        restored.allow_rpc = false;
+        assert_eq!(restored.queue.items[0]["resumeElapsedSeconds"], 75);
+        restored.append(item("234567", 15.0, false), false).unwrap();
+        assert_eq!(restored.queue.items.len(), 2);
+        assert!(restored.session.is_none());
+        restored
+            .route("/api/queue/items", json!({"action":"clear"}))
+            .unwrap();
+        assert!(restored.queue.items.is_empty());
+    }
+    #[test]
+    fn sync_failure_preserves_game_queue_and_its_progress() {
+        let mut f = Fixture::new();
+        f.0.append(item("123456", 15.0, false), false).unwrap();
+        f.0.session.as_mut().unwrap()["pairedSteamId"] = json!("1000");
+        f.0.session.as_mut().unwrap()["elapsedBeforeSegment"] = json!(45);
+        f.0.steam_idle.items =
+            vec![json!({"steamId":"1000","state":"error","error":"steam_not_owned"})];
+        f.0.tick();
+        assert!(f.0.session.is_none());
+        assert_eq!(f.0.queue.phase, "error");
+        assert_eq!(f.0.queue.items[0]["resumeElapsedSeconds"], 45);
+        assert_eq!(f.0.queue.error.as_deref(), Some("steam_not_owned"));
+    }
+    #[test]
+    fn sync_rejects_an_unmatched_title_before_launching() {
+        let mut f = Fixture::new();
+        let mut game = item("123456", 15.0, false);
+        game["syncSteam"] = json!(true);
+        assert_eq!(
+            f.0.start_process(&game).unwrap_err(),
+            "steam_sync_unavailable"
+        );
+        assert!(f.0.session.is_none());
     }
     struct Fixture(Backend);
     impl Fixture {

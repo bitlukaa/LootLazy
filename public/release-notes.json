@@ -1,13 +1,13 @@
 {
-  "version": "3.3.0",
+  "version": "3.5.2",
   "en": [
-    "Game Time brings a refreshed session workspace.",
-    "Pause quests and resume your saved queue after restarting.",
-    "Clearer activity errors and local diagnostics."
+    "Simplified quest controls and session settings.",
+    "Donation page available from the main navigation.",
+    "Improved completion alerts with a sound preview."
   ],
   "ar": [
-    "صفحة وقت اللعب بتصميم جديد للجلسات.",
-    "إيقاف المهام مؤقتًا واستكمال القائمة المحفوظة بعد إعادة التشغيل.",
-    "رسائل أوضح لمشكلات النشاط وتشخيص محلي."
+    "تبسيط أدوات المهام وإعدادات الجلسات.",
+    "صفحة الدعم متاحة من الشريط الرئيسي.",
+    "تحسين تنبيهات الانتهاء وإضافة تجربة للصوت."
   ]
 }
