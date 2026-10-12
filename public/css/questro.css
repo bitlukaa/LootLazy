@@ -222,3 +222,9 @@ html[data-theme-transition=active]::view-transition-new(root){z-index:999;clip-p
 .variety-session .variety-duration{margin-block:24px}.variety-duration .duration-error{margin-top:12px}
 
 .quests-section-header>#btn-resume-quest-queue{margin-inline-start:auto;flex-shrink:0}.duration-meta{display:flex;align-items:center;gap:12px;font-size:11px;flex-wrap:wrap}.questro-navbar .nav-tab{padding-inline:10px}.questro-navbar{flex-wrap:wrap;gap:8px}.questro-navbar .navbar-status-wrap{margin-inline-start:auto}
+
+.sound-controls{align-items:center;flex-shrink:0}.settings-row>div:first-child{min-width:0}.preferences-settings .settings-row p{max-width:560px;line-height:1.7}@media(max-width:600px){.settings-row:has(.sound-controls){align-items:flex-start;flex-direction:column}.sound-controls{width:100%;justify-content:space-between}}
+
+@media(min-width:1024px){#view-simulator .workspace-grid,.variety-workspace{height:max(420px,calc(100dvh - 250px))}}
+
+.steam-search-hint{font-size:12px;line-height:1.7;margin-top:14px}

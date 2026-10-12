@@ -1,5 +1,13 @@
 # Release history
 
+## 3.5.3 — October 12, 2026
+
+- Fixed the Settings layout and placed the sound preview alongside Sound Alerts.
+- Added optional Discord sync from Idle Steam for matched games.
+- Improved paired session timers and completion alerts.
+- Added brief Game Time and Game Variety badge guidance.
+- Added a Steam search tip for owned games that are not installed.
+
 ## 3.5.2 — October 12, 2026
 
 - Added Game Variety with stable list resizing, shuffled selections, search, and reordering.

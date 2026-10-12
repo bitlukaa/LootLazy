@@ -581,6 +581,7 @@ impl Backend {
             .flatten()
             .find(|sku| {
                 sku["distributor"] == "steam"
+                    && (item["syncSteamId"].is_null() || item["syncSteamId"] == sku["id"])
                     && sku["id"].as_str().is_some_and(|id| {
                         !id.is_empty() && id.len() <= 10 && id.bytes().all(|b| b.is_ascii_digit())
                     })
@@ -608,6 +609,19 @@ impl Backend {
         if let Some(session) = self.session.as_mut() {
             session["pairedSteamId"] = json!(steam_id);
             session["timerWaiting"] = json!(true);
+        }
+        if let Some(steam_item) = self
+            .steam_idle
+            .items
+            .iter_mut()
+            .find(|entry| entry["steamId"] == steam_id)
+        {
+            steam_item["durationMinutes"] = item["durationMinutes"].clone();
+            steam_item["gameTimeManaged"] = json!(true);
+        }
+        if let Err(error) = self.steam_idle.save() {
+            let _ = self.stop_process("sync_save_failed");
+            return Err(error);
         }
         self.started_at = None;
         Ok(())
@@ -725,6 +739,17 @@ impl Backend {
         if let Some(mut session) = self.session.take() {
             if let Some(id) = session["pairedSteamId"].as_str() {
                 let _ = self.steam_idle.pause(Some(id));
+                if reason == "idle_timeout" {
+                    if let Some(item) = self
+                        .steam_idle
+                        .items
+                        .iter_mut()
+                        .find(|item| item["steamId"] == id)
+                    {
+                        item["state"] = json!("completed");
+                    }
+                    let _ = self.steam_idle.save();
+                }
             }
             let image = session["questImage"].as_str().map(str::to_string);
             self.prune_quest_cache(&image.into_iter().collect::<Vec<_>>());
@@ -750,6 +775,7 @@ impl Backend {
                 self.last_finished = Some(json!({
                     "gameName": session["gameName"],
                     "questId": quest,
+                    "steamId": session["pairedSteamId"],
                     "reason": reason,
                     "timestamp": stamp()
                 }));
@@ -1612,6 +1638,22 @@ impl Backend {
                 }
             }
         }
+        let mut matches = std::collections::HashMap::new();
+        for game in &self.catalog {
+            for sku in game["third_party_skus"].as_array().into_iter().flatten() {
+                if sku["distributor"] == "steam" {
+                    if let Some(id) = sku["id"].as_str() {
+                        matches.entry(id).or_insert(game["id"].clone());
+                    }
+                }
+            }
+        }
+        for game in &mut games {
+            game["discordAppId"] = matches
+                .get(text(game, "steamId").as_str())
+                .cloned()
+                .unwrap_or(Value::Null);
+        }
         games
     }
     fn pause_game_queue(&mut self) -> Result<(), String> {
@@ -1808,6 +1850,44 @@ impl Backend {
                 Ok(
                     json!({"total":games.len(),"games":games.into_iter().take(50).collect::<Vec<_>>(),"runtimeReady":self.steam_runtime.is_some()}),
                 )
+            }
+            "/api/steam/sync" => {
+                if self.session.is_some()
+                    || self.queue.active()
+                    || self.quest_queue.active()
+                    || self.variety.active()
+                {
+                    return Err("A game is already running".into());
+                }
+                let id = text(&body, "steamId");
+                let duration = body["durationMinutes"]
+                    .as_u64()
+                    .filter(|duration| *duration <= 1440)
+                    .ok_or("Invalid duration")?;
+                let game = self
+                    .catalog
+                    .iter()
+                    .find(|game| {
+                        game["third_party_skus"]
+                            .as_array()
+                            .into_iter()
+                            .flatten()
+                            .any(|sku| sku["distributor"] == "steam" && sku["id"] == id)
+                    })
+                    .cloned()
+                    .ok_or("discord_sync_unavailable")?;
+                let resolution = self.resolve(&game);
+                self.start_process(&json!({"appId":game["id"],"gameName":game["name"],"iconHash":game["icon_hash"],"executableName":resolution["primaryExecutable"],"durationMinutes":duration,"syncSteam":true,"syncSteamId":id}))?;
+                if let Some(item) = self
+                    .steam_idle
+                    .items
+                    .iter_mut()
+                    .find(|item| item["steamId"] == id)
+                {
+                    item["durationMinutes"] = json!(duration);
+                }
+                self.steam_idle.save()?;
+                Ok(self.steam_idle.status())
             }
             "/api/steam/start" => {
                 self.refresh_steam_runtime();
@@ -2731,6 +2811,43 @@ mod tests {
             "steam_sync_unavailable"
         );
         assert!(f.0.session.is_none());
+    }
+    #[test]
+    fn reverse_sync_rejects_unmatched_games_and_busy_sessions() {
+        let mut f = Fixture::new();
+        assert_eq!(
+            f.0.route(
+                "/api/steam/sync",
+                json!({"steamId":"730","durationMinutes":15})
+            )
+            .unwrap_err(),
+            "discord_sync_unavailable"
+        );
+        f.0.session = Some(json!({"appId":"123456"}));
+        assert_eq!(
+            f.0.route(
+                "/api/steam/sync",
+                json!({"steamId":"730","durationMinutes":15})
+            )
+            .unwrap_err(),
+            "A game is already running"
+        );
+        f.0.session = None;
+    }
+    #[test]
+    fn steam_titles_include_exact_discord_matches() {
+        let mut f = Fixture::new();
+        f.0.catalog = vec![
+            json!({"id":"123456","name":"Matched","third_party_skus":[{"distributor":"steam","id":"999999001"}]}),
+        ];
+        let games = f.0.steam_games();
+        assert_eq!(
+            games
+                .iter()
+                .find(|game| game["steamId"] == "999999001")
+                .unwrap()["discordAppId"],
+            "123456"
+        );
     }
     struct Fixture(Backend);
     impl Fixture {

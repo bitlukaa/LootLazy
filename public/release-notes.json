@@ -1,13 +1,13 @@
 {
-  "version": "3.5.2",
+  "version": "3.5.3",
   "en": [
-    "Simplified quest controls and session settings.",
-    "Donation page available from the main navigation.",
-    "Improved completion alerts with a sound preview."
+    "Corrected Settings layout and sound preview.",
+    "Optional Discord sync from Idle Steam for matched titles.",
+    "Brief badge guidance and Steam library search tips."
   ],
   "ar": [
-    "تبسيط أدوات المهام وإعدادات الجلسات.",
-    "صفحة الدعم متاحة من الشريط الرئيسي.",
-    "تحسين تنبيهات الانتهاء وإضافة تجربة للصوت."
+    "تصحيح ترتيب الإعدادات وتجربة الصوت.",
+    "مزامنة اختيارية مع ديسكورد من ستيم للألعاب المتطابقة.",
+    "توضيحات مختصرة للشارات والبحث عن ألعاب ستيم."
   ]
 }

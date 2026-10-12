@@ -14,7 +14,7 @@ Questro keeps things simple: choose your games, set a timer, and start a session
 - **Game Variety:** choose 10, 50, 100, or a custom number of games. Search and reorder the list, shuffle it, and apply one duration to the group.
 - **Quests:** view available 15-minute desktop play quests, start them from their cards, and resume unfinished sessions. Video and activity quests stay out of the list.
 - **Idle Steam:** run independent sessions together, with continuous, preset, or custom timers. Search for titles beyond your installed games.
-- **Optional Steam sync:** pair a supported Game Time title with a Steam session in one click.
+- **Optional two-way sync:** start a matched Discord and Steam session together from either Game Time or Idle Steam.
 - **A compact interface:** light and dark themes, English and Arabic, live client status, tray controls, and optional completion sounds and notifications.
 
 ## Get started
@@ -27,8 +27,11 @@ For quests, accept the quest in Discord and choose **Desktop** before starting i
 
 For Steam sessions, the game must be in your Steam library. Steam needs to be signed in, and a compatible Steam runtime must be available from an installed game. The selected title does not have to be installed.
 
-## Latest update · 3.5.2
+## Latest update · 3.5.3
 
+- Corrected Settings layout and sound-preview placement.
+- Two-way Discord and Steam sync for matched titles.
+- Short badge guidance and Steam library search tips.
 - New Game Variety and Idle Steam pages.
 - Saved queue recovery and optional Steam sync.
 - Game Variety duration presets, custom hours and minutes, search, and reordering.

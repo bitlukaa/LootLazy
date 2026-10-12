@@ -439,6 +439,7 @@ impl SteamIdle {
         };
         self.items[index]["durationMinutes"] = json!(duration);
         self.items[index]["state"] = json!("starting");
+        self.items[index]["gameTimeManaged"] = json!(false);
         self.items[index]["error"] = Value::Null;
         if let Err(e) = self.save() {
             self.items = previous;
@@ -579,7 +580,10 @@ impl SteamIdle {
             }
             if let Some(i) = self.index(&id) {
                 let duration = self.items[i]["durationMinutes"].as_u64().unwrap_or(0) * 60;
-                if duration > 0 && self.elapsed(&id) >= duration {
+                if duration > 0
+                    && self.elapsed(&id) >= duration
+                    && self.items[i]["gameTimeManaged"] != true
+                {
                     self.end(&id, "completed", None);
                     changed = true;
                 }
@@ -927,6 +931,32 @@ mod tests {
         assert!(steam.workers["1000"].started.is_some());
         steam.pause(None).unwrap();
         let _ = fs::remove_file(ready);
+        let _ = fs::remove_file(root.join("data/steam_sessions.json"));
+        let _ = fs::remove_dir(root.join("data"));
+        let _ = fs::remove_dir(root);
+    }
+    #[test]
+    fn paired_steam_timer_waits_for_its_game_time_owner() {
+        let root =
+            std::env::temp_dir().join(format!("questro-steam-pair-{}", rand::random::<u64>()));
+        fs::create_dir_all(root.join("data")).unwrap();
+        let mut steam = SteamIdle::new(&root);
+        steam.items = vec![
+            json!({"id":"1000","steamId":"1000","durationMinutes":1,"elapsedSeconds":0,"state":"running","gameTimeManaged":true}),
+        ];
+        steam.workers.insert(
+            "1000".into(),
+            SteamProcess {
+                child: None,
+                ready_file: root.join("no-status"),
+                launched: Instant::now(),
+                started: Some(Instant::now() - Duration::from_secs(75)),
+            },
+        );
+        steam.tick();
+        assert_eq!(steam.items[0]["state"], "running");
+        steam.pause(None).unwrap();
+        assert_eq!(steam.items[0]["state"], "paused");
         let _ = fs::remove_file(root.join("data/steam_sessions.json"));
         let _ = fs::remove_dir(root.join("data"));
         let _ = fs::remove_dir(root);

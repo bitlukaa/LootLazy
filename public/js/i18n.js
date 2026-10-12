@@ -1,6 +1,11 @@
 // Questro interface translations. Keep application logic and comments in English.
 const I18N = {
   "ar": {
+    "steam_search_hint": "مش لاقي لعبة؟ ابحث عنها بالأعلى لإضافتها وتشغيلها، حتى لو مش مثبتة على جهازك. لازم تكون موجودة في مكتبة حسابك على ستيم.",
+    "game_time_badge_note": "خلي ديسكورد مفتوح وتأكد إنه اكتشف اللعبة، عشان وقت اللعب المؤهل يتحسب لشارة Game Time.",
+    "game_variety_badge_note": "شغّل ألعاب مختلفة بالتتابع؛ الألعاب اللي ديسكورد يكتشفها ممكن تتحسب لشارة Game Variety.",
+    "sync_discord": "تشغيل على ديسكورد أيضًا",
+    "discord_sync_unavailable": "اللعبة غير مرتبطة بعنوان في قاعدة ديسكورد.",
     "test_sound": "تجربة الصوت",
     "tab_donation": "الدعم",
     "recommended_5m": "الموصى به: ٥ دقائق",
@@ -285,6 +290,11 @@ const I18N = {
     "section_completed": "المهام المكتملة"
   },
   "en": {
+    "steam_search_hint": "Don't see a game? Search above to add and run it, even if it isn't installed. It must be in your Steam library.",
+    "game_time_badge_note": "Keep Discord open and make sure it detects the game for eligible playtime to count toward your Game Time badge.",
+    "game_variety_badge_note": "Run different games in turn. Games detected by Discord may count toward your Game Variety badge.",
+    "sync_discord": "Sync with Discord",
+    "discord_sync_unavailable": "This Steam title has no matching Discord game.",
     "test_sound": "Test sound",
     "tab_donation": "Donation",
     "recommended_5m": "Recommended: 5 min",
