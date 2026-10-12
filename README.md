@@ -1,73 +1,96 @@
+<div align="center">
+
+<img src="public/assets/questro-logo.svg" width="100" height="100" alt="Questro">
+
 # Questro
 
-A lightweight Windows app for game sessions, Discord quests, and Steam timers.
+### Discord quests. Gaming badges. Steam hours.
 
-[![Download](https://img.shields.io/github/v/release/bitlukaa/Questro?label=Download&color=777af8)](https://github.com/bitlukaa/Questro/releases)
-[![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078d4)](https://github.com/bitlukaa/Questro/releases)
-[![Support Questro](https://img.shields.io/badge/Support-Questro-777af8)](#support-questro)
+**Lightweight game activity, without downloading every full game.**
 
-Questro keeps things simple: choose your games, set a timer, and start a session. Queue games one after another, build a shuffled selection, or manage several Steam sessions together — all from one place.
+[![Download](https://img.shields.io/github/v/release/bitlukaa/Questro?label=Download&color=5865f2)](https://github.com/bitlukaa/Questro/releases/latest)
+[![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078d4)](https://github.com/bitlukaa/Questro/releases/latest)
+[![License](https://img.shields.io/badge/License-MIT-16a34a)](LICENSE)
+[![Support](https://img.shields.io/badge/Support-Questro-5865f2)](#support-questro)
+
+**Manual quest controls. Local game sessions. No Discord login, account tokens, or injected client scripts.**
+
+[Download](https://github.com/bitlukaa/Questro/releases/latest) · [Features](#features) · [Report a bug](https://github.com/bitlukaa/Questro/issues) · [Support](#support-questro)
+
+</div>
+
+Questro brings Discord game activity, desktop play quests, and Steam idling into one app. Choose your games, set the time, and start — whether you're working toward gaming badges, lining up several quests, or keeping your owned Steam games active.
+
+If Questro helps you, consider leaving a star!
 
 ## Features
 
-- **Game Time:** browse games, choose preset or custom durations, and save a queue you can pause and resume after reopening the app.
-- **Game Variety:** choose 10, 50, 100, or a custom number of games. Search and reorder the list, shuffle it, and apply one duration to the group.
-- **Quests:** view available 15-minute desktop play quests, start them from their cards, and resume unfinished sessions. Video and activity quests stay out of the list.
-- **Idle Steam:** run independent sessions together, with continuous, preset, or custom timers. Search for titles beyond your installed games.
-- **Optional two-way sync:** start a matched Discord and Steam session together from either Game Time or Idle Steam.
-- **A compact interface:** light and dark themes, English and Arabic, live client status, tray controls, and optional completion notifications.
+- **Game Time** — Run lightweight game activity with continuous, preset, or custom timers. Manage one game or a saved queue.
+- **Game Variety** — Choose 10, 50, 100, or a custom number of games. Shuffle, search, reorder, and run the group with one duration per game.
+- **Desktop play quests** — Browse available 15-minute quests and start directly from their cards. Accept the quest in Discord first; unfinished local sessions can be resumed.
+- **Idle Steam** — Run several owned games together with separate timers. Search for games even when they aren't installed.
+- **Two-way sync** — Start matched Discord and Steam sessions together from either page.
+- **Pick up where you left off** — Pause, resume, clear, and reorder saved queues after reopening Questro.
+- **Make it yours** — Light and dark themes, English and Arabic, compact client indicators, desktop notifications, and tray controls.
+- **Keep it light** — A native Windows app with an executable of approximately 4.2 MB.
 
-## Get started
+## Download & run
 
-1. Choose a download from [Releases](https://github.com/bitlukaa/Questro/releases): **Setup** installs Questro and creates shortcuts; **Portable ZIP** runs without installation.
-2. Choose a game or quest and set your duration.
-3. Start the session. You can pause, resume, or clear a saved queue whenever you need.
+Choose your version from [GitHub Releases](https://github.com/bitlukaa/Questro/releases/latest).
 
-For quests, accept the quest in Discord and choose **Desktop** before starting it in Questro. Check progress and claim any reward in Discord itself.
+| Download | Instructions |
+|---|---|
+| **Windows x64 · Setup** | Run the installer and choose your installation folder. |
+| **Windows x64 · Portable ZIP** | Extract the archive and run `Questro.exe`. |
+| **Windows x64 · Portable EXE** | Download and run the executable directly. |
 
-For Steam sessions, the game must be in your Steam library. Steam needs to be signed in, and a compatible Steam runtime must be available from an installed game. The selected title does not have to be installed.
+Windows 10/11 (64-bit) and Microsoft Edge WebView2 are required. Setup can download WebView2 if needed.
 
-## Latest update · 3.6.0
+## Getting started
 
-- Setup and portable download options.
-- In-app update downloads and installation when a newer release is available.
-- Corrected Settings layout.
-- Two-way Discord and Steam sync for matched titles.
-- Short badge guidance and Steam library search tips.
-- New Game Variety and Idle Steam pages.
-- Saved queue recovery and optional Steam sync.
-- Game Variety duration presets, custom hours and minutes, search, and reordering.
-- Simpler quest controls, with a resume action for unfinished sessions.
-- A dedicated Donation page and optional completion notifications.
+**Discord activity and badges:** keep Discord open, select a game, set its duration, and start. Use Game Variety for a lineup of different games. Discord must detect eligible games for badge progress to count.
 
-See the [release history](CHANGELOG.md) for updates.
+**Quests:** accept the quest in Discord and choose **Desktop**, then click **Start Quest** in Questro. Check progress and claim your reward in Discord yourself.
 
-## Updates
+**Steam:** sign in to Steam, choose a game you own, and start. A compatible runtime from an installed Steam game is required; the selected title does not have to be installed.
 
-Use **Check updates** in Settings. When a newer release is available, choose **Download & install** to update and restart Questro. Stop active sessions first; your saved settings and queues are preserved.
+**Updates:** use **Check updates** in Settings, then **Download & install** when a newer release is available. Stop active sessions first; saved settings and queues are preserved.
 
-## Privacy & limitations
+## Privacy & account safety
 
-Questro does not request your Discord password or account token, and does not automatically accept quests or claim rewards. However, we cannot guarantee that using it will not result in account restrictions or a ban. Use it at your own discretion.
+Questro does not request Discord passwords or account tokens, and does not automatically accept quests or claim rewards. Sessions use Questro's local timer; the app does not read your account's quest progress.
 
-A completed local timer does not confirm quest completion or recorded Steam playtime. Compatibility and reward eligibility are not guaranteed; follow each platform's rules.
+> [!WARNING]
+> We cannot guarantee that using Questro will not result in account restrictions or a ban. Use it at your own discretion and follow each platform's rules. Local timers do not guarantee badge progress, recorded Steam hours, or quest rewards.
 
-Windows 10 or 11, 64-bit, and Microsoft Edge WebView2 are required. The current executable is approximately **4.2 MB**; saved data and cached artwork use additional space.
+<a id="support-questro"></a>
 
 ## Support Questro
 
-If Questro has been useful to you, thanks for using it. Feedback, bug reports, and sharing the project help a lot.
+If Questro makes things easier for you, your support helps make time for improvements, fixes, and new features. No pressure — feedback and sharing the project help too.
 
-Optional coffee and crypto support are planned. The in-app Donation page is ready; payment links will be added once they are available.
+**Crypto support**
 
-## Build from source
+| Currency | Network |
+|---|---|
+| USDT | Ethereum (ERC-20) or BNB Smart Chain (BEP-20) |
+| ETH | Ethereum |
+| BNB | BNB Smart Chain |
 
-Requires Rust with the MSVC toolchain and the Windows C++ build tools.
+Donation address:
 
-```powershell
- git clone https://github.com/bitlukaa/Questro.git
- cd Questro
- powershell -ExecutionPolicy Bypass -File .\tools\build-tauri.ps1
-```
+`0xb71112d778780d7a586d9bd77e57df6f11192777`
 
-Questro is an independent project and is not affiliated with Discord or Valve.
+Make sure your sending network matches the network you intend to use.
+
+**Buy Me a Coffee:** coming soon. A creator-page link will be added when available.
+
+## Community
+
+[Contributing](CONTRIBUTING.md) · [Community guidelines](CODE_OF_CONDUCT.md) · [Security policy](SECURITY.md)
+
+## License
+
+Questro is available under the [MIT License](LICENSE). Third-party notices are included with the downloads.
+
+*Questro is an independent project and is not affiliated with Discord or Valve.*

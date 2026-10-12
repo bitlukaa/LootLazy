@@ -259,3 +259,7 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 #view-simulator .panel{background:var(--surface);border-radius:12px;box-shadow:0 1px 3px #00000005}
 
 .empty-game-icon img{width:32px;height:32px;object-fit:contain}.section-intro{font-size:13px;line-height:1.7;margin-bottom:20px}.polished-empty{gap:14px}
+
+.support-symbol-image{width:32px;height:32px;object-fit:contain}.crypto-selectors{display:grid;grid-template-columns:1fr 1fr;gap:12px}.crypto-selectors label{display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--muted)}.crypto-selectors select{font-size:12px;padding:10px}.crypto-choice{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:4px}.wallet-address-label{font-size:12px;color:var(--muted)}#crypto-address{display:block;width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);font-size:12px;line-height:1.6;overflow-wrap:anywhere;user-select:all;text-align:left}.support-option.crypto-support p{flex:0}.crypto-copy-status{min-height:18px;font-size:12px!important;color:var(--green)!important}.crypto-network-note{font-size:11px!important}.support-options{align-items:start}@media(max-width:520px){.crypto-selectors{grid-template-columns:1fr}}
+
+.support-option button:not(:disabled){opacity:1}

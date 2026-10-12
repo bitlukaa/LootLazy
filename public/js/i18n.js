@@ -1,6 +1,13 @@
 // Questro interface translations. Keep application logic and comments in English.
 const I18N = {
   "ar": {
+    "crypto_currency": "العملة",
+    "crypto_network": "الشبكة",
+    "crypto_address": "عنوان التبرع",
+    "crypto_copy": "نسخ العنوان",
+    "crypto_copied": "تم نسخ العنوان",
+    "crypto_copy_failed": "تعذر النسخ. حدّد العنوان وانسخه يدويًا.",
+    "crypto_network_note": "تأكد أن شبكة الإرسال مطابقة للشبكة المختارة.",
     "game_time_empty_title": "اضبط وقت لعبتك",
     "game_time_empty_body": "اختَر لعبة وحدّد مدة تشغيل نشاطها.",
     "steam_empty_title": "ابدأ جلسة ستيم",
@@ -37,7 +44,7 @@ const I18N = {
     "support_coffee_desc": "لفتة بسيطة لدعم العمل وراء البرنامج.",
     "support_soon": "قريبًا",
     "support_crypto": "دعم بالعملات الرقمية",
-    "support_crypto_desc": "اسم العملة والشبكة وعنوان الاستقبال هتظهر هنا لما الخيار يبقى جاهز.",
+    "support_crypto_desc": "ساهم في التطوير باستخدام USDT أو ETH أو BNB على الشبكات الموضحة أدناه.",
     "support_thanks": "شكرًا لأنك جزء من Questro.",
     "total_played": "إجمالي وقت التشغيل",
     "discord_sessions": "جلسات ديسكورد",
@@ -299,6 +306,13 @@ const I18N = {
     "section_completed": "المهام المكتملة"
   },
   "en": {
+    "crypto_currency": "Currency",
+    "crypto_network": "Network",
+    "crypto_address": "Donation address",
+    "crypto_copy": "Copy address",
+    "crypto_copied": "Address copied",
+    "crypto_copy_failed": "Could not copy. Select the address and copy it manually.",
+    "crypto_network_note": "Make sure your sending network matches the selected network.",
     "game_time_empty_title": "Set your game time",
     "game_time_empty_body": "Select a game and choose how long its activity runs.",
     "steam_empty_title": "Start a Steam session",
@@ -335,7 +349,7 @@ const I18N = {
     "support_coffee_desc": "A small thank-you to support the work behind Questro.",
     "support_soon": "Coming soon",
     "support_crypto": "Crypto support",
-    "support_crypto_desc": "Currency, network, and receiving address will be available here once this option is ready.",
+    "support_crypto_desc": "Support development with USDT, ETH, or BNB on the networks listed below.",
     "support_thanks": "Thanks for being part of Questro.",
     "total_played": "Total Played",
     "discord_sessions": "Discord sessions",

@@ -1,11 +1,11 @@
 {
-  "version": "3.6.3",
+  "version": "3.6.4",
   "en": [
-    "Published Lucide navigation icons and the Steam mark from Simple Icons.",
-    "Page-specific guidance and cleaner session placeholders."
+    "Refined support page with matching icons.",
+    "Crypto donation address with clear currency and network choices."
   ],
   "ar": [
-    "أيقونات Lucide جاهزة وشعار Steam من Simple Icons.",
-    "نصوص خاصة بكل صفحة وتحسين مساحة إعداد الجلسة."
+    "تحسين صفحة الدعم بأيقونات متناسقة.",
+    "عنوان تبرع رقمي مع اختيارات واضحة للعملة والشبكة."
   ]
 }

@@ -1,5 +1,11 @@
 # Release history
 
+## 3.6.4 — October 12, 2026
+
+- Refined support icons and removed duplicate branding.
+- Added crypto support with explicit currency/network choices and address copying.
+- Refreshed the README around benefits, downloads, manual controls, and community support.
+
 ## 3.6.3 — October 12, 2026
 
 - Replaced custom graphics with published Lucide and Simple Icons assets.
