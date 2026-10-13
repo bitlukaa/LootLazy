@@ -1,3 +1,9 @@
+# Validation notes for 3.6.15
+
+This release adds a new Variety startup/reset policy, independent current-game selection, compact session controls, platform status labels, local notification history, simplified donation/update feedback, and navigation polish. Current checks cover 70 Rust regressions, 18 frontend tests, and isolated renderer scenarios for empty startup, count selection, active controls, returning between tabs, notification retention/bounds/safe text, both languages, and themes. Physical sleep, long live sessions, and clean Windows installation remain untested. No new memory measurements were run.
+
+## Earlier validation history
+
 # Validation notes for 3.6.12
 
 Local checks cover 69 Rust regressions, 17 frontend tests, isolated renderer tests, native WebView2 UI/recovery, update replacement and signing, fixed game-count presets, explicit duration drafts, official download links, and stable game-list rows during timer updates. Sleep accounting, disconnected Discord state, parallel Steam timers, and restart recovery are exercised with fixtures; this is not a physical sleep test or a live platform reward test.

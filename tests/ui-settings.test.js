@@ -37,3 +37,8 @@ test('quest refresh toasts quests_new_found when new quests arrive',async()=>{
  await fn(true,false);
  assert.deepEqual(messages,['quests_new_found']);
 });
+
+
+test('manual up-to-date checks produce a toast while silent checks do not',async()=>{
+ for(const silent of [false,true]){const messages=[];const fn=run('loadUpdates',{updatesBusy:false,state:{update:{latestVersion:'3.6.15'},tab:'settings'},$:()=>({}),busy:()=>{},request:async()=>({status:'up_to_date',latestVersion:'3.6.15'}),renderUpdates:()=>{},toast:message=>messages.push(message),t:key=>key,window:{lootlazyDiagnostic:true}});await fn(true,silent);assert.deepEqual(messages,silent?[]:['updates_current']);}
+});

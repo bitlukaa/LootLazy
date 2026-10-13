@@ -22,6 +22,8 @@ const popularGames = [
   { id: '230410', name: 'Warframe', type: 1, third_party_skus: [{ distributor: 'steam', id: '230410' }], resolution: { executables: [{ os: 'win32', name: 'Warframe.x64.exe' }], primaryExecutable: 'Warframe.x64.exe' } }
 ];
 
+const catalogPath=process.env.LOOTLAZY_SCREENSHOT_CATALOG;
+if(catalogPath){const catalog=JSON.parse(fs.readFileSync(catalogPath,'utf8'));for(const game of popularGames){const match=catalog.find(item=>item.name===game.name && item.icon_hash);if(match)Object.assign(game,{id:match.id,icon_hash:match.icon_hash,cover_image_hash:match.cover_image_hash});}}
 const mockQuests = [
   {
     id: '123456789012345678',
@@ -90,7 +92,7 @@ let server, browser;
       deviceScaleFactor: 1
     });
 
-    await page.route('http://artwork.localhost/**', async route => { const url=new URL(route.request().url()).searchParams.get('url'); if(!url||!/^https:\/\/(?:shared\.akamai|shared\.fastly|cdn\.akamai)\.steamstatic\.com\//.test(url))return route.fulfill({status:404,body:''}); try{const response=await route.fetch({url,timeout:15000});await route.fulfill({response});}catch{await route.fulfill({status:404,body:''});} });
+    await page.route('http://artwork.localhost/**', async route => { const url=new URL(route.request().url()).searchParams.get('url'); if(!url||!(url.startsWith('https://cdn.discordapp.com/app-icons/')||url.startsWith('https://cdn.discordapp.com/app-assets/')||/^https:\/\/(?:shared\.akamai|shared\.fastly|cdn\.akamai)\.steamstatic\.com\//.test(url)))return route.fulfill({status:404,body:''}); try{const response=await route.fetch({url,timeout:15000});await route.fulfill({response});}catch{await route.fulfill({status:404,body:''});} });
 
     await page.addInitScript(({ games, quests }) => {
       window.lootlazyDiagnostic = true;
@@ -99,6 +101,8 @@ let server, browser;
           items: games.slice(0, 10).map((g, i) => ({
             id: g.id,
             appId: g.id,
+            icon_hash:g.icon_hash,
+            cover_image_hash:g.cover_image_hash,
             gameName: g.name,
             durationMinutes: 15,
             state: 'queued',

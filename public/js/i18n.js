@@ -777,6 +777,8 @@ Object.assign(I18N.ar,{
   "status_connected": "متصل",
   "status_disconnected": "غير متصل"
 });
+Object.assign(I18N.en,{"tab_steam":"Steam Idle","variety_choose_count":"Choose your game count","variety_choose_hint":"Select 10, 50, 100, or 200 games to build your Discord lineup.","notifications_title":"Notifications","notifications_clear":"Clear","notifications_empty":"No notifications yet.","game_time_badge_note":"Choose a game and manage its Discord activity with a timed session or queue.","game_variety_badge_note":"Choose a game count, set one duration, and run your Discord activities in order.","custom_process":"Manual session","manual_session_hint":"Use an executable name to create a custom Discord activity when the game is not in the catalog."});
+Object.assign(I18N.ar,{"tab_steam":"Steam Idle","variety_choose_count":"اختر عدد الألعاب","variety_choose_hint":"اختر 10 أو 50 أو 100 أو 200 لعبة لتجهيز قائمة نشاط Discord.","notifications_title":"الإشعارات","notifications_clear":"مسح","notifications_empty":"لا توجد إشعارات بعد.","game_time_badge_note":"اختر لعبة وأدر نشاطها على Discord بجلسة محددة المدة أو قائمة ألعاب.","game_variety_badge_note":"اختر عدد الألعاب ومدة موحدة لتشغيل أنشطة Discord بالترتيب.","custom_process":"جلسة يدوية","manual_session_hint":"استخدم اسم ملف تنفيذي لإنشاء نشاط Discord مخصص للعبة غير موجودة في القائمة."});
 let currentLang = localStorage.getItem('lootlazy_lang') === 'ar' ? 'ar' : 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 

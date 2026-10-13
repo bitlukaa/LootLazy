@@ -1785,6 +1785,23 @@ impl Backend {
                     self.variety.pause()?;
                     self.stop_process("variety_paused")?;
                 }
+                if parsed.path() == "/api/variety/stop" {
+                    let minutes = self.variety.data["defaultMinutes"].as_u64().unwrap_or(5);
+                    let items = self.variety.data["items"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|item| {
+                            let mut item = item.clone();
+                            item["state"] = json!("queued");
+                            item["elapsedSeconds"] = json!(0);
+                            item
+                        })
+                        .collect();
+                    self.variety.replace(items)?;
+                    self.variety.data["defaultMinutes"] = json!(minutes);
+                    self.variety.save()?;
+                }
                 Ok(self.variety.status())
             }
             "/api/variety/items" => {
@@ -3398,5 +3415,30 @@ mod tests {
             .as_object()
             .unwrap()
             .is_empty());
+    }
+    #[test]
+    fn variety_stop_resets_progress_while_pause_keeps_it() {
+        let mut f = Fixture::new();
+        f.0.variety
+            .replace(vec![crate::rotation::item(
+                &json!({"id":"123456","name":"Test"}),
+                5,
+            )])
+            .unwrap();
+        f.0.variety.data["defaultMinutes"] = json!(5);
+        f.0.variety.prepare().unwrap();
+        f.0.variety.data["items"][0]["elapsedSeconds"] = json!(12);
+        f.0.variety.running();
+        f.0.variety.pause().unwrap();
+        let paused = f.0.variety.status();
+        assert_eq!(paused["phase"], "paused");
+        let stopped = f.0.route("/api/variety/stop", json!({})).unwrap();
+        assert_eq!(stopped["phase"], "idle");
+        assert!(stopped["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|item| item["state"] == "queued" && item["elapsedSeconds"] == 0));
+        assert_eq!(f.0.variety.data["defaultMinutes"], 5);
     }
 }

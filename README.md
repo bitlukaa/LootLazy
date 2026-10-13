@@ -26,9 +26,11 @@ If LootLazy helps you, consider leaving a star!
 ## Features
 
 - **Game Time** — Run lightweight game activity with continuous, preset, or custom timers. Manage one game or a saved queue.
-- **Game Variety** — Begin with 10 games and choose 10, 50, 100, or 200 games. Shuffle, search, reorder, and run the group with one duration per game. Paused sessions with playtime can be resumed.
+- **Game Variety** — Begin with an empty setup and choose 10, 50, 100, or 200 games for Discord activity. Shuffle, search, reorder, and run the group with one duration per game. Pause and resume within the current app session; restarting the app requires a fresh game-count selection.
 - **Desktop play quests** — Browse available 15-minute quests and start directly from their cards. Accept the quest in Discord first; unfinished local sessions can be resumed.
-- **Idle Steam** — Keep owned games active for playtime and eligible Steam trading-card drops. Steam controls card eligibility and timing; LootLazy does not track remaining drops. Run several games together with separate timers, search for titles even when they aren't installed, and manage single sessions in the Library or monitor multiple concurrent games in the Active sessions tab.
+- **Steam Idle** — Keep owned games active for playtime and eligible Steam trading-card drops. Steam controls card eligibility and timing; LootLazy does not track remaining drops. Run several games together with separate timers, search for titles even when they aren't installed, and manage single sessions in the Library or monitor multiple concurrent games in the Active sessions tab.
+- **Notification history** — The header bell keeps the latest 30 displayed notifications locally, including completed sessions and update feedback. Open it to mark them as read or clear the list.
+- **Manual session** — Enter an executable name to create a custom Discord activity when the game is missing from the catalog.
 - **Two-way sync** — Start matched Discord and Steam sessions together from either page.
 - **Pick up where you left off** — Pause, resume, clear, and reorder saved queues after reopening LootLazy.
 - **Make it yours** — Light and dark themes, English and Arabic, compact client indicators, desktop notifications, and tray controls.
@@ -42,9 +44,9 @@ The gallery uses the application interface with example game and quest data.
 |:---:|:---:|
 | [![Game Time](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-time.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-time.png) | [![Game Variety](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-variety.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-variety.png) |
 
-| Idle Steam | Quests |
+| Steam Idle | Quests |
 |:---:|:---:|
-| [![Idle Steam](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png) | [![Quests](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png) |
+| [![Steam Idle](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png) | [![Quests](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png) |
 
 Click a screenshot to view it at full size.
 
@@ -60,7 +62,7 @@ Choose your version from [GitHub Releases](https://github.com/bitlukaa/LootLazy/
 
 Windows 10/11 (64-bit) and Microsoft Edge WebView2 are required. Setup can download WebView2 if needed.
 
-Download 3.6.10 manually if upgrading from earlier versions: earlier update helpers do not handle the renamed executable correctly. Keep your existing portable folder to retain its data.
+For versions earlier than 3.6.11, download the latest build manually once: earlier update helpers may not handle the renamed executable or signing protocol correctly. Keep your existing portable folder to retain its data.
 
 ## Getting started
 

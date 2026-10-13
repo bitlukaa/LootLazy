@@ -1,9 +1,15 @@
 {
-  "version": "3.6.14",
+  "version": "3.6.15",
   "en": [
-    "Refined the original Steam icon with matching purple shading and clear white details throughout Idle Steam and Settings."
+    "Game Variety starts empty until you choose a game count; only the current game is highlighted.",
+    "Compact session controls with icons, a consistent timer, and no repeated duration labels.",
+    "Header platform logos and Running / Not running indicators, plus persistent local notification history.",
+    "Simplified donation and update feedback, and clearer Discord activity descriptions."
   ],
   "ar": [
-    "تحسين شعار Steam الأصلي بتدرج بنفسجي وتفاصيل بيضاء واضحة في Idle Steam والإعدادات."
+    "تبدأ Game Variety فارغة حتى اختيار عدد الألعاب، مع تمييز اللعبة الحالية فقط.",
+    "أزرار جلسات مختصرة بأيقونات وعدّاد موحد دون تكرار المدة.",
+    "شعارات وحالة تشغيل المنصات في الشريط مع سجل إشعارات محلي.",
+    "تبسيط صفحة الدعم ورسائل التحديث وتوضيح نشاط Discord."
   ]
 }

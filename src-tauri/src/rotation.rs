@@ -53,16 +53,9 @@ impl Rotation {
     }
     pub fn new_variety(path: PathBuf) -> Self {
         let mut rotation = Self::new(path);
-        let has_progress = rotation.data["items"].as_array().is_some_and(|items| {
-            items
-                .iter()
-                .any(|item| item["elapsedSeconds"].as_u64().unwrap_or(0) > 0)
-        });
-        if matches!(rotation.phase(), "idle" | "completed") || !has_progress {
-            let minutes = rotation.data["defaultMinutes"].as_u64().unwrap_or(5);
-            rotation.data =
-                json!({"items":[],"index":0,"phase":"idle","error":null,"defaultMinutes":minutes});
-        }
+        let minutes = rotation.data["defaultMinutes"].as_u64().unwrap_or(5);
+        rotation.data =
+            json!({"items":[],"index":0,"phase":"idle","error":null,"defaultMinutes":minutes});
         rotation
     }
     pub fn phase(&self) -> &str {
@@ -859,7 +852,7 @@ mod tests {
         ))
     }
     #[test]
-    fn variety_restart_clears_unstarted_lineup_and_keeps_paused_progress() {
+    fn variety_restart_requires_a_new_count_even_after_progress() {
         let file = path();
         let mut rotation = Rotation::new(file.clone());
         rotation
@@ -880,9 +873,9 @@ mod tests {
         rotation.segment = Some(Instant::now() - Duration::from_secs(20));
         rotation.save().unwrap();
         let restored = Rotation::new_variety(file.clone());
-        assert_eq!(restored.phase(), "paused");
-        assert_eq!(restored.data["items"].as_array().unwrap().len(), 1);
-        assert!(restored.elapsed() >= 20);
+        assert_eq!(restored.phase(), "idle");
+        assert!(restored.data["items"].as_array().unwrap().is_empty());
+        assert_eq!(restored.data["defaultMinutes"], 15);
         let _ = fs::remove_file(file);
     }
     #[test]
