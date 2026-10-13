@@ -1,15 +1,13 @@
 {
-  "version": "3.6.16",
+  "version": "3.6.17",
   "en": [
-    "Fixed Game Variety status text and added its green Running marker.",
-    "Notification entries open a dedicated history and details page; manual refresh/update-check toasts are excluded.",
-    "Smaller Clear actions and a single focus border for the custom executable field.",
-    "Game refresh retries one temporary connection failure while preserving the saved library."
+    "Simplified notification details by removing Open section.",
+    "Mark as read replaces Clear and preserves all retained notification history.",
+    "Refreshed the GitHub gallery with current application screenshots."
   ],
   "ar": [
-    "إصلاح نص حالة Game Variety وإضافة نقطة التشغيل الخضراء.",
-    "صفحة لسجل وتفاصيل الإشعارات، دون رسائل التحديث اليدوي أو فحص التحديثات.",
-    "تصغير زر المسح وإزالة الإطار الزائد من خانة الملف التنفيذي.",
-    "إعادة محاولة واحدة عند خطأ اتصال مؤقت أثناء تحديث الألعاب مع الاحتفاظ بالمكتبة."
+    "إزالة زر فتح القسم من تفاصيل الإشعارات.",
+    "استبدال المسح بتحديد كمقروءة مع الاحتفاظ بسجل الإشعارات.",
+    "تحديث صور التطبيق على GitHub بالواجهة الحالية."
   ]
 }

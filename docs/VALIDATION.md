@@ -1,3 +1,7 @@
+# Validation notes for 3.6.17
+
+Frontend unit/localization and isolated renderer checks cover removing Open section, marking all retained events as read without deleting records or selected details, unread-badge reset, disabled action when all entries are read, and read-state persistence after reload. The gallery is rendered from the current interface with declared example data and includes notification details. No memory measurements were performed.
+
 # Validation notes for 3.6.16
 
 Current frontend checks cover 21 unit/localization cases and isolated renderer scenarios for the literal Running badge, notification entry navigation, safe details rendering, 30-event retention, five-entry dropdown, filtering of manual refresh/update-check toasts, Clear size, and a single custom-input focus border. Catalog refresh fixtures exercise one transient retry, validation-error rejection, and persistent-failure reporting without removing saved games. Rust application logic is unchanged from the 70-test 3.6.15 validation except version metadata. No memory benchmark was performed.

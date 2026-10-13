@@ -121,6 +121,7 @@ let server, browser;
         }
       };
 
+      window.lootlazyScreenshotState=store;
       window.lootlazyRequest = async (route, body) => {
         const url = new URL(route, 'http://localhost');
         const p = url.pathname;
@@ -128,7 +129,7 @@ let server, browser;
         if (p === '/api/catalog-stats') return { totalGames: games.length };
         if (p === '/api/settings') return { desktop_notifications: false, total_playtime_seconds: 0 };
         if (p === '/api/quests') return { quests, last_synced: new Date().toISOString() };
-        if (p.startsWith('/api/updates')) return { currentVersion: '3.6.11', status: 'up_to_date' };
+        if (p.startsWith('/api/updates')) return { currentVersion: '3.6.17', status: 'up_to_date' };
         if (p === '/api/status') return {
           discordConnected: true,
           steamRunning: true,
@@ -188,6 +189,8 @@ let server, browser;
       switchTab('variety');
     });
     await settle();
+    await page.evaluate(()=>{const plan=window.lootlazyScreenshotState.variety;plan.phase='running';plan.active=true;plan.remainingSeconds=285;plan.items[0].state='running';window.lootlazyRotations.update(plan,null);});
+    await settle();
     const gameVarietyPath = path.join(screenshotsDir, 'game-variety.png');
     await page.screenshot({ path: gameVarietyPath });
     console.log('Saved:', gameVarietyPath);
@@ -213,6 +216,8 @@ let server, browser;
     await page.screenshot({ path: questsPath });
     console.log('Saved:', questsPath);
 
+    await page.evaluate(()=>{window.lootlazyNotifications.add(t('session_completed',{game:'Counter-Strike 2'}),'success',{kind:'session',target:'simulator'});window.lootlazyNotifications.add(t('update_available_version',{version:'3.6.17'}),'info',{kind:'update',target:'settings'});});
+    await page.click('#notifications-toggle');await page.locator('#notifications-list .notification-item').last().click();await settle();await page.screenshot({path:path.join(screenshotsDir,'notifications.png')});
     console.log('All gallery screenshots updated successfully.');
   } finally {
     if (browser) await browser.close();

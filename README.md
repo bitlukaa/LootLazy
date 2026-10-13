@@ -29,7 +29,7 @@ If LootLazy helps you, consider leaving a star!
 - **Game Variety** — Begin with an empty setup and choose 10, 50, 100, or 200 games for Discord activity. Shuffle, search, reorder, and run the group with one duration per game. Pause and resume within the current app session; restarting the app requires a fresh game-count selection.
 - **Desktop play quests** — Browse available 15-minute quests and start directly from their cards. Accept the quest in Discord first; unfinished local sessions can be resumed.
 - **Steam Idle** — Keep owned games active for playtime and eligible Steam trading-card drops. Steam controls card eligibility and timing; LootLazy does not track remaining drops. Run several games together with separate timers, search for titles even when they aren't installed, and manage single sessions in the Library or monitor multiple concurrent games in the Active sessions tab.
-- **Notification history** — The header bell shows the latest five events and opens a full history/details page with the latest 30 session completions and automatically discovered updates stored locally. Click an entry to read its details or clear the list. Manual refresh and update-check messages stay as temporary toasts.
+- **Notification history** — The header bell shows the latest five events and opens a full history/details page with the latest 30 session completions and automatically discovered updates stored locally. Click an entry to read its details, or use Mark as read to reset the unread count without deleting history. Manual refresh and update-check messages stay as temporary toasts.
 - **Manual session** — Enter an executable name to create a custom Discord activity when the game is missing from the catalog.
 - **Two-way sync** — Start matched Discord and Steam sessions together from either page.
 - **Pick up where you left off** — Pause, resume, clear, and reorder saved queues after reopening LootLazy.
@@ -38,7 +38,7 @@ If LootLazy helps you, consider leaving a star!
 
 ## Screenshots
 
-The gallery uses the application interface with example game and quest data.
+The gallery uses the application interface with example game, quest, and notification data.
 
 | Game Time | Game Variety |
 |:---:|:---:|
@@ -47,6 +47,8 @@ The gallery uses the application interface with example game and quest data.
 | Steam Idle | Quests |
 |:---:|:---:|
 | [![Steam Idle](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png) | [![Quests](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png) |
+
+[![Notification history](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/notifications.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/notifications.png)
 
 Click a screenshot to view it at full size.
 
