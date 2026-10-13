@@ -713,7 +713,7 @@ Object.assign(I18N.ar,{
   "steam_library": "مكتبة Steam",
   "steam_start_selected": "تشغيل المحدد",
   "steam_selected_count": "تم تحديد {count}",
-  "steam_active_sessions": "الجلسات",
+  "steam_active_sessions": "الجلسات النشطة",
   "steam_pause_all": "إيقاف الكل مؤقتًا",
   "steam_stop_all": "إيقاف الكل",
   "steam_apply_duration": "تطبيق الوقت",
@@ -724,6 +724,12 @@ Object.assign(I18N.ar,{
   "steam_library_hint": "الألعاب المثبتة · ابحث عن ألعاب أخرى"
 });
 Object.assign(I18N.en,{
+  "steam_sub_mode": "Steam mode",
+  "steam_mode_library": "Steam Library",
+  "steam_mode_active": "Active sessions",
+  "steam_no_active_sessions": "No active sessions",
+  "steam_no_active_hint": "Select a game from your Steam library to start idling.",
+  "steam_browse_library": "Browse library",
   "steam_status_title": "Steam client and session connection",
   "steam_connected": "Steam Connected",
   "steam_open": "Steam Open",
@@ -731,23 +737,23 @@ Object.assign(I18N.en,{
   "steam_launch_failed": "Could not open Steam. Make sure the desktop client is installed.",
   "steam_library_reminder": "Make sure the game is in your Steam library, then start it here. It does not need to be installed.",
   "connections_privacy_title": "Connections & Privacy",
-  "connections_privacy_desc": "How LootLazy communicates with third-party platforms and permissions required.",
+  "connections_privacy_desc": "Local platform checks and account privacy.",
+  "discord_running": "Running",
+  "discord_not_running": "Not running",
   "connection_discord_title": "Discord Client",
-  "connection_discord_desc": "LootLazy automatically detects if the Discord desktop app is running on your PC via local IPC to display activity and complete quests. No Discord login, OAuth linking, or credentials required.",
+  "connection_discord_desc": "LootLazy checks whether Discord Desktop is running before starting a quest session. No Discord account linking, login, OAuth, or account tokens are required.",
   "connection_steam_title": "Steam (Game Time & Idle)",
   "connection_steam_desc": "Communicates locally with your running Steam client to register playtime. No account credentials or login required.",
-  "connection_cards_title": "Steam Trading Cards",
-  "connection_cards_desc": "The only feature requiring a Steam Web session (session cookie). Required because remaining card drops can only be fetched from the Steam badges page.",
   "status_connected": "Connected",
-  "status_disconnected": "Disconnected",
-  "status_session_required": "Requires Session",
-  "cards_drops_title": "Trading Card Drops",
-  "cards_drops_intro": "Automatically farm eligible trading cards by idling games until all remaining drops are collected.",
-  "cards_remaining_count": "{count} card drops remaining",
-  "cards_no_drops": "No card drops remaining",
-  "cards_session_hint": "Reading remaining card drops requires an active Steam Web session to query the badges page."
+  "status_disconnected": "Disconnected"
 });
 Object.assign(I18N.ar,{
+  "steam_sub_mode": "وضع ستيم",
+  "steam_mode_library": "مكتبة ستيم",
+  "steam_mode_active": "الجلسات النشطة",
+  "steam_no_active_sessions": "لا توجد جلسات نشطة",
+  "steam_no_active_hint": "اختر لعبة من مكتبة ستيم لبدء تشغيلها هنا.",
+  "steam_browse_library": "تصفح المكتبة",
   "steam_status_title": "حالة تطبيق Steam واتصال الجلسة",
   "steam_connected": "Steam متصل",
   "steam_open": "Steam مفتوح",
@@ -756,39 +762,16 @@ Object.assign(I18N.ar,{
   "steam_library_reminder": "تأكد إن اللعبة موجودة في مكتبة Steam عندك، ثم شغّلها من هنا. مش لازم تكون مثبتة على الجهاز.",
   "connections_privacy_title": "الربط والخصوصية",
   "connections_privacy_desc": "توضيح لكيفية تواصل LootLazy مع البرامج والمنصات الخارجية وحدود صلاحياتها.",
+  "discord_running": "قيد التشغيل",
+  "discord_not_running": "غير مشغّل",
   "connection_discord_title": "تطبيق ديسكورد (Discord)",
-  "connection_discord_desc": "يكتشف LootLazy تلقائياً ما إذا كان تطبيق ديسكورد المكتبي مفتوحاً على جهازك عبر اتصال محلي (IPC) لعرض نشاط اللعبة وإنجاز المهام. لا يتطلب البرنامج تسجيل الدخول بحساب ديسكورد، ولا يطلب صلاحيات، ولا يتم تخزين أي بيانات خاصة.",
+  "connection_discord_desc": "يتحقق LootLazy من تشغيل تطبيق Discord المكتبي قبل بدء جلسة المهمة. لا يتطلب ربط حساب ديسكورد أو تسجيل الدخول أو OAuth أو توكنات الحساب.",
   "connection_steam_title": "عميل ستيم (وقت اللعب والمحاكاة)",
   "connection_steam_desc": "يتواصل البرنامج محلياً مع عميل ستيم المشغّل على جهاز الكمبيوتر لتسجيل ساعات اللعب ومحاكاة الجلسات. لا يتطلب تسجيل الدخول بحساب ستيم أو إدخال كلمة المرور.",
-  "connection_cards_title": "بطاقات ستيم (Steam Trading Cards)",
-  "connection_cards_desc": "هذه الميزة هي الوحيدة التي تتطلب جلسة ستيم (تسجيل دخول ويب / ملف تعريف الارتباط للجلسة Session Cookie) لأن نظام ستيم لا يتيح بيانات البطاقات المتبقية ومستوى الشارات إلا عبر صفحة الشارات في مجتمع ستيم.",
   "status_connected": "متصل",
-  "status_disconnected": "غير متصل",
-  "status_session_required": "يتطلب جلسة ويب",
-  "cards_drops_title": "مزرعة بطاقات التداول",
-  "cards_drops_intro": "جمع بطاقات الألعاب المؤهلة تلقائياً عبر محاكاة تشغيل اللعبة حتى نفاد البطاقات المتبقية.",
-  "cards_remaining_count": "{count} بطاقات متبقية",
-  "cards_no_drops": "لا توجد بطاقات متبقية حالياً",
-  "cards_session_hint": "تتطلب قراءة عدد البطاقات المتبقية وجود جلسة ويب نشطة على صفحة شارات ستيم."
+  "status_disconnected": "غير متصل"
 });
-// Card tracking is a preview until an account data provider is implemented.
-Object.assign(I18N.en,{
- cards_preview_status:"Coming soon",
- cards_drops_intro:"Remaining-card tracking is being prepared. Manual Steam idling is available above.",
- cards_session_hint:"Card tracking and automatic stopping are not available in this version. No Steam Web sign-in or cookies are requested.",
- connection_cards_desc:"Manual idle sessions do not require a Steam Web session. Remaining-card tracking is not connected yet."
-});
-Object.assign(I18N.ar,{
- cards_preview_status:"قريبًا",
- cards_drops_intro:"متابعة البطاقات المتبقية قيد التجهيز. يمكنك استخدام جلسات Steam اليدوية بالأعلى.",
- cards_session_hint:"متابعة البطاقات والإيقاف التلقائي غير متاحين في هذه النسخة. لا نطلب تسجيل دخول Steam عبر الويب أو ملفات جلسة.",
- connection_cards_desc:"الجلسات اليدوية لا تحتاج جلسة Steam عبر الويب. متابعة البطاقات المتبقية لم يتم ربطها بعد."
-});
-// Copy legacy preferences without deleting the original keys.
-for(const suffix of ['lang','theme','variety_counts','steam_durations']){
- try{const key='lootlazy_'+suffix;if(localStorage.getItem(key)===null){const old=localStorage.getItem('questro_'+suffix)||localStorage.getItem('questra_'+suffix);if(old!==null)localStorage.setItem(key,old);}}catch{}
-}
-let currentLang = (localStorage.getItem('lootlazy_lang') || localStorage.getItem('lootlazy_lang') || localStorage.getItem('questra_lang')) === 'ar' ? 'ar' : 'en';
+let currentLang = localStorage.getItem('lootlazy_lang') === 'ar' ? 'ar' : 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 
 function number(value){return Number(value).toLocaleString(currentLang==='ar'?'ar-EG':'en-US');}

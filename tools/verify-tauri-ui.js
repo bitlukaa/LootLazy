@@ -1,7 +1,7 @@
 // LootLazy native interface and recovery regression checks.
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
 const {spawn,execFileSync}=require('child_process');
-const {chromium}=require(process.env.LOOTLAZY_PLAYWRIGHT||process.env.QUESTRA_PLAYWRIGHT||'playwright');
+const {chromium}=require(process.env.LOOTLAZY_PLAYWRIGHT||'playwright');
 const root=path.resolve(__dirname,'..'),exe=path.join(root,'dist/LootLazy-Tauri/LootLazy.exe');
 fs.mkdirSync(path.join(root,'data/.test-temp'),{recursive:true});fs.mkdirSync(path.join(root,'.internal'),{recursive:true});
 const fixture=fs.mkdtempSync(path.join(root,'data/.test-temp/lootlazy-tauri-ui-'));
@@ -13,7 +13,7 @@ for(const id of ['123456789','234567890'])games.push({id,name:'Quest game '+id,e
 save('detectable_cache.json',games);save('catalog_meta.json',{lastUpdated:new Date().toISOString()});
 const expiresAt=new Date(Date.now()+86400000).toISOString();
 save('active_quests.json',{source:'fixture',last_synced:new Date().toISOString(),quests:['123456789','234567890'].map(id=>({id,appId:id,gameName:'Quest game '+id,questName:'Quest '+id,kind:'play',durationSeconds:900,durationMinutes:15,startsAt:new Date(Date.now()-3600000).toISOString(),expiresAt,variantIds:[id],rewards:[]}))});
-save('questra_overrides.json',{settings:{scan_local_steam:false,desktop_notifications:false,minimize_to_tray:false},custom_executables:{},saved_games:[]});
+save('lootlazy_overrides.json',{settings:{scan_local_steam:false,desktop_notifications:false,minimize_to_tray:false},custom_executables:{},saved_games:[]});
 let child,browser,page;const checks=[],errors=[],runtimeWarnings=[];
 async function until(fn,timeout=15000){const end=Date.now()+timeout;while(Date.now()<end){try{const value=await fn();if(value)return value;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error('Timed out waiting for native interface');}
 async function open(){

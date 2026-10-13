@@ -1,10 +1,10 @@
-# Validation notes for 3.6.8
+# Validation notes for 3.6.11
 
 Local regression coverage includes helper path confinement, update signatures, Steam runtime publisher checks, queue persistence, timer suspension accounting, and synchronized-session failure handling. Frontend checks cover localization, settings rollback, refresh cooldowns and custom game-count controls. Native WebView checks use synthetic game identities and isolated data.
 
-The card-drop planning module is preparatory only. It is not loaded by the interface and performs no Steam authentication or account requests. Missing and stale counts remain unknown. Questro currently does not track remaining cards or stop idling when drops end.
+Idle Steam uses manual game selection, timers, and an Active Sessions view. It does not collect Steam web sessions or automatically track card drops.
 
-Performance benchmarks include the native host and owned WebView2 processes. Summed working sets include shared pages and differ from private memory or Windows Task Manager's grouped figure. Short samples cannot establish long-term stability. Run `node tools/benchmark-normal-tray.cjs` without an existing Questro instance for a normal-release tray measurement; it uses isolated data and does not open a game session. The benchmark terminates only the process tree it launched.
+Performance benchmarks include the native host and owned WebView2 processes. Summed working sets include shared pages and differ from private memory or Windows Task Manager's grouped figure. Short samples cannot establish long-term stability. Run `node tools/benchmark-normal-tray.cjs` without an existing LootLazy instance for a normal-release tray measurement; it uses isolated data and does not open a game session. The benchmark terminates only the process tree it launched.
 
 Windows Authenticode signing is not configured. Ed25519 update signatures authenticate the update payload independently and do not eliminate SmartScreen warnings. The private signing key must stay outside the repository and is never included in release assets.
 

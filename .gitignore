@@ -4,8 +4,8 @@ dist/
 data/
 games/
 discord-quest-helper/
-Questro.exe
-Questro.lnk
+*.exe
+*.lnk
 *.log
 *.tmp
 src-tauri/target/
@@ -18,5 +18,5 @@ releases/
 *.pk8
 *.private-key
 
-# Generated renamed launcher
-LootLazy.exe
+# Local agent instructions
+AGENTS.md

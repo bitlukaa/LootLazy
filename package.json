@@ -1,6 +1,6 @@
 {
   "name": "lootlazy",
-  "version": "3.6.10",
+  "version": "3.6.11",
   "description": "LootLazy",
   "scripts": {
     "start": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/start-tauri.ps1",
@@ -11,7 +11,7 @@
     "test:localization": "node --test tests/localization.test.js",
     "package": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/package-tauri.ps1",
     "test:renderer": "node tools/verify-rotations-ui.js",
-    "test:unit": "node --test tests/localization.test.js tests/ui-settings.test.js tests/card-drops.test.js"
+    "test:unit": "node --test tests/localization.test.js tests/ui-settings.test.js tests/steam-ui.test.js"
   },
   "keywords": [
     "game-simulator",

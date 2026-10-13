@@ -12,7 +12,7 @@ fn hex<const N: usize>(value: &str) -> Result<[u8; N], String> {
     Ok(bytes)
 }
 pub fn message(version: &str, hash: &str, size: u64) -> String {
-    format!("Questro update v1\n{version}\n{hash}\n{size}\n")
+    format!("LootLazy update v1\n{version}\n{hash}\n{size}\n")
 }
 fn verify_with_key(
     key: &[u8; 32],

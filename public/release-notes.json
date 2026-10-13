@@ -1,1 +1,15 @@
-{"version":"3.6.10","en":["Cleaned legacy build and interface names.","Preserved legacy settings and signing-key compatibility."],"ar":["تنظيف أسماء البناء والواجهة القديمة.","الحفاظ على توافق الإعدادات ومفتاح التوقيع القديم."]}
+{
+  "version": "3.6.11",
+  "en": [
+    "Idle Steam reorganized with dedicated Steam Library and Active Sessions views. Multi-game sessions now run in a separate active sessions tab.",
+    "Removed automatic Trading Cards and session-cookie authentication.",
+    "Cleaned application branding and platform privacy descriptions.",
+    "Update signature protocol now uses LootLazy; earlier releases require a one-time manual upgrade."
+  ],
+  "ar": [
+    "إعادة تنظيم Idle Steam بوضعين منفصلين: مكتبة Steam والجلسات النشطة، مع إدارة الجلسات المتعددة في تبويب مستقل للجلسات النشطة.",
+    "إزالة نظام بطاقات التداول التلقائي وتسجيل الدخول ببيانات الجلسة.",
+    "تنظيف اسم التطبيق وتحسين وصف الخصوصية وشعار Discord.",
+    "التوقيع يستخدم اسم LootLazy؛ الترقية من النسخ الأقدم تحتاج تثبيتًا يدويًا مرة واحدة."
+  ]
+}

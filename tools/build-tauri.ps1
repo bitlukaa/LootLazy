@@ -35,17 +35,9 @@ if (Test-Path -LiteralPath $compiler) {
   if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed.' }
   $parentDir = Split-Path -Parent $projectRoot
   if (Test-Path -LiteralPath $parentDir) {
-    Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $parentDir 'LootLazy.exe') -Force
+    try { Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $parentDir 'LootLazy.exe') -Force } catch { Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $parentDir 'LootLazy.exe.pending') -Force; Write-Output 'Installed app is open; update staged.' }
   }
   if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed.' }
-}
-# Preserve the prior development profile when moving the build directory.
-$legacyData=Join-Path $projectRoot 'dist/Questro-Tauri/data'
-$newData=Join-Path $output 'data'
-if((Test-Path -LiteralPath $legacyData) -and !(Test-Path -LiteralPath $newData)){
- $legacyExe=Join-Path $projectRoot 'dist/Questro-Tauri/Questro.exe'
- if(@(Get-CimInstance Win32_Process | Where-Object {$_.ExecutablePath -eq $legacyExe}).Count){throw 'Close the old development app before migrating its profile.'}
- Copy-Item -LiteralPath $legacyData -Destination $output -Recurse -ErrorAction Stop
 }
 # Portable user data is never replaced by a rebuild.
 $dataFolder = Join-Path $output 'data'

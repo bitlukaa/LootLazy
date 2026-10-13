@@ -34,7 +34,7 @@ By contributing, you agree that your contribution may be distributed under the p
 
 ## Reproduce the frontend checks
 
-Install Node.js 22 or later and run `npm ci --ignore-scripts`, `npx playwright install chromium`, `npm run test:unit`, and `npm run test:renderer`. Set QUESTRO_BROWSER only to use a specific installed Chromium browser. Build Windows helpers with `tools/build-helper.ps1` before direct Cargo builds; the normal build script does this automatically.
+Install Node.js 22 or later and run `npm ci --ignore-scripts`, `npx playwright install chromium`, `npm run test:unit`, and `npm run test:renderer`. Set LOOTLAZY_BROWSER only to use a specific installed Chromium browser. Build Windows helpers with `tools/build-helper.ps1` before direct Cargo builds; the normal build script does this automatically.
 
 ## Release signing
 
@@ -44,4 +44,4 @@ After the final build, run `tools/sign-release.ps1 -BinaryPath releases/LootLazy
 
 Older clients do not enforce the new signature policy until they install version 3.6.8 or later. Windows Authenticode signing of LootLazy itself is separate and still requires an appropriate publisher certificate. Steam SDK verification uses the installed SDK publisher signature and does not sign or modify the game.
 
-Legacy protected keys are copied from QuestroSigning on first use; the original remains a backup. Never generate a replacement merely because the application was renamed.
+Keep the existing protected signing key when renaming the application. Version 3.6.11 uses the LootLazy signature domain; earlier installations require a one-time manual upgrade.

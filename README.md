@@ -28,7 +28,7 @@ If LootLazy helps you, consider leaving a star!
 - **Game Time** — Run lightweight game activity with continuous, preset, or custom timers. Manage one game or a saved queue.
 - **Game Variety** — Begin with 10 games and choose 10, 50, 100, or save your own custom counts. Remove saved custom counts, shuffle, search, reorder, and run the group with one duration per game. Paused sessions with playtime can be resumed.
 - **Desktop play quests** — Browse available 15-minute quests and start directly from their cards. Accept the quest in Discord first; unfinished local sessions can be resumed.
-- **Idle Steam** — Keep owned games active for playtime and eligible Steam Trading Card drops. Run several games together with separate timers, and search for titles even when they aren't installed.
+- **Idle Steam** — Keep owned games active for playtime and eligible Steam trading-card drops. Steam controls card eligibility and timing; LootLazy does not track remaining drops. Run several games together with separate timers, search for titles even when they aren't installed, and manage single sessions in the Library or monitor multiple concurrent games in the Active sessions tab.
 - **Two-way sync** — Start matched Discord and Steam sessions together from either page.
 - **Pick up where you left off** — Pause, resume, clear, and reorder saved queues after reopening LootLazy.
 - **Make it yours** — Light and dark themes, English and Arabic, compact client indicators, desktop notifications, and tray controls.
@@ -36,7 +36,7 @@ If LootLazy helps you, consider leaving a star!
 
 ## Screenshots
 
-The card-drop panel is a preview; remaining-card tracking and automatic farming are not enabled.
+The gallery uses the application interface with example game and quest data.
 
 | Game Time | Game Variety |
 |:---:|:---:|
@@ -60,7 +60,7 @@ Choose your version from [GitHub Releases](https://github.com/bitlukaa/LootLazy/
 
 Windows 10/11 (64-bit) and Microsoft Edge WebView2 are required. Setup can download WebView2 if needed.
 
-Download 3.6.10 manually if upgrading from Questro or LootLazy 3.6.9: earlier update helpers do not handle the renamed executable correctly. Keep your existing portable folder to retain its data. Version 3.6.10 fixes the installer helper and preserves legacy settings and signing verification.
+Download 3.6.10 manually if upgrading from earlier versions: earlier update helpers do not handle the renamed executable correctly. Keep your existing portable folder to retain its data.
 
 ## Getting started
 
@@ -70,7 +70,7 @@ Download 3.6.10 manually if upgrading from Questro or LootLazy 3.6.9: earlier up
 
 **Steam:** sign in to Steam, choose a game you own, and start. A compatible Valve-signed runtime from an installed Steam game is required; the selected title does not have to be installed.
 
-**Trading Cards:** choose an eligible game with card drops remaining to idle while Steam awards available drops. Check remaining drops on your Steam Badges page. LootLazy does not track remaining cards or stop automatically when drops run out; Steam controls eligibility and drop timing. See the [Steam Trading Cards FAQ](https://steamcommunity.com/tradingcards/faq/).
+**Steam Idling:** sign in to Steam, choose your owned games, set the duration, and start. Run single sessions directly from the Steam Library or monitor multiple running games from the Active sessions view.
 
 **Updates:** use **Check updates** in Settings, then **Download & install** when a newer release is available. Stop active sessions first; saved settings and queues are preserved. Starting with version 3.6.8, updates also require a publisher signature.
 
@@ -112,3 +112,5 @@ Make sure your sending network matches the network you intend to use.
 LootLazy is available under the [MIT License](LICENSE). Third-party notices are included with the downloads.
 
 *LootLazy is an independent project and is not affiliated with Discord or Valve.*
+
+Update signatures use the LootLazy protocol from version 3.6.11. Install this version manually once when upgrading from an earlier release; subsequent updates use the built-in updater.

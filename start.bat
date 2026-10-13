@@ -1,2 +1,2 @@
 @echo off
-start "" "%~dp0Questro.exe"
+start "" "%~dp0LootLazy.exe"

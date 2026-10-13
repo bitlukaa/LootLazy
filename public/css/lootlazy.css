@@ -300,11 +300,6 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .connection-card-desc { font-size: 12px; line-height: 1.7; margin: 0; }
 .status-pill.status-pill-session { background: hsl(var(--lootlazy-primary)/.1); color: var(--accent); border-color: hsl(var(--lootlazy-primary)/.25); }
 
-/* Steam Trading Cards panel styling */
-.steam-cards-panel { margin-top: 24px; padding: 24px; }
-.cards-heading-title { display: flex; align-items: center; gap: 10px; }
-.cards-panel-intro { font-size: 12px; margin-top: 6px; margin-bottom: 16px; line-height: 1.6; }
-.cards-empty-state { padding: 24px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; background: var(--surface-2); }
-.cards-empty-state p { margin: 0; font-size: 12px; line-height: 1.7; }
-.cards-eligible-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-.card-drop-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); font-size: 12px; }
+/* Active sessions view styling */
+.steam-active-view { display: flex; flex-direction: column; gap: 16px; }
+.steam-active-view .rotation-panel { margin-top: 0; }

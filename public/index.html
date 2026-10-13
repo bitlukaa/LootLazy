@@ -62,7 +62,15 @@
  </div>
 </section>
 <section id="view-steam" class="view-panel rotation-view">
- <div class="page-heading"><h1 data-i18n="tab_steam">Idle Steam</h1></div><p class="quests-reminder muted" data-i18n="steam_library_reminder">Make sure the game is in your Steam library, then start it here. It does not need to be installed.</p>
+ <div class="page-heading">
+  <div><h1 data-i18n="tab_steam">Idle Steam</h1></div>
+  <div class="sim-modes" role="group" data-i18n-aria-label="steam_sub_mode">
+   <button class="sim-mode active" data-steam-sub-mode="library"><span id="steam-mode-library-icon"></span><span data-i18n="steam_mode_library">Steam Library</span></button>
+   <button class="sim-mode" data-steam-sub-mode="active"><span id="steam-mode-active-icon"></span><span data-i18n="steam_mode_active">Active sessions</span><span id="steam-active-nav-badge" class="count-badge" hidden>0</span></button>
+  </div>
+ </div>
+ <div id="steam-library-mode-view">
+  <p class="quests-reminder muted" data-i18n="steam_library_reminder">Make sure the game is in your Steam library, then start it here. It does not need to be installed.</p>
  <div class="steam-workspace">
   <aside class="panel steam-picker"><div class="panel-heading"><h2 data-i18n="steam_library">Steam library</h2><button id="steam-refresh" type="button" class="icon-button" data-i18n-aria-label="refresh_catalog"><span id="steam-refresh-icon" class="refresh-icon"></span></button></div><div class="search-field"><span id="steam-search-icon"></span><input id="steam-search" type="search" data-i18n-placeholder="search_placeholder" data-i18n-aria-label="search_placeholder" autocomplete="off"></div><p id="steam-game-count" class="picker-total muted"></p><div id="steam-library" class="game-list"></div><p class="steam-search-hint muted" data-i18n="steam_search_hint"></p><div id="steam-multiple" class="steam-multiple" hidden><span id="steam-selected-count" class="muted"></span><button id="steam-start-selected" type="button" class="button button-primary" data-i18n="steam_start_selected">Start selected</button></div></aside>
   <section class="panel steam-session-panel"><div class="configuration-heading"><h2 data-i18n="game_configuration">Session setup</h2></div><div id="steam-empty" class="game-empty polished-empty"><div class="empty-game-icon" aria-hidden="true"><img src="assets/nav/steam.svg" width="32" height="32" alt=""></div><h3 data-i18n="steam_empty_title"></h3><p data-i18n="steam_empty_body"></p></div>
@@ -76,8 +84,25 @@
    </div><p id="steam-runtime-note" class="inline-note" hidden data-i18n="steam_runtime_missing"></p>
   </section>
  </div>
- <section id="steam-sessions-panel" class="panel rotation-panel" hidden><div class="rotation-summary"><div class="page-title"><h2 data-i18n="steam_active_sessions">Active sessions</h2><span id="steam-session-count" class="count-badge"></span></div><div class="rotation-actions"><button id="steam-pause-all" class="button button-secondary" type="button" data-i18n="steam_pause_all">Pause all</button><button id="steam-stop-all" class="button button-danger" type="button" data-i18n="steam_stop_all">Stop all</button></div></div><div id="steam-list" class="rotation-list"></div></section>
- <section id="steam-cards-panel" class="panel steam-cards-panel"><div class="panel-heading"><div class="cards-heading-title"><h2 data-i18n="cards_drops_title">Trading Card Drops</h2><span id="cards-total-badge" class="count-badge">—</span></div><span id="cards-session-pill" class="status-pill status-pill-session" data-i18n="cards_preview_status">Coming soon</span></div><p class="muted cards-panel-intro" data-i18n="cards_drops_intro">Remaining-card tracking is being prepared. Manual Steam idling is available above.</p><div id="cards-empty-state" class="cards-empty-state"><p class="muted" data-i18n="cards_session_hint">Card tracking and automatic stopping are not available in this version. No Steam Web sign-in or cookies are requested.</p></div><div id="cards-eligible-list" class="cards-eligible-list" hidden></div></section>
+ </div>
+ <div id="steam-active-mode-view" class="steam-active-view" hidden>
+  <section id="steam-sessions-panel" class="panel rotation-panel">
+   <div class="rotation-summary">
+    <div class="page-title"><h2 data-i18n="steam_active_sessions">Active sessions</h2><span id="steam-session-count" class="count-badge">0</span></div>
+    <div class="rotation-actions">
+     <button id="steam-pause-all" class="button button-secondary" type="button" data-i18n="steam_pause_all">Pause all</button>
+     <button id="steam-stop-all" class="button button-danger" type="button" data-i18n="steam_stop_all">Stop all</button>
+    </div>
+   </div>
+   <div id="steam-empty-active" class="game-empty polished-empty">
+    <div class="empty-game-icon" aria-hidden="true"><img src="assets/nav/steam.svg" width="32" height="32" alt=""></div>
+    <h3 data-i18n="steam_no_active_sessions">No active sessions</h3>
+    <p data-i18n="steam_no_active_hint">Select a game from your Steam library to start idling.</p>
+    <div class="session-actions"><button id="steam-browse-library-btn" type="button" class="button button-primary" data-i18n="steam_browse_library">Browse library</button></div>
+   </div>
+   <div id="steam-list" class="rotation-list" hidden></div>
+  </section>
+ </div>
 </section>
 <section id="view-quests" class="view-panel">
  <div class="page-heading"><div class="page-title"><h1 data-i18n="tab_quests">Quests</h1><span id="quests-count" class="count-badge"></span></div><div class="heading-actions"><button id="btn-refresh-quests" class="button button-primary"><span id="refresh-quests-icon-slot" class="refresh-icon"></span><span data-i18n="refresh_quests">Refresh quests</span></button></div></div>
@@ -115,19 +140,15 @@
   <div class="settings-row"><div><h2 data-i18n="desktop_notifications_title">Desktop Notifications</h2><p class="muted" data-i18n="desktop_notifications_desc">Notify when game timer or quest finishes</p></div><button type="button" class="toggle-switch" role="switch" aria-checked="false" data-setting-toggle="desktop_notifications" data-i18n-aria-label="desktop_notifications_title"><span class="toggle-thumb"></span></button></div>
  </section>
  <section class="panel connections-settings">
-  <div class="connections-heading"><h2 data-i18n="connections_privacy_title">Connections &amp; Privacy</h2><p class="muted" data-i18n="connections_privacy_desc">How LootLazy communicates with third-party platforms</p></div>
+  <div class="connections-heading"><h2 data-i18n="connections_privacy_title">Connections &amp; Privacy</h2><p class="muted" data-i18n="connections_privacy_desc">Local platform checks and account privacy.</p></div>
   <div class="connections-grid">
    <div class="connection-card">
-    <div class="connection-card-header"><div class="connection-card-title"><img src="assets/nav/quests.svg" class="connection-card-icon" width="20" height="20" alt=""><strong data-i18n="connection_discord_title">Discord Client</strong></div><span id="settings-discord-status" class="status-pill" data-i18n="status_disconnected">Disconnected</span></div>
-    <p class="connection-card-desc muted" data-i18n="connection_discord_desc">Detects the open Discord desktop app locally via IPC. No account login, token, or credentials are required or stored.</p>
+    <div class="connection-card-header"><div class="connection-card-title"><img src="assets/nav/discord.svg" class="connection-card-icon" width="20" height="20" alt=""><strong data-i18n="connection_discord_title">Discord Client</strong></div><span id="settings-discord-status" class="status-pill">Not running</span></div>
+    <p class="connection-card-desc muted" data-i18n="connection_discord_desc">LootLazy checks whether Discord Desktop is running before starting a quest session. No Discord account linking, login, OAuth, or account tokens are required.</p>
    </div>
    <div class="connection-card">
     <div class="connection-card-header"><div class="connection-card-title"><img src="assets/nav/steam.svg" class="connection-card-icon" width="20" height="20" alt=""><strong data-i18n="connection_steam_title">Steam (Game Time &amp; Idle)</strong></div><span id="settings-steam-status" class="status-pill" data-i18n="status_disconnected">Disconnected</span></div>
     <p class="connection-card-desc muted" data-i18n="connection_steam_desc">Communicates locally with your running Steam client to register playtime. No account credentials or login required.</p>
-   </div>
-   <div class="connection-card">
-    <div class="connection-card-header"><div class="connection-card-title"><img src="assets/nav/steam.svg" class="connection-card-icon" width="20" height="20" alt=""><strong data-i18n="connection_cards_title">Steam Trading Cards</strong></div><span id="settings-cards-status" class="status-pill status-pill-session" data-i18n="cards_preview_status">Coming soon</span></div>
-    <p class="connection-card-desc muted" data-i18n="connection_cards_desc">The only feature requiring a Steam Web session (session cookie). Required because remaining card drops can only be fetched from the Steam badges page.</p>
    </div>
   </div>
  </section>
@@ -143,6 +164,6 @@
 <dialog id="duration-dialog"><form id="duration-edit-form"><div class="dialog-heading"><h2 data-i18n="edit_duration">Edit duration</h2><button type="button" id="duration-dialog-close" class="icon-button" data-i18n-aria-label="cancel">×</button></div><p id="duration-edit-game" class="muted"></p><div class="duration-custom"><label><span data-i18n="hours">Hours</span><input id="edit-hours" type="number" min="0" max="24" required></label><span class="time-separator">:</span><label><span data-i18n="minutes">Minutes</span><input id="edit-minutes" type="number" min="0" max="59" required></label></div><div class="dialog-actions"><button type="button" id="duration-dialog-cancel" class="button button-quiet" data-i18n="cancel">Cancel</button><button type="submit" class="button button-primary" data-i18n="save_apply">Save</button></div></form></dialog>
 
 <div id="toast-container" role="status" aria-live="polite"></div>
-<script src="js/desktop.js"></script><script src="js/icons.js"></script><script src="js/card-drops.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script><script src="js/rotations.js"></script>
+<script src="js/desktop.js"></script><script src="js/icons.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script><script src="js/rotations.js"></script>
 </body></html>
 

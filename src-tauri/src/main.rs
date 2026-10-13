@@ -23,6 +23,17 @@ use std::{
 };
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 type Shared = Arc<Mutex<backend::Backend>>;
+fn trusted_main_label(label: &str) -> bool {
+    label == "main"
+}
+fn require_main_window(window: &tauri::WebviewWindow) -> Result<(), String> {
+    if trusted_main_label(window.label()) {
+        Ok(())
+    } else {
+        Err("Untrusted application window".into())
+    }
+}
+
 // Lower WebView memory pressure in the tray without suspending scripts or native timers.
 fn set_webview_memory(app: &tauri::AppHandle, inactive: bool) {
     #[cfg(windows)]
@@ -46,11 +57,17 @@ fn set_webview_memory(app: &tauri::AppHandle, inactive: bool) {
 }
 
 #[tauri::command]
-fn quit(app: tauri::AppHandle) {
+fn quit(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<(), String> {
+    require_main_window(&window)?;
     app.exit(0);
+    Ok(())
 }
 #[tauri::command]
-fn window_close(window: tauri::WebviewWindow, state: tauri::State<'_, Shared>) {
+fn window_close(
+    window: tauri::WebviewWindow,
+    state: tauri::State<'_, Shared>,
+) -> Result<(), String> {
+    require_main_window(&window)?;
     let minimize_to_tray = state
         .lock()
         .ok()
@@ -66,9 +83,11 @@ fn window_close(window: tauri::WebviewWindow, state: tauri::State<'_, Shared>) {
     } else {
         window.app_handle().exit(0);
     }
+    Ok(())
 }
 #[tauri::command]
-fn notify_desktop(title: String, body: String, window: tauri::WebviewWindow) {
+fn notify_desktop(title: String, body: String, window: tauri::WebviewWindow) -> Result<(), String> {
+    require_main_window(&window)?;
     let _ = window.request_user_attention(Some(tauri::UserAttentionType::Critical));
     #[cfg(windows)]
     {
@@ -92,6 +111,7 @@ fn notify_desktop(title: String, body: String, window: tauri::WebviewWindow) {
                 .status();
         });
     }
+    Ok(())
 }
 static UPDATING: AtomicBool = AtomicBool::new(false);
 static CATALOG_REFRESH: Mutex<()> = Mutex::new(());
@@ -114,7 +134,9 @@ async fn api(
     body: Value,
     state: tauri::State<'_, Shared>,
     app: tauri::AppHandle,
+    window: tauri::WebviewWindow,
 ) -> Result<Value, String> {
+    require_main_window(&window)?;
     if !route.starts_with("/api/") || route.len() > 2000 {
         return Err("Invalid application route".into());
     }
@@ -294,7 +316,7 @@ async fn api(
 fn root() -> PathBuf {
     let diagnostic = std::env::args().any(|a| a == "--verify-ui" || a == "--verify-backend");
     if diagnostic {
-        std::env::var_os("LOOTLAZY_DATA_ROOT").or_else(|| std::env::var_os("QUESTRO_DATA_ROOT"))
+        std::env::var_os("LOOTLAZY_DATA_ROOT")
     } else {
         None
     }
@@ -391,9 +413,7 @@ fn main() {
         return;
     }
     let isolated_ui_test = std::env::args().any(|a| a == "--verify-ui")
-        && std::env::var_os("LOOTLAZY_DATA_ROOT")
-            .or_else(|| std::env::var_os("QUESTRO_DATA_ROOT"))
-            .is_some()
+        && std::env::var_os("LOOTLAZY_DATA_ROOT").is_some()
         && root
             .file_name()
             .and_then(|n| n.to_str())
@@ -436,6 +456,9 @@ fn main() {
             notify_desktop
         ])
         .on_window_event(|window, event| {
+            if window.label() != "main" {
+                return;
+            }
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let state = window.state::<Shared>();
                 let minimize_to_tray = state
@@ -578,4 +601,15 @@ fn main() {
             quit_state.lock().unwrap().shutdown();
         }
     });
+}
+
+#[cfg(test)]
+mod window_security_tests {
+    #[test]
+    fn external_login_windows_cannot_access_main_commands() {
+        assert!(super::trusted_main_label("main"));
+        for name in ["steam-login", "main/steam", "", "Main"] {
+            assert!(!super::trusted_main_label(name));
+        }
+    }
 }

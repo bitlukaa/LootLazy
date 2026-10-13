@@ -33,7 +33,7 @@ namespace DummyGame
             IntPtr ownerHandle = owner.Handle;
             bool nativeTest = args.Length >= 3 && args[0] == "--title" && args[2] == "--native-window";
             Form dummyForm = nativeTest ? (Form)new GameSession() : new BackgroundOwner();
-            dummyForm.Text = args.Length >= 2 && args[0] == "--title" ? args[1] : "Questro";
+            dummyForm.Text = args.Length >= 2 && args[0] == "--title" ? args[1] : "LootLazy";
             dummyForm.Owner = owner;
             dummyForm.ShowInTaskbar = nativeTest;
             dummyForm.WindowState = nativeTest ? FormWindowState.Minimized : FormWindowState.Normal;

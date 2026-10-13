@@ -33,7 +33,7 @@ jobs:
         run: ./tools/test-tauri.ps1
       - name: Update replacement regressions
         run: ./tools/test-update-install.ps1
-      - name: Protected signing key migration fixtures
+      - name: Protected signing key path fixture
         run: ./tools/test-signing-migration.ps1
       - name: Build portable application
         run: ./tools/build-tauri.ps1

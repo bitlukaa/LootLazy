@@ -23,12 +23,11 @@ fn parse_release(release: &Value, current: &str) -> Result<Value, String> {
         return Err("Unstable release".into());
     }
     let current_name = format!("LootLazy-{version}.zip");
-    let legacy_name = format!("Questro-{version}.zip");
     let asset = release["assets"]
         .as_array()
         .into_iter()
         .flatten()
-        .find(|a| a["name"] == current_name || a["name"] == legacy_name)
+        .find(|a| a["name"] == current_name)
         .ok_or("Portable release unavailable")?;
     let expected = asset["name"].as_str().ok_or("Missing asset name")?;
     let url = url::Url::parse(
@@ -44,12 +43,9 @@ fn parse_release(release: &Value, current: &str) -> Result<Value, String> {
         || url.port().is_some()
         || url.query().is_some()
         || url.fragment().is_some()
-        || !(url
+        || !url
             .path()
             .starts_with("/bitlukaa/LootLazy/releases/download/")
-            || url
-                .path()
-                .starts_with("/bitlukaa/Questro/releases/download/"))
         || !url.path().ends_with(&format!("/{expected}"))
     {
         return Err("Invalid download".into());
@@ -119,15 +115,10 @@ fn trusted_asset_url(value: &str, name: &str) -> Result<url::Url, String> {
         || url.port().is_some()
         || url.query().is_some()
         || url.fragment().is_some()
-        || !(url
+        || !url
             .path()
             .starts_with("/bitlukaa/LootLazy/releases/download/")
-            || url
-                .path()
-                .starts_with("/bitlukaa/Questro/releases/download/"))
-        || !(url.path().ends_with(&format!("/{name}"))
-            || (name == "Questro.exe" && url.path().ends_with("/LootLazy.exe"))
-            || (name == "Questro.exe.sig" && url.path().ends_with("/LootLazy.exe.sig")))
+        || !url.path().ends_with(&format!("/{name}"))
     {
         return Err("Invalid download".into());
     }
@@ -138,13 +129,13 @@ fn executable_metadata(release: &Value) -> Result<Value, String> {
         .as_array()
         .into_iter()
         .flatten()
-        .find(|asset| asset["name"] == "LootLazy.exe" || asset["name"] == "Questro.exe")
+        .find(|asset| asset["name"] == "LootLazy.exe")
         .ok_or("Update executable unavailable")?;
     let url = trusted_asset_url(
         asset["browser_download_url"]
             .as_str()
             .ok_or("Missing download")?,
-        "Questro.exe",
+        "LootLazy.exe",
     )?;
     let hash = asset["digest"]
         .as_str()
@@ -159,13 +150,13 @@ fn executable_metadata(release: &Value) -> Result<Value, String> {
         .as_array()
         .into_iter()
         .flatten()
-        .find(|asset| asset["name"] == "LootLazy.exe.sig" || asset["name"] == "Questro.exe.sig")
+        .find(|asset| asset["name"] == "LootLazy.exe.sig")
         .ok_or("Signed update unavailable")?;
     let signature_url = trusted_asset_url(
         signature["browser_download_url"]
             .as_str()
             .ok_or("Missing signature URL")?,
-        "Questro.exe.sig",
+        "LootLazy.exe.sig",
     )?;
     if !signature["size"]
         .as_u64()
@@ -186,7 +177,7 @@ pub fn stage(root: &std::path::Path) -> Result<Value, String> {
     }
     let url = trusted_asset_url(
         release["binaryUrl"].as_str().ok_or("Invalid download")?,
-        "Questro.exe",
+        "LootLazy.exe",
     )?;
     let client = reqwest::blocking::Client::builder()
         .timeout(Duration::from_secs(120))
@@ -239,7 +230,7 @@ pub fn stage(root: &std::path::Path) -> Result<Value, String> {
         release["signatureUrl"]
             .as_str()
             .ok_or("updates_signature_failed")?,
-        "Questro.exe.sig",
+        "LootLazy.exe.sig",
     )?;
     let mut signature_response = client
         .get(signature_url)
@@ -297,10 +288,10 @@ pub fn launch_installer(root: &std::path::Path) -> Result<(), String> {
 mod tests {
     use super::*;
     fn release(version: &str) -> Value {
-        json!({"tag_name":format!("v{version}"),"draft":false,"prerelease":false,"body":"New features","assets":[{"name":format!("Questro-{version}.zip"),"browser_download_url":format!("{RELEASES}/download/v{version}/Questro-{version}.zip")}]})
+        json!({"tag_name":format!("v{version}"),"draft":false,"prerelease":false,"body":"New features","assets":[{"name":format!("LootLazy-{version}.zip"),"browser_download_url":format!("{RELEASES}/download/v{version}/LootLazy-{version}.zip")}]})
     }
     #[test]
-    fn renamed_release_assets_keep_legacy_compatibility() {
+    fn release_assets_use_application_names() {
         let mut value = release("99.0.0");
         value["assets"][0]["name"] = json!("LootLazy-99.0.0.zip");
         value["assets"][0]["browser_download_url"] =
@@ -312,7 +303,7 @@ mod tests {
         assert_eq!(parse_release(&value, "3.6.8").unwrap()["canInstall"], true);
         assert!(trusted_asset_url(
             "https://github.com/bitlukaa/LootLazy-other/releases/download/v99/LootLazy.exe",
-            "Questro.exe"
+            "LootLazy.exe"
         )
         .is_err());
         assert!(parse_release(&release("3.6.8"), "3.6.9").is_ok());
@@ -321,9 +312,9 @@ mod tests {
     fn executable_updates_require_a_trusted_url_digest_and_bounded_size() {
         let mut value = release("99.0.0");
         assert_eq!(parse_release(&value, "3.5.4").unwrap()["canInstall"], false);
-        value["assets"].as_array_mut().unwrap().push(json!({"name":"Questro.exe","browser_download_url":format!("{RELEASES}/download/v99.0.0/Questro.exe"),"digest":format!("sha256:{}","a".repeat(64)),"size":4096}));
+        value["assets"].as_array_mut().unwrap().push(json!({"name":"LootLazy.exe","browser_download_url":format!("{RELEASES}/download/v99.0.0/LootLazy.exe"),"digest":format!("sha256:{}","a".repeat(64)),"size":4096}));
         assert_eq!(parse_release(&value, "3.5.4").unwrap()["canInstall"], false);
-        value["assets"].as_array_mut().unwrap().push(json!({"name":"Questro.exe.sig","browser_download_url":format!("{RELEASES}/download/v99.0.0/Questro.exe.sig"),"size":300}));
+        value["assets"].as_array_mut().unwrap().push(json!({"name":"LootLazy.exe.sig","browser_download_url":format!("{RELEASES}/download/v99.0.0/LootLazy.exe.sig"),"size":300}));
         assert_eq!(parse_release(&value, "3.5.4").unwrap()["canInstall"], true);
         value["assets"][1]["digest"] = json!("sha256:invalid");
         assert!(executable_metadata(&value).is_err());
@@ -331,11 +322,11 @@ mod tests {
         value["assets"][1]["size"] = json!(65 * 1024 * 1024);
         assert!(executable_metadata(&value).is_err());
         value["assets"][1]["size"] = json!(4096);
-        value["assets"][1]["browser_download_url"] = json!("https://evil.example/Questro.exe");
+        value["assets"][1]["browser_download_url"] = json!("https://evil.example/LootLazy.exe");
         assert!(executable_metadata(&value).is_err());
         assert!(trusted_asset_url(
-            "https://github.com/another/repo/releases/download/v99/Questro.exe",
-            "Questro.exe"
+            "https://github.com/another/repo/releases/download/v99/LootLazy.exe",
+            "LootLazy.exe"
         )
         .is_err());
     }
@@ -358,7 +349,7 @@ mod tests {
     fn unstable_missing_and_foreign_downloads_are_rejected() {
         let mut value = release("3.3.0");
         value["assets"][0]["browser_download_url"] =
-            json!("https://evil.example/Questro-3.3.0.zip");
+            json!("https://evil.example/LootLazy-3.3.0.zip");
         assert!(parse_release(&value, "3.2.0").is_err());
         value = release("3.3.0-beta.1");
         assert!(parse_release(&value, "3.2.0").is_err());

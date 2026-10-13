@@ -1,11 +1,11 @@
 // Exercise LootLazy's actual Rust activity worker with the authorized AION 2 session.
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
-const {spawn,execFileSync}=require('child_process');const {chromium}=require(process.env.QUESTRA_PLAYWRIGHT||'playwright');
+const {spawn,execFileSync}=require('child_process');const {chromium}=require(process.env.LOOTLAZY_PLAYWRIGHT||'playwright');
 const root=path.resolve(__dirname,'..'),fixture=fs.mkdtempSync(path.join(root,'data/.test-temp/lootlazy-live-ui-'));
 fs.mkdirSync(path.join(fixture,'data'),{recursive:true});
 const game=JSON.parse(fs.readFileSync('E:/Programs/LootLazy/data/detectable_cache.json','utf8')).find(g=>g.id==='1445982809792708628');assert.ok(game);
 fs.writeFileSync(path.join(fixture,'data/detectable_cache.json'),JSON.stringify([game]));fs.writeFileSync(path.join(fixture,'data/catalog_meta.json'),JSON.stringify({lastUpdated:new Date().toISOString()}));
-fs.writeFileSync(path.join(fixture,'data/questra_overrides.json'),JSON.stringify({settings:{scan_local_steam:false},custom_executables:{},saved_games:[]}));
+fs.writeFileSync(path.join(fixture,'data/lootlazy_overrides.json'),JSON.stringify({settings:{scan_local_steam:false},custom_executables:{},saved_games:[]}));
 const exe=path.join(root,'dist/LootLazy-Tauri/LootLazy.exe'),child=spawn(exe,['--verify-ui'],{cwd:path.dirname(exe),env:{...process.env,LOOTLAZY_DATA_ROOT:fixture},stdio:'pipe',windowsHide:true});
 let browser,page;const stderr=[];child.stderr.on('data',b=>stderr.push(b.toString()));
 async function until(fn,timeout=20000){const end=Date.now()+timeout;while(Date.now()<end){try{const value=await fn();if(value)return value;}catch{}await new Promise(r=>setTimeout(r,150));}throw Error('Native activity test timed out');}

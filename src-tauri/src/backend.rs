@@ -97,14 +97,7 @@ impl Backend {
         fs::create_dir_all(root.join("data")).map_err(|e| e.to_string())?;
         let read =
             |name: &str, fallback: Value| storage::read(&root.join("data").join(name), fallback);
-        let settings_name = [
-            "lootlazy_overrides.json",
-            "questro_overrides.json",
-            "questra_overrides.json",
-        ]
-        .into_iter()
-        .find(|name| root.join("data").join(name).exists())
-        .unwrap_or("lootlazy_overrides.json");
+        let settings_name = "lootlazy_overrides.json";
         let mut overrides = read(settings_name, storage::defaults());
         if !overrides.is_object() {
             overrides = storage::defaults();
@@ -185,14 +178,7 @@ impl Backend {
         let mut curated: Value =
             serde_json::from_str(include_str!("../../public/executable-candidates.json"))
                 .unwrap_or(json!({"games":{}}));
-        let catalog_name = [
-            "lootlazy_catalog.json",
-            "questro_catalog.json",
-            "questra_catalog.json",
-        ]
-        .into_iter()
-        .find(|name| root.join("data").join(name).exists())
-        .unwrap_or("lootlazy_catalog.json");
+        let catalog_name = "lootlazy_catalog.json";
         let local_curated = read(catalog_name, json!({}));
         if let Some(games) = local_curated["games"].as_object() {
             for (id, entry) in games {
@@ -200,6 +186,7 @@ impl Backend {
             }
         }
         let executable_resolver = crate::executables::Resolver::new(&catalog);
+        let initial_steam = crate::rotation::SteamIdle::new(&root);
         let backend = Self {
             catalog,
             executable_resolver,
@@ -225,7 +212,7 @@ impl Backend {
                 .take(50)
                 .collect(),
             variety: crate::rotation::Rotation::new_variety(root.join("data/variety_queue.json")),
-            steam_idle: crate::rotation::SteamIdle::new(&root),
+            steam_idle: initial_steam,
             steam_runtime: None,
             steam_search: read("steam_search.json", json!([]))
                 .as_array()
@@ -2612,10 +2599,10 @@ pub fn fetch_catalog(meta: &Value, has_saved_catalog: bool) -> Result<CatalogDow
 mod tests {
     use super::*;
     #[test]
-    fn renamed_settings_read_legacy_files_and_write_preferred_names() {
+    fn settings_read_and_write_application_files() {
         let f = Fixture::new();
         storage::save(
-            &f.0.root.join("data/questro_overrides.json"),
+            &f.0.root.join("data/lootlazy_overrides.json"),
             &json!({"settings":{"desktop_notifications":false}}),
         )
         .unwrap();
@@ -2625,7 +2612,7 @@ mod tests {
             .save("lootlazy_overrides.json", &loaded.overrides)
             .unwrap();
         assert!(f.0.root.join("data/lootlazy_overrides.json").exists());
-        assert!(f.0.root.join("data/questro_overrides.json").exists());
+        assert!(f.0.root.join("data/lootlazy_overrides.json").exists());
     }
     #[test]
     fn helper_directories_remain_confined_for_dot_and_reserved_names() {
@@ -3247,7 +3234,7 @@ mod tests {
     #[test]
     fn corrupt_saved_shapes_are_safe() {
         let f = Fixture::new();
-        storage::save(&f.0.root.join("data/questra_overrides.json"), &json!(12)).unwrap();
+        storage::save(&f.0.root.join("data/lootlazy_overrides.json"), &json!(12)).unwrap();
         storage::save(
             &f.0.root.join("data/active_quests.json.states.json"),
             &json!([]),
