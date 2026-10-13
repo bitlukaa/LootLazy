@@ -1,11 +1,9 @@
 {
-  "version": "3.6.13",
+  "version": "3.6.14",
   "en": [
-    "New Game Time and Game Variety icons in the LootLazy purple palette.",
-    "Simplified Active Sessions by removing the duplicate Browse library button."
+    "Refined the original Steam icon with matching purple shading and clear white details throughout Idle Steam and Settings."
   ],
   "ar": [
-    "أيقونتان جديدتان لـGame Time وGame Variety بألوان LootLazy البنفسجية.",
-    "تبسيط Active Sessions بإزالة زر تصفح المكتبة المكرر."
+    "تحسين شعار Steam الأصلي بتدرج بنفسجي وتفاصيل بيضاء واضحة في Idle Steam والإعدادات."
   ]
 }
