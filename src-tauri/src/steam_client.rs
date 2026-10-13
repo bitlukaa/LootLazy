@@ -69,7 +69,7 @@ pub fn ensure_open() -> Result<(), String> {
         .into_iter()
         .map(|root| root.join("steam.exe"))
         .find(|path| path.is_file())
-        .ok_or("steam_launch_failed")?;
+        .ok_or("steam_not_installed")?;
     let mut command = Command::new(exe);
     command.arg("-silent");
     #[cfg(windows)]

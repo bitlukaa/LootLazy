@@ -5,6 +5,8 @@ mod diagnostics;
 mod executables;
 mod feed;
 mod metadata;
+mod platform_download;
+mod platform_environment;
 mod presence;
 mod rotation;
 mod steam_client;
@@ -154,6 +156,10 @@ async fn api(
         let url =
             url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
         match url.path() {
+            "/api/platforms/download" => {
+                platform_download::open(body["platform"].as_str().unwrap_or(""))?;
+                return Ok(serde_json::json!({"success":true}));
+            }
             "/api/updates" => return Ok(updates::info()),
             "/api/updates/check" => return Ok(updates::check()),
             "/api/updates/install" => {
@@ -401,14 +407,10 @@ fn main() {
         );
     }
     let root = root();
-    let temp = root.join("data/temp");
-    std::fs::create_dir_all(&temp).expect("LootLazy folder must be writable");
-    for key in ["TEMP", "TMP", "TMPDIR"] {
-        std::env::set_var(key, &temp);
-    }
+    platform_environment::restore_inherited_temp(&root);
     if std::env::args().any(|a| a == "--verify-backend") {
         let state = backend::Backend::new(root.clone()).unwrap();
-        let result = serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"root":root,"catalogCount":state.catalog.len(),"runtime":"Tauri + Rust","nodeBundled":false,"storage":root.join("data"),"profile":root.join("data/webview"),"status":state.status()});
+        let result = serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"root":root,"catalogCount":state.catalog.len(),"runtime":"Tauri + Rust","nodeBundled":false,"temporaryDirectory":std::env::temp_dir(),"storage":root.join("data"),"profile":root.join("data/webview"),"status":state.status()});
         storage::save(&root.join("data/tauri-verification.json"), &result).unwrap();
         return;
     }

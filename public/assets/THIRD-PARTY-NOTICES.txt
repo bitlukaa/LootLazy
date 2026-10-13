@@ -79,6 +79,12 @@ For these and/or other purposes and motivations, and without any expectation of 
 For more information, please see <https://creativecommons.org/publicdomain/zero/1.0>.
 
 
+Platform branding
+Discord Quests badge
+Source: https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png
+The original mark belongs to Discord Inc. The interface presents the original badge in its accent color. Platform marks remain the property of their respective owners and are not licensed under LootLazy's MIT license. LootLazy is not affiliated with Discord or Valve.
+
+
 UI component portions
 MIT License
 

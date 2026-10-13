@@ -243,12 +243,31 @@ pub fn open_desktop_if_missing() -> Result<(), String> {
                 std::ptr::null(),
                 SW_SHOWNORMAL,
             );
-            if result as isize <= 32 {
-                return Err("discord_launch_failed".into());
+            if let Some(error) = launch_error(result as isize) {
+                return Err(error.into());
             }
         }
         Ok(())
     }
     #[cfg(not(windows))]
     Err("discord_launch_failed".into())
+}
+
+fn launch_error(result: isize) -> Option<&'static str> {
+    match result {
+        2 | 3 | 31 => Some("discord_not_installed"),
+        value if value > 32 => None,
+        _ => Some("discord_launch_failed"),
+    }
+}
+#[cfg(test)]
+mod launch_tests {
+    #[test]
+    fn missing_handler_is_distinct_from_a_failed_launch() {
+        for code in [2, 3, 31] {
+            assert_eq!(super::launch_error(code), Some("discord_not_installed"));
+        }
+        assert_eq!(super::launch_error(5), Some("discord_launch_failed"));
+        assert_eq!(super::launch_error(33), None);
+    }
 }

@@ -16,7 +16,8 @@
         "languages": [
           "English"
         ],
-        "startMenuFolder": "LootLazy"
+        "startMenuFolder": "LootLazy",
+        "installerIcon": "../LootLazy.ico"
       },
       "webviewInstallMode": {
         "type": "downloadBootstrapper",

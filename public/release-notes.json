@@ -1,15 +1,17 @@
 {
-  "version": "3.6.11",
+  "version": "3.6.12",
   "en": [
-    "Idle Steam reorganized with dedicated Steam Library and Active Sessions views. Multi-game sessions now run in a separate active sessions tab.",
-    "Removed automatic Trading Cards and session-cookie authentication.",
-    "Cleaned application branding and platform privacy descriptions.",
-    "Update signature protocol now uses LootLazy; earlier releases require a one-time manual upgrade."
+    "Steam and Discord status show Running or Not running, with official download links when needed.",
+    "Game Variety offers fixed 10, 50, 100, and 200-game counts.",
+    "Custom durations in Game Variety and Idle Steam require Save, with Cancel to discard edits.",
+    "Original Discord Quests badge and matching Windows installer icon.",
+    "Removed the application-wide temporary folder override and unnecessary game-list rebuilding."
   ],
   "ar": [
-    "إعادة تنظيم Idle Steam بوضعين منفصلين: مكتبة Steam والجلسات النشطة، مع إدارة الجلسات المتعددة في تبويب مستقل للجلسات النشطة.",
-    "إزالة نظام بطاقات التداول التلقائي وتسجيل الدخول ببيانات الجلسة.",
-    "تنظيف اسم التطبيق وتحسين وصف الخصوصية وشعار Discord.",
-    "التوقيع يستخدم اسم LootLazy؛ الترقية من النسخ الأقدم تحتاج تثبيتًا يدويًا مرة واحدة."
+    "حالة Steam وDiscord توضح التشغيل مع روابط التحميل الرسمية عند الحاجة.",
+    "أعداد Game Variety ثابتة: 10 و50 و100 و200 لعبة.",
+    "حفظ أو إلغاء المدد المخصصة في Game Variety وIdle Steam.",
+    "شارة Quests الأصلية وشعار التطبيق في ملف التثبيت.",
+    "إصلاح وراثة الملفات المؤقتة وتقليل إعادة بناء قائمة الألعاب."
   ]
 }

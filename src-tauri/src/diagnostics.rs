@@ -9,7 +9,11 @@ use std::{
 static LOG_LOCK: Mutex<Option<HashMap<String, Instant>>> = Mutex::new(None);
 pub fn code(error: &str) -> &'static str {
     let text = error.to_lowercase();
-    if text.contains("discord_launch_failed") {
+    if text.contains("discord_not_installed") {
+        "discord_not_installed"
+    } else if text.contains("steam_not_installed") {
+        "steam_not_installed"
+    } else if text.contains("discord_launch_failed") {
         "discord_launch_failed"
     } else if text.contains("save_failed") {
         "save_failed"

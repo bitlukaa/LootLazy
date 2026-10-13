@@ -26,7 +26,7 @@ If LootLazy helps you, consider leaving a star!
 ## Features
 
 - **Game Time** — Run lightweight game activity with continuous, preset, or custom timers. Manage one game or a saved queue.
-- **Game Variety** — Begin with 10 games and choose 10, 50, 100, or save your own custom counts. Remove saved custom counts, shuffle, search, reorder, and run the group with one duration per game. Paused sessions with playtime can be resumed.
+- **Game Variety** — Begin with 10 games and choose 10, 50, 100, or 200 games. Shuffle, search, reorder, and run the group with one duration per game. Paused sessions with playtime can be resumed.
 - **Desktop play quests** — Browse available 15-minute quests and start directly from their cards. Accept the quest in Discord first; unfinished local sessions can be resumed.
 - **Idle Steam** — Keep owned games active for playtime and eligible Steam trading-card drops. Steam controls card eligibility and timing; LootLazy does not track remaining drops. Run several games together with separate timers, search for titles even when they aren't installed, and manage single sessions in the Library or monitor multiple concurrent games in the Active sessions tab.
 - **Two-way sync** — Start matched Discord and Steam sessions together from either page.

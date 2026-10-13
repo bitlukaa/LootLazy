@@ -1,13 +1,17 @@
-# Validation notes for 3.6.11
+# Validation notes for 3.6.12
 
-Local regression coverage includes helper path confinement, update signatures, Steam runtime publisher checks, queue persistence, timer suspension accounting, and synchronized-session failure handling. Frontend checks cover localization, settings rollback, refresh cooldowns and custom game-count controls. Native WebView checks use synthetic game identities and isolated data.
+Local checks cover 69 Rust regressions, 17 frontend tests, isolated renderer tests, native WebView2 UI/recovery, update replacement and signing, fixed game-count presets, explicit duration drafts, official download links, and stable game-list rows during timer updates. Sleep accounting, disconnected Discord state, parallel Steam timers, and restart recovery are exercised with fixtures; this is not a physical sleep test or a live platform reward test.
 
-Idle Steam uses manual game selection, timers, and an Active Sessions view. It does not collect Steam web sessions or automatically track card drops.
+Idle Steam provides manual game selection, timers, and Active Sessions. It does not collect Steam web sessions or automatically track card drops. External clients no longer inherit an application-wide temporary directory override.
 
-Performance benchmarks include the native host and owned WebView2 processes. Summed working sets include shared pages and differ from private memory or Windows Task Manager's grouped figure. Short samples cannot establish long-term stability. Run `node tools/benchmark-normal-tray.cjs` without an existing LootLazy instance for a normal-release tray measurement; it uses isolated data and does not open a game session. The benchmark terminates only the process tree it launched.
+A 126-second fresh-data tray sample (normal release, no diagnostic port, no game sessions) recorded a summed host plus WebView2 working set of 165–172 MiB in its last six samples. The final host working set was 33.1 MiB, total private memory 172.0 MiB, and average CPU 1.04% of one core. Early startup working sets were 366–368 MiB. These are short environment-specific samples with a one-game fixture; they do not predict a large real library or simultaneous Steam sessions. Summed working sets include shared pages and differ from Task Manager grouped measurements.
 
-Windows Authenticode signing is not configured. Ed25519 update signatures authenticate the update payload independently and do not eliminate SmartScreen warnings. The private signing key must stay outside the repository and is never included in release assets.
+The installer icon is explicitly configured and the extracted installer and application icon images were byte-identical. Portable contents and signed executable hashes are inspected separately. A clean Windows machine and long live Steam/Discord sessions have not been tested; Windows Sandbox is unavailable in this environment.
 
-Real account eligibility, rewards, platform enforcement, prolonged Steam/Discord sessions and fresh-machine installation remain outside the automated regression evidence. No platform account-safety guarantee is made.
+Windows Authenticode signing is not configured. Ed25519 signatures independently authenticate update payloads and do not remove SmartScreen warnings. Private signing material stays outside the repository and release assets.
 
-On the development computer, a 126-second normal tray sample before the memory policy recorded a 532–542 MiB summed working set. After the policy, early samples were 514–517 MiB, then 265–309 MiB. Private memory remained approximately 324–331 MiB after warm-up; this is a resident-memory reduction, not proof that allocated memory was eliminated. Observed CPU averaged 0.69% of one core in the latter short sample. Results are environment-specific.
+A separate native diagnostic sample used an idle interface and then one synthetic local helper. Idle working sets initially measured 379–381 MiB, then fell to 129–172 MiB as the runtime reclaimed memory. During the 63-second active helper sample, total working sets were 226–243 MiB, average CPU 4.48% of one core. This diagnostic run uses CDP and does not measure live simultaneous Steam games.
+
+A clean-install Windows Sandbox plan is prepared by tools/prepare-clean-install.ps1. Its PowerShell syntax was checked, but the guest test has not executed here.
+
+The update startup path also repairs only an inherited TEMP/TMP/TMPDIR value matching this installation's data/temp directory. Other user-configured temporary paths remain unchanged.
