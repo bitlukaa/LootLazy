@@ -156,6 +156,7 @@ async fn api(
         let url =
             url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
         match url.path() {
+            "/api/platforms/status" => return Ok(serde_json::json!({"discordInstalled":presence::installed(),"steamInstalled":steam_client::running() || steam_client::installed()})),
             "/api/platforms/download" => {
                 platform_download::open(body["platform"].as_str().unwrap_or(""))?;
                 return Ok(serde_json::json!({"success":true}));

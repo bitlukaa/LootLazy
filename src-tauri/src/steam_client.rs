@@ -85,3 +85,9 @@ pub fn ensure_open() -> Result<(), String> {
     }
     Ok(())
 }
+
+pub fn installed() -> bool {
+    crate::executables::detected_roots()
+        .into_iter()
+        .any(|root| root.join("steam.exe").is_file())
+}

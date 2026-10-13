@@ -271,3 +271,32 @@ mod launch_tests {
         assert_eq!(super::launch_error(33), None);
     }
 }
+
+pub fn installed() -> bool {
+    if is_discord_desktop_running() {
+        return true;
+    }
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::System::Registry::{
+            RegGetValueW, HKEY_CLASSES_ROOT, RRF_RT_REG_EXPAND_SZ, RRF_RT_REG_SZ,
+        };
+        let key: Vec<u16> = "discord\\shell\\open\\command"
+            .encode_utf16()
+            .chain(Some(0))
+            .collect();
+        let mut bytes = 0u32;
+        return RegGetValueW(
+            HKEY_CLASSES_ROOT,
+            key.as_ptr(),
+            std::ptr::null(),
+            RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            &mut bytes,
+        ) == 0
+            && (3..=32768).contains(&bytes);
+    }
+    #[cfg(not(windows))]
+    false
+}
