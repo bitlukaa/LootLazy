@@ -166,15 +166,10 @@ impl Backend {
             quest_queue.phase = "paused".into();
             quest_queue.items[0]["state"] = json!("paused");
         }
-        let catalog = unique_catalog(
-            read("detectable_cache.json", json!([]))
-                .as_array()
-                .cloned()
-                .unwrap_or_default()
-                .into_iter()
-                .filter(valid_game)
-                .collect(),
-        );
+        let catalog = unique_catalog(match read("detectable_cache.json", json!([])) {
+            Value::Array(entries) => entries.into_iter().filter(valid_game).collect(),
+            _ => Vec::new(),
+        });
         let mut curated: Value =
             serde_json::from_str(include_str!("../../public/executable-candidates.json"))
                 .unwrap_or(json!({"games":{}}));
@@ -1681,14 +1676,18 @@ impl Backend {
         let _ = self.save_quest_queue();
     }
     pub fn install_catalog(&mut self, data: Value) -> Result<(), String> {
-        let list = data.as_array().ok_or("Invalid catalog")?;
-        if list.is_empty() || list.iter().any(|g| !valid_game(g)) {
+        let Value::Array(list) = data else {
+            return Err("Invalid catalog".into());
+        };
+        if list.is_empty() || list.iter().any(|game| !valid_game(game)) {
             return Err("Invalid catalog metadata".into());
         }
-        let catalog = unique_catalog(list.clone());
-        self.save("detectable_cache.json", &json!(catalog))?;
-        self.executable_resolver = crate::executables::Resolver::new(&catalog);
-        self.catalog = catalog;
+        let data = Value::Array(unique_catalog(list));
+        self.save("detectable_cache.json", &data)?;
+        if let Value::Array(catalog) = data {
+            self.executable_resolver = crate::executables::Resolver::new(&catalog);
+            self.catalog = catalog;
+        }
         self.meta = json!({"lastUpdated":stamp(),"count":self.catalog.len()});
         self.save("catalog_meta.json", &self.meta)
     }

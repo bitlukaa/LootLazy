@@ -15,3 +15,7 @@ A separate native diagnostic sample used an idle interface and then one syntheti
 A clean-install Windows Sandbox plan is prepared by tools/prepare-clean-install.ps1. Its PowerShell syntax was checked, but the guest test has not executed here.
 
 The update startup path also repairs only an inherited TEMP/TMP/TMPDIR value matching this installation's data/temp directory. Other user-configured temporary paths remain unchanged.
+
+A more representative normal tray sample copied the existing public catalog (24,636 games) into an otherwise fresh profile, without credentials or user settings. After 63 seconds, the total working set was 312 MiB and total private memory 329 MiB; the native host accounted for 178 MiB of working set and 157 MiB private memory. Startup totals were approximately 524–527 MiB. This exposes the catalog's contribution in addition to WebView2.
+
+Redundant full-catalog copies during load and refresh were removed without dropping fields or changing the stored public catalog. These short before/after runs did not demonstrate a meaningful reduction in steady working sets (321 versus 312 MiB). Do not generalize the small one-game fixture's 165–172 MiB tray result to a full library. Further sustained memory reduction needs a more compact catalog representation and longer measurements.
