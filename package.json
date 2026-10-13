@@ -1,6 +1,6 @@
 {
   "name": "lootlazy",
-  "version": "3.6.12",
+  "version": "3.6.13",
   "description": "LootLazy",
   "scripts": {
     "start": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/start-tauri.ps1",

@@ -24,7 +24,7 @@ test('Active sessions panel is exclusively inside steam-active-mode-view', () =>
   assert.ok(sessionPanel !== -1, 'Sessions panel must exist');
   assert.ok(sessionPanel > activeStart, 'Sessions panel must be inside active sessions view, not library view');
   assert.ok(html.includes('id="steam-empty-active"'), 'Empty active state must exist');
-  assert.ok(html.includes('id="steam-browse-library-btn"'), 'Browse library button must exist');
+  assert.equal(html.includes('id="steam-browse-library-btn"'), false, 'Active sessions must not duplicate the library navigation');
   assert.ok(html.includes('id="steam-pause-all"'), 'Pause all button must exist');
   assert.ok(html.includes('id="steam-stop-all"'), 'Stop all button must exist');
 });
