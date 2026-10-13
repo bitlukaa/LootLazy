@@ -1,120 +1,71 @@
 <div align="center">
 
-<img src="public/assets/lootlazy-logo.svg" width="100" height="100" alt="LootLazy">
+<img src="public/assets/lootlazy-logo.svg" width="96" height="96" alt="LootLazy">
 
 # LootLazy
 
-### Discord quests. Gaming badges. Steam hours.
+### Your games. Your pace. 🎮
 
-**Lightweight game activity, without downloading every full game.**
+**Discord activity, quests, and Steam idling — all in one place.**
 
 [![Download](https://img.shields.io/github/v/release/bitlukaa/LootLazy?label=Download&color=5865f2)](https://github.com/bitlukaa/LootLazy/releases/latest)
-[![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078d4)](https://github.com/bitlukaa/LootLazy/releases/latest)
-[![License](https://img.shields.io/badge/License-MIT-16a34a)](LICENSE)
-[![Support](https://img.shields.io/badge/Support-LootLazy-5865f2)](#support-lootlazy)
+[![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-5865f2)](https://github.com/bitlukaa/LootLazy/releases/latest)
+[![Stars](https://img.shields.io/github/stars/bitlukaa/LootLazy?style=social)](https://github.com/bitlukaa/LootLazy/stargazers)
 
-**Manual quest controls. Local game sessions. No Discord login, account tokens, or injected client scripts.**
-
-[Download](https://github.com/bitlukaa/LootLazy/releases/latest) · [Features](#features) · [Report a bug](https://github.com/bitlukaa/LootLazy/issues) · [Support](#support-lootlazy)
+**[⬇️ Download for Windows](https://github.com/bitlukaa/LootLazy/releases/latest)** · **[📸 Take a look](#screenshots)** · **[💬 Share feedback](https://github.com/bitlukaa/LootLazy/issues)**
 
 </div>
 
-LootLazy brings Discord game activity, desktop play quests, and Steam idling into one app. Choose your games, set the time, and start — whether you're working toward gaming badges, lining up several quests, or keeping your owned Steam games active.
+Choose your games, set your time, and let LootLazy manage the sessions. Whether you're switching up your Discord activity, working through quests, or keeping Steam games active, it's all a few clicks away.
 
-If LootLazy helps you, consider leaving a star!
+## ✨ What's inside
 
-## Features
+- **🎮 Game Time** — Put your Discord game activity on your schedule. One game or a whole queue.
+- **🔀 Game Variety** — Mix things up with a lineup of games that runs in order.
+- **🏆 Quests** — Browse desktop play quests and manage their sessions in one place.
+- **💤 Steam Idle** — Keep owned games active for playtime and eligible trading-card drops.
+- **🔗 Stay in sync** — Run matching Discord and Steam sessions side by side.
+- **🎨 Make it yours** — Light or dark, English or Arabic, with tray controls and notifications that keep you in the loop.
 
-- **Game Time** — Run lightweight game activity with continuous, preset, or custom timers. Manage one game or a saved queue.
-- **Game Variety** — Begin with an empty setup and choose 10, 50, 100, or 200 games for Discord activity. Shuffle, search, reorder, and run the group with one duration per game. Pause and resume within the current app session; restarting the app requires a fresh game-count selection.
-- **Desktop play quests** — Browse available 15-minute quests and start directly from their cards. Accept the quest in Discord first; unfinished local sessions can be resumed.
-- **Steam Idle** — Keep owned games active for playtime and eligible Steam trading-card drops. Steam controls card eligibility and timing; LootLazy does not track remaining drops. Run several games together with separate timers, search for titles even when they aren't installed, and manage single sessions in the Library or monitor multiple concurrent games in the Active sessions tab.
-- **Notification history** — The header bell shows the latest five events and opens a full history/details page with the latest 30 session completions and automatically discovered updates stored locally. Click an entry to read its details, or use Mark as read to reset the unread count without deleting history. Manual refresh and update-check messages stay as temporary toasts.
-- **Manual session** — Enter an executable name to create a custom Discord activity when the game is missing from the catalog.
-- **Two-way sync** — Start matched Discord and Steam sessions together from either page.
-- **Pick up where you left off** — Pause, resume, clear, and reorder saved queues after reopening LootLazy.
-- **Make it yours** — Light and dark themes, English and Arabic, compact client indicators, desktop notifications, and tray controls.
-- **Keep it light** — A native Windows app with an executable of approximately 4.3 MB.
+<a id="screenshots"></a>
 
-## Screenshots
+## 📸 See it in action
 
-The gallery uses the application interface with example game, quest, and notification data.
-
-| Game Time | Game Variety |
+| 🎮 Game Time | 🔀 Game Variety |
 |:---:|:---:|
 | [![Game Time](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-time.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-time.png) | [![Game Variety](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-variety.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-variety.png) |
 
-| Steam Idle | Quests |
+| 💤 Steam Idle | 🏆 Quests |
 |:---:|:---:|
 | [![Steam Idle](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png) | [![Quests](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png) |
 
+<details>
+<summary>🔔 A closer look at notifications</summary>
+
 [![Notification history](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/notifications.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/notifications.png)
 
-Click a screenshot to view it at full size.
+</details>
 
-## Download & run
+*Screenshots use example data. Click any image to see it at full size.*
 
-Choose your version from [GitHub Releases](https://github.com/bitlukaa/LootLazy/releases/latest).
+## 🚀 Get started
 
-| Download | Instructions |
-|---|---|
-| **Windows x64 · Setup** | Run the installer and choose your installation folder. |
-| **Windows x64 · Portable ZIP** | Extract the archive and run `LootLazy.exe`. |
-| **Windows x64 · Portable EXE** | Download and run the executable directly. |
+1. **[Download the latest release](https://github.com/bitlukaa/LootLazy/releases/latest).** Choose Setup to install, or ZIP to go portable.
+2. **Open Discord or Steam**, depending on the session you want to run.
+3. **Pick your games, set the time, and hit Start.**
 
-Windows 10/11 (64-bit) and Microsoft Edge WebView2 are required. Setup can download WebView2 if needed.
+For quests, accept the quest in Discord and choose **Desktop** first. Discord and Steam determine activity tracking and reward eligibility.
 
-For versions earlier than 3.6.11, download the latest build manually once: earlier update helpers may not handle the renamed executable or signing protocol correctly. Keep your existing portable folder to retain its data.
+*Windows 10/11 · 64-bit. Need setup help? [Read the quick guide](docs/USAGE.md).*
 
-## Getting started
+## 💜 Support LootLazy
 
-**Discord activity and badges:** keep Discord open, select a game, set its duration, and start. Use Game Variety for a lineup of different games. Discord must detect eligible games for badge progress to count.
+**⭐ Like the app? Give it a star!** It helps other players find LootLazy.
 
-**Quests:** accept the quest in Discord and choose **Desktop**, then click **Start Quest** in LootLazy. Check progress and claim your reward in Discord yourself.
+Found a bug or have an idea? [Tell us](https://github.com/bitlukaa/LootLazy/issues). You can also support development through **Donation** inside the app.
 
-**Steam:** sign in to Steam, choose a game you own, and start. A compatible Valve-signed runtime from an installed Steam game is required; the selected title does not have to be installed.
+---
 
-**Steam Idling:** sign in to Steam, choose your owned games, set the duration, and start. Run single sessions directly from the Steam Library or monitor multiple running games from the Active sessions view.
+[Contribute](CONTRIBUTING.md) · [Community](CODE_OF_CONDUCT.md) · [Security](SECURITY.md) · [MIT License](LICENSE)
 
-**Updates:** use **Check updates** in Settings, then **Download & install** when a newer release is available. Stop active sessions first; saved settings and queues are preserved. Starting with version 3.6.8, updates also require a publisher signature.
-
-## Privacy & account safety
-
-Local session helpers run separately from the game. LootLazy does not inject code into game processes or modify game files or memory.
-
-LootLazy does not request Discord passwords or account tokens, and does not automatically accept quests or claim rewards. Sessions use LootLazy's local timer; the app does not read your account's quest progress.
-
-> [!WARNING]
-> We cannot guarantee that using LootLazy will not result in account restrictions or a ban. Use it at your own discretion and follow each platform's rules. Local timers do not guarantee badge progress, recorded Steam hours, or quest rewards.
-
-<a id="support-lootlazy"></a>
-
-## Support LootLazy
-
-If LootLazy makes things easier for you, your support helps make time for improvements, fixes, and new features. No pressure — feedback and sharing the project help too.
-
-**Crypto support**
-
-| Currency | Network |
-|---|---|
-| USDT | Ethereum (ERC-20) or BNB Smart Chain (BEP-20) |
-| ETH | Ethereum |
-| BNB | BNB Smart Chain |
-
-Donation address:
-
-`0xcbd6fec2fb4acb31dc3dacac133ca364ccbe58d8`
-
-Make sure your sending network matches the network you intend to use.
-
-## Community
-
-[Contributing](CONTRIBUTING.md) · [Community guidelines](CODE_OF_CONDUCT.md) · [Security policy](SECURITY.md)
-
-## License
-
-LootLazy is available under the [MIT License](LICENSE). Third-party notices are included with the downloads.
-
-*LootLazy is an independent project and is not affiliated with Discord or Valve.*
-
-Update signatures use the LootLazy protocol from version 3.6.11. Install this version manually once when upgrading from an earlier release; subsequent updates use the built-in updater.
+*Independent project. Not affiliated with Discord or Valve.*
