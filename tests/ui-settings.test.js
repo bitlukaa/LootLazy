@@ -42,3 +42,15 @@ test('quest refresh toasts quests_new_found when new quests arrive',async()=>{
 test('manual up-to-date checks produce a toast while silent checks do not',async()=>{
  for(const silent of [false,true]){const messages=[];const fn=run('loadUpdates',{updatesBusy:false,state:{update:{latestVersion:'3.6.15'},tab:'settings'},$:()=>({}),busy:()=>{},request:async()=>({status:'up_to_date',latestVersion:'3.6.15'}),renderUpdates:()=>{},toast:message=>messages.push(message),t:key=>key,window:{lootlazyDiagnostic:true}});await fn(true,silent);assert.deepEqual(messages,silent?[]:['updates_current']);}
 });
+
+
+test('catalog refresh retries one transient transport failure without an error toast',async()=>{
+ let calls=0;const messages=[];const context={number:value=>String(value),state:{games:[]},$:()=>({}),busy:()=>{},Date:{now:()=>900000},setTimeout:cb=>cb(),lastRealCatalogFetch:0,localStorage:{setItem:()=>{}},request:async()=>{calls++;if(calls===1)throw Error('network_unavailable');return {changed:false,count:50};},loadStats:async()=>{},fetchGames:async()=>{},toast:(message,type)=>messages.push([message,type]),t:key=>key};
+ await run('refreshCatalog',context)({},false);assert.equal(calls,2);assert.deepEqual(messages,[['games_current','success']]);assert.equal(context.state.catalogBusy,false);assert.equal(context.lastRealCatalogFetch,900000);
+});
+test('catalog refresh does not retry validation failures or hide persistent connection errors',async()=>{
+ for(const error of ['Invalid catalog metadata','network_unavailable']){let calls=0;const messages=[];const context={state:{games:[{id:'1'}]},$:()=>({}),busy:()=>{},Date:{now:()=>900000},setTimeout:cb=>cb(),lastRealCatalogFetch:0,localStorage:{setItem:()=>{}},request:async()=>{calls++;throw Error(error);},loadStats:async()=>{},fetchGames:async()=>{},toast:(message,type)=>messages.push([message,type]),t:key=>key};await run('refreshCatalog',context)({},false);assert.equal(calls,error==='network_unavailable'?2:1);assert.deepEqual(messages,[['catalog_error','error']]);assert.equal(context.state.games.length,1);assert.equal(context.lastRealCatalogFetch,0);}
+});
+test('manual update checks do not write notifications but automatic discovery does',async()=>{
+ for(const check of [true,false]){const history=[];const context={updatesBusy:false,state:{update:{},tab:'settings'},$:()=>({}),busy:()=>{},request:async()=>({status:'available',latestVersion:'3.6.16'}),renderUpdates:()=>{},toast:()=>{},t:key=>key,window:{lootlazyDiagnostic:true,lootlazyNotifications:{add:(...args)=>history.push(args)}}};await run('loadUpdates',context)(check,false);assert.equal(history.length,check?0:1);}
+});

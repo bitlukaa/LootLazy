@@ -1,3 +1,7 @@
+# Validation notes for 3.6.16
+
+Current frontend checks cover 21 unit/localization cases and isolated renderer scenarios for the literal Running badge, notification entry navigation, safe details rendering, 30-event retention, five-entry dropdown, filtering of manual refresh/update-check toasts, Clear size, and a single custom-input focus border. Catalog refresh fixtures exercise one transient retry, validation-error rejection, and persistent-failure reporting without removing saved games. Rust application logic is unchanged from the 70-test 3.6.15 validation except version metadata. No memory benchmark was performed.
+
 # Validation notes for 3.6.15
 
 This release adds a new Variety startup/reset policy, independent current-game selection, compact session controls, platform status labels, local notification history, simplified donation/update feedback, and navigation polish. Current checks cover 70 Rust regressions, 18 frontend tests, and isolated renderer scenarios for empty startup, count selection, active controls, returning between tabs, notification retention/bounds/safe text, both languages, and themes. Physical sleep, long live sessions, and clean Windows installation remain untested. No new memory measurements were run.

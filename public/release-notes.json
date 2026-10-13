@@ -1,15 +1,15 @@
 {
-  "version": "3.6.15",
+  "version": "3.6.16",
   "en": [
-    "Game Variety starts empty until you choose a game count; only the current game is highlighted.",
-    "Compact session controls with icons, a consistent timer, and no repeated duration labels.",
-    "Header platform logos and Running / Not running indicators, plus persistent local notification history.",
-    "Simplified donation and update feedback, and clearer Discord activity descriptions."
+    "Fixed Game Variety status text and added its green Running marker.",
+    "Notification entries open a dedicated history and details page; manual refresh/update-check toasts are excluded.",
+    "Smaller Clear actions and a single focus border for the custom executable field.",
+    "Game refresh retries one temporary connection failure while preserving the saved library."
   ],
   "ar": [
-    "تبدأ Game Variety فارغة حتى اختيار عدد الألعاب، مع تمييز اللعبة الحالية فقط.",
-    "أزرار جلسات مختصرة بأيقونات وعدّاد موحد دون تكرار المدة.",
-    "شعارات وحالة تشغيل المنصات في الشريط مع سجل إشعارات محلي.",
-    "تبسيط صفحة الدعم ورسائل التحديث وتوضيح نشاط Discord."
+    "إصلاح نص حالة Game Variety وإضافة نقطة التشغيل الخضراء.",
+    "صفحة لسجل وتفاصيل الإشعارات، دون رسائل التحديث اليدوي أو فحص التحديثات.",
+    "تصغير زر المسح وإزالة الإطار الزائد من خانة الملف التنفيذي.",
+    "إعادة محاولة واحدة عند خطأ اتصال مؤقت أثناء تحديث الألعاب مع الاحتفاظ بالمكتبة."
   ]
 }

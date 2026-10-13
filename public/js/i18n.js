@@ -628,7 +628,7 @@ Object.assign(I18N.en,{
   "rotation_summary": "{count} games · {time}",
   "rotation_empty": "Choose games to build your queue.",
   "rotation_duration": "Time per game",
-  "rotation_running": "{game} · {remaining} remaining",
+  "rotation_running": "Running",
   "rotation_paused": "Paused · Your progress is saved",
   "rotation_idle": "Ready",
   "rotation_completed": "Queue completed",
@@ -666,7 +666,7 @@ Object.assign(I18N.ar,{
   "rotation_summary": "{count} لعبة · {time}",
   "rotation_empty": "اختر الألعاب لبناء الطابور.",
   "rotation_duration": "وقت اللعبة",
-  "rotation_running": "{game} · متبقي {remaining}",
+  "rotation_running": "قيد التشغيل",
   "rotation_paused": "متوقف مؤقتًا · تم حفظ التقدم",
   "rotation_idle": "جاهز",
   "rotation_completed": "اكتمل الطابور",
@@ -779,6 +779,8 @@ Object.assign(I18N.ar,{
 });
 Object.assign(I18N.en,{"tab_steam":"Steam Idle","variety_choose_count":"Choose your game count","variety_choose_hint":"Select 10, 50, 100, or 200 games to build your Discord lineup.","notifications_title":"Notifications","notifications_clear":"Clear","notifications_empty":"No notifications yet.","game_time_badge_note":"Choose a game and manage its Discord activity with a timed session or queue.","game_variety_badge_note":"Choose a game count, set one duration, and run your Discord activities in order.","custom_process":"Manual session","manual_session_hint":"Use an executable name to create a custom Discord activity when the game is not in the catalog."});
 Object.assign(I18N.ar,{"tab_steam":"Steam Idle","variety_choose_count":"اختر عدد الألعاب","variety_choose_hint":"اختر 10 أو 50 أو 100 أو 200 لعبة لتجهيز قائمة نشاط Discord.","notifications_title":"الإشعارات","notifications_clear":"مسح","notifications_empty":"لا توجد إشعارات بعد.","game_time_badge_note":"اختر لعبة وأدر نشاطها على Discord بجلسة محددة المدة أو قائمة ألعاب.","game_variety_badge_note":"اختر عدد الألعاب ومدة موحدة لتشغيل أنشطة Discord بالترتيب.","custom_process":"جلسة يدوية","manual_session_hint":"استخدم اسم ملف تنفيذي لإنشاء نشاط Discord مخصص للعبة غير موجودة في القائمة."});
+Object.assign(I18N.en,{"notifications_view_all":"View all notifications","notification_session_title":"Session completed","notification_update_title":"New update","notification_open_section":"Open section","catalog_error":"Could not refresh games. Your saved library is still available."});
+Object.assign(I18N.ar,{"notifications_view_all":"عرض جميع الإشعارات","notification_session_title":"انتهت الجلسة","notification_update_title":"تحديث جديد","notification_open_section":"فتح القسم","catalog_error":"تعذّر تحديث الألعاب. مكتبتك المحفوظة ما زالت متاحة."});
 let currentLang = localStorage.getItem('lootlazy_lang') === 'ar' ? 'ar' : 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 
