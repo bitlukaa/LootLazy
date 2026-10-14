@@ -1,13 +1,15 @@
 {
-  "version": "3.6.17",
-  "en": [
-    "Simplified notification details by removing Open section.",
-    "Mark as read replaces Clear and preserves all retained notification history.",
-    "Refreshed the GitHub gallery with current application screenshots."
-  ],
   "ar": [
-    "إزالة زر فتح القسم من تفاصيل الإشعارات.",
-    "استبدال المسح بتحديد كمقروءة مع الاحتفاظ بسجل الإشعارات.",
-    "تحديث صور التطبيق على GitHub بالواجهة الحالية."
+    "إضافة النقطتين بعد Discord وSteam في حالة التشغيل.",
+    "تثبيت أزرار الكويستات عند مرور الماوس وتحديث الحالة.",
+    "تحديث صور GitHub بكويستات فعلية وترتيب مطابق للتطبيق.",
+    "ثبّت هذا الإصدار يدويًا مرة واحدة بسبب تغيير مفتاح توقيع التحديثات."
+  ],
+  "version": "3.6.18",
+  "en": [
+    "Discord: and Steam: status labels are included in this release.",
+    "Quest controls stay still on hover and during status updates.",
+    "Updated GitHub screenshots with real desktop quests and matching navigation order.",
+    "Install this release manually once because the update signing key has changed."
   ]
 }
