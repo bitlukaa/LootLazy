@@ -1,5 +1,12 @@
 # Release history
 
+## 3.6.18 — October 14, 2026
+
+- Include Discord: and Steam: status labels in the downloadable application.
+- Keep quest action buttons still during hover and repeated status updates.
+- Match the screenshot gallery to the navigation order and show real desktop quest artwork.
+- Rotate the update signing key after loss of its backup; install 3.6.18 manually once before using future in-app updates.
+
 ## 3.6.10 — October 13, 2026
 
 - Use LootLazy build paths, interface names and launchers exclusively.

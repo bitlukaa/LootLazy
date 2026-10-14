@@ -5,7 +5,7 @@ const clock=seconds=>[Math.floor(seconds/3600),Math.floor(seconds%3600/60),Math.
 const hm=minutes=>[Math.floor(minutes/60),Math.round(minutes%60)].map(n=>String(n).padStart(2,'0')).join(':');
 function humanTime(seconds){const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=Math.floor(seconds%60);return [[h,'hours_unit'],[m,'minutes_unit'],[s,'seconds_unit']].filter(([n])=>n>0).map(([n,key])=>number(n)+' '+t(key)).join(' ');}
 function dateText(value,withTime=false){const date=new Date(value);if(!Number.isFinite(date.getTime()))return '—';return new Intl.DateTimeFormat(currentLang==='ar'?'ar-EG':'en-US',withTime?{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}:{month:'short',day:'numeric'}).format(date);}
-function actionLabel(button,icon,label){button.innerHTML=getIcon(icon)+'<span>'+escapeHtml(label)+'</span>';}
+function actionLabel(button,icon,label){const markup=getIcon(icon)+'<span>'+escapeHtml(label)+'</span>';if(button.dataset.actionMarkup===markup&&button.firstElementChild)return;button.innerHTML=markup;button.dataset.actionMarkup=markup;}
 function setSlot(id,icon){if($(id))$(id).innerHTML=getIcon(icon);}
 function errorText(error,fallback='start_error'){
  const steamCodes=['discord_not_installed','steam_not_installed','discord_sync_unavailable','steam_sync_unavailable','steam_sync_already_running','steam_runtime_untrusted','steam_runtime_missing','steam_launch_failed','steam_not_owned','steam_connection_lost','steam_initialization_failed'];const steamCode=steamCodes.find(key=>String(error?.message||error||'').includes(key));if(steamCode)return t(steamCode);

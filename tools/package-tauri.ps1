@@ -1,4 +1,4 @@
-param([string]$OutputName='LootLazy-3.6.17',[switch]$UpdateExisting)
+param([string]$OutputName='LootLazy-3.6.18',[switch]$UpdateExisting)
 $ErrorActionPreference='Stop'
 if ($OutputName -notmatch '^LootLazy-\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?$') { throw 'Invalid package name.' }
 $projectRoot=Split-Path -Parent $PSScriptRoot

@@ -1,0 +1,54 @@
+[
+  {
+    "gameName": "Where Winds Meet",
+    "rewards": [
+      {
+        "name": "700 Orbs",
+        "quantity": 700,
+        "type": 4
+      }
+    ],
+    "id": "1554683719422316636",
+    "kind": "play",
+    "image": "https://cdn.discordapp.com/quests/1554683719422316636/1554771505303527474.jpg",
+    "resumeElapsedSeconds": 0,
+    "questName": "Where Winds Meet 2.2 Wuxia New Era",
+    "variantIds": [
+      "1554683719422316636"
+    ],
+    "game": {
+      "id": "1437509662303059998",
+      "name": "Where Winds Meet"
+    },
+    "durationSeconds": 900,
+    "durationMinutes": 15,
+    "startsAt": "2026-10-10T07:00:00.0000000Z",
+    "expiresAt": "2026-10-19T06:59:00.0000000Z"
+  },
+  {
+    "gameName": "Dragon's Dogma 2",
+    "rewards": [
+      {
+        "name": "700 Orbs",
+        "quantity": 700,
+        "type": 4
+      }
+    ],
+    "id": "1554267368748883999",
+    "kind": "play",
+    "image": "https://cdn.discordapp.com/quests/1539357001602302053/1539358043815411783.jpg",
+    "resumeElapsedSeconds": 0,
+    "questName": "Dark Arisen Arrives",
+    "variantIds": [
+      "1554267368748883999"
+    ],
+    "game": {
+      "id": "1220537550809337856",
+      "name": "Dragon's Dogma 2"
+    },
+    "durationSeconds": 900,
+    "durationMinutes": 15,
+    "startsAt": "2026-10-09T17:00:00.0000000Z",
+    "expiresAt": "2026-10-16T00:00:00.0000000Z"
+  }
+]

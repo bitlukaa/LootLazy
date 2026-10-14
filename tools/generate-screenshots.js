@@ -24,38 +24,7 @@ const popularGames = [
 
 const catalogPath=process.env.LOOTLAZY_SCREENSHOT_CATALOG;
 if(catalogPath){const catalog=JSON.parse(fs.readFileSync(catalogPath,'utf8'));for(const game of popularGames){const match=catalog.find(item=>item.name===game.name && item.icon_hash);if(match)Object.assign(game,{id:match.id,icon_hash:match.icon_hash,cover_image_hash:match.cover_image_hash});}}
-const mockQuests = [
-  {
-    id: '123456789012345678',
-    questName: 'Example quest · Counter-Strike 2',
-    image: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/header.jpg',
-    gameName: 'Counter-Strike 2',
-    game: { id: '730' },
-    kind: 'play',
-    durationMinutes: 15,
-    durationSeconds: 900,
-    resumeElapsedSeconds: 0,
-    startsAt: new Date(Date.now() - 3600000).toISOString(),
-    expiresAt: new Date(Date.now() + 86400000 * 5).toISOString(),
-    variantIds: ['730'],
-    rewards: [{ name: 'Discord Badge & Avatar Decoration' }]
-  },
-  {
-    id: '234567890123456789',
-    questName: 'Example quest · Warframe',
-    image: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/230410/header.jpg',
-    gameName: 'Warframe',
-    game: { id: '230410' },
-    kind: 'play',
-    durationMinutes: 15,
-    durationSeconds: 900,
-    resumeElapsedSeconds: 0,
-    startsAt: new Date(Date.now() - 7200000).toISOString(),
-    expiresAt: new Date(Date.now() + 86400000 * 3).toISOString(),
-    variantIds: ['230410'],
-    rewards: [{ name: 'In-Game Reward & Discord Badge' }]
-  }
-];
+const mockQuests = JSON.parse(fs.readFileSync(path.join(screenshotsDir, 'quest-examples.json'), 'utf8').replace(/^\uFEFF/, ''));
 
 let server, browser;
 
@@ -92,7 +61,7 @@ let server, browser;
       deviceScaleFactor: 1
     });
 
-    await page.route('http://artwork.localhost/**', async route => { const url=new URL(route.request().url()).searchParams.get('url'); if(!url||!(url.startsWith('https://cdn.discordapp.com/app-icons/')||url.startsWith('https://cdn.discordapp.com/app-assets/')||/^https:\/\/(?:shared\.akamai|shared\.fastly|cdn\.akamai)\.steamstatic\.com\//.test(url)))return route.fulfill({status:404,body:''}); try{const response=await route.fetch({url,timeout:15000});await route.fulfill({response});}catch{await route.fulfill({status:404,body:''});} });
+    await page.route('http://artwork.localhost/**', async route => { const url=new URL(route.request().url()).searchParams.get('url'); if(!url||!(url.startsWith('https://cdn.discordapp.com/app-icons/')||url.startsWith('https://cdn.discordapp.com/app-assets/')||url.startsWith('https://cdn.discordapp.com/quests/')||/^https:\/\/(?:shared\.akamai|shared\.fastly|cdn\.akamai)\.steamstatic\.com\//.test(url)))return route.fulfill({status:404,body:''}); try{const response=await route.fetch({url,timeout:15000});await route.fulfill({response});}catch{await route.fulfill({status:404,body:''});} });
 
     await page.addInitScript(({ games, quests }) => {
       window.lootlazyDiagnostic = true;
@@ -129,7 +98,7 @@ let server, browser;
         if (p === '/api/catalog-stats') return { totalGames: games.length };
         if (p === '/api/settings') return { desktop_notifications: false, total_playtime_seconds: 0 };
         if (p === '/api/quests') return { quests, last_synced: new Date().toISOString() };
-        if (p.startsWith('/api/updates')) return { currentVersion: '3.6.17', status: 'up_to_date' };
+        if (p.startsWith('/api/updates')) return { currentVersion: '3.6.18', status: 'up_to_date' };
         if (p === '/api/status') return {
           discordConnected: true,
           steamRunning: true,
@@ -213,10 +182,13 @@ let server, browser;
     });
     await settle();
     const questsPath = path.join(screenshotsDir, 'quests.png');
+    await page.waitForFunction(()=>[...document.querySelectorAll('.quest-cover img')].every(image=>image.complete&&image.naturalWidth>0));
+    for(const button of await page.locator('.quest-card .button').all()){if(await button.isVisible()){await button.hover();const motion=await button.evaluate(element=>({transform:getComputedStyle(element).transform,animation:getComputedStyle(element).animationName}));if(motion.transform!=='none'||motion.animation!=='none')throw Error('Quest button moves');}}
+    await page.mouse.move(0,0);
     await page.screenshot({ path: questsPath });
     console.log('Saved:', questsPath);
 
-    await page.evaluate(()=>{window.lootlazyNotifications.add(t('session_completed',{game:'Counter-Strike 2'}),'success',{kind:'session',target:'simulator'});window.lootlazyNotifications.add(t('update_available_version',{version:'3.6.17'}),'info',{kind:'update',target:'settings'});});
+    await page.evaluate(()=>{window.lootlazyNotifications.add(t('session_completed',{game:'Counter-Strike 2'}),'success',{kind:'session',target:'simulator'});window.lootlazyNotifications.add(t('update_available_version',{version:'3.6.18'}),'info',{kind:'update',target:'settings'});});
     await page.click('#notifications-toggle');await page.locator('#notifications-list .notification-item').last().click();await settle();await page.screenshot({path:path.join(screenshotsDir,'notifications.png')});
     console.log('All gallery screenshots updated successfully.');
   } finally {

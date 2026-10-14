@@ -35,9 +35,9 @@ Choose your games, set your time, and let LootLazy manage the sessions. Whether 
 |:---:|:---:|
 | [![Game Time](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-time.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-time.png) | [![Game Variety](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-variety.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/game-variety.png) |
 
-| 💤 Steam Idle | 🏆 Quests |
+| 🏆 Quests | 💤 Steam Idle |
 |:---:|:---:|
-| [![Steam Idle](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png) | [![Quests](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png) |
+| [![Quests](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/quests.png) | [![Steam Idle](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png)](https://raw.githubusercontent.com/bitlukaa/LootLazy/main/docs/screenshots/idle-steam.png) |
 
 <details>
 <summary>🔔 A closer look at notifications</summary>
