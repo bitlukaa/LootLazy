@@ -340,3 +340,6 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .lootlazy-navbar .navigation{flex:1 1 0%;flex-wrap:nowrap;overflow-x:auto}
 .lootlazy-navbar .navigation .nav-tab{padding-inline:7px;gap:5px;font-size:12px}
 @media(max-width:920px){.lootlazy-navbar{flex-wrap:wrap}.lootlazy-navbar .navigation{flex:1 1 100%;justify-content:center;flex-wrap:wrap;overflow:visible}}
+
+.app-version-line{display:flex;align-items:center;gap:7px;margin-top:4px}.updates-settings .app-version-line #app-version{margin-top:0}
+.build-channel-badge{display:inline-flex;align-items:center;background:var(--selected);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 15%,var(--line));border-radius:5px;font-size:9px;font-weight:600;line-height:1.4;padding:2px 6px;white-space:nowrap}.brand .build-channel-badge{font-size:8px;padding:1px 5px}
