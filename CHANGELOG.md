@@ -1,5 +1,17 @@
 # Release history
 
+## 3.7.0 — Steam Accounts preview
+
+- Added Steam Accounts between Steam Library and Active sessions.
+- Manage separate Steam sign-ins, Steam Guard prompts, selected games, and timed or continuous sessions.
+- Account sessions use a source-built internal engine; the desktop Steam client is optional.
+- Protect saved account authentication data with Windows DPAPI; passwords are not saved.
+- Stop idling when an account disconnects or plays elsewhere. No automatic session start after reopening.
+- Keep card farming, remote commands, plugin loading, and engine self-updates disabled.
+- Embed the engine in the signed application payload so Setup, portable downloads, and app updates carry the same version.
+- Preview validation uses synthetic accounts and authentication fixtures; live Steam sign-in and credited playtime still require local user testing before a stable promotion.
+
+
 ## 3.6.22 — October 15, 2026
 
 - Clean portable data and generated helpers when application data deletion is selected during uninstall.

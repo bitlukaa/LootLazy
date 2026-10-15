@@ -135,3 +135,46 @@ integrity, English/Arabic UI regressions, and account-tab placement tests. Live 
 needs a user-authorized test account entered locally, never a password posted in chat.
 Until those pass, keep this work on a development branch and keep the public release
 unchanged. Do not add a decorative accounts tab that cannot perform these operations.
+
+## Build and test the implemented preview
+
+Requirements: Windows x64, .NET SDK 10, Node.js 22, Rust/MSVC and the usual Tauri
+Windows build prerequisites. Users of the built application do not need the SDK.
+
+```powershell
+npm ci --ignore-scripts
+./tools/build-steam-engine.ps1
+npm run test:accounts
+npm run test:unit
+npx playwright install chromium
+npm run test:renderer
+./tools/test-tauri.ps1
+./tools/build-tauri.ps1
+./tools/build-setup.ps1
+```
+
+The engine adapter lives in `engine/LootLazyBridge.cs`; the explicit patches are
+in `tools/prepare-steam-engine.cjs`. Native ownership/extraction is implemented in
+`src-tauri/src/steam_accounts.rs` and the UI in `public/js/steam-accounts.js`.
+Engine data lives under `data/steam-accounts`; executable/runtime extraction is
+under `data/steam-engine`. Both are covered by the full-data uninstall cleanup.
+
+The source-built, self-contained engine is embedded in the application executable.
+It is extracted only when the account tab is first opened. No separate ASF install,
+web dashboard or unauthenticated localhost control port is used. One hidden owned
+engine process manages all accounts. The same signed executable carries its engine
+through normal app updates and portable/Setup packaging.
+
+To modify SteamKit, unpack the preserved source archive and build the SteamKit2
+NuGet project into a local package directory. Supply that directory during restore
+(or configure a local NuGet source), then rebuild the engine and LootLazy. Rebuild
+`LootLazy.exe` after changing the engine because its hash is embedded in the app.
+There is no signing-key requirement for local development/relinking. Distributed
+update signing remains separate from local builds.
+
+Offline tests exercise actual DPAPI-protected database writes/reads and reject
+plaintext database files; protocol fixtures exercise validation, account isolation,
+persistence and shutdown; actual initialization fixtures register/remove disabled
+bots without login. Browser fixtures exercise the UI and simulated Guard failures.
+These do not establish real Steam sign-in success or server-credited game hours.
+Do not advertise the preview as live-tested until those have been checked locally.

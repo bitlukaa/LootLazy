@@ -1,0 +1,21 @@
+const fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'..'),base=path.join(root,'data/asf-build/ArchiSteamFarm');
+function patch(file,before,after){const target=path.join(base,file),text=fs.readFileSync(target,'utf8');if(text.split(before).length!==2)throw Error('ASF patch anchor changed: '+file);fs.writeFileSync(target,text.replace(before,after));}
+patch('Program.cs','private static async Task Init(IReadOnlyCollection<string>? args)','internal static async Task Init(IReadOnlyCollection<string>? args)');
+patch('Program.cs','private static async Task Shutdown(byte exitCode = 0)','internal static async Task Shutdown(byte exitCode = 0)');
+patch('NLog/Logging.cs','internal static async Task<string?> GetUserInput(ASF.EUserInputType userInputType, string botName = SharedInfo.ASF) {','internal static async Task<string?> GetUserInput(ASF.EUserInputType userInputType, string botName = SharedInfo.ASF) {\n\t\tif (LootLazyBridge.Enabled) return await LootLazyBridge.InputAsync(userInputType, botName).ConfigureAwait(false);');
+patch('Core/ASF.cs','await RegisterBots().ConfigureAwait(false);','if (!LootLazyBridge.Enabled) await RegisterBots().ConfigureAwait(false);');
+patch('Steam/Interaction/Commands.cs','public async Task<string?> Response(EAccess access, string message, ulong steamID = 0) {','public async Task<string?> Response(EAccess access, string message, ulong steamID = 0) {\n\t\tif (LootLazyBridge.Enabled) return null;');
+patch('Plugins/PluginsCore.cs','internal static async Task<bool> InitPlugins() {','internal static async Task<bool> InitPlugins() {\n\t\tif (LootLazyBridge.Enabled) return true;');
+patch('Steam/Cards/CardsFarmer.cs','internal async Task StartFarming() {','internal async Task StartFarming() {\n\t\tif (LootLazyBridge.Enabled) return;');
+patch('Steam/Cards/CardsFarmer.cs','internal async Task<bool> Resume(bool userAction) {','internal async Task<bool> Resume(bool userAction) {\n\t\tif (LootLazyBridge.Enabled) return false;');
+patch('Steam/Bot.cs','private async Task ResetGamesPlayed() {','private async Task ResetGamesPlayed() {\n\t\tif (LootLazyBridge.Enabled) { await LootLazyBridge.ResetGames(this).ConfigureAwait(false); return; }');
+patch('Steam/Bot.cs','internal async Task CheckOccupationStatus() {','internal async Task CheckOccupationStatus() {\n\t\tif (LootLazyBridge.Enabled && !IsPlayingPossible) LootLazyBridge.Occupied(this);');
+patch('Steam/Bot.cs','private async void OnDisconnected(SteamClient.DisconnectedCallback callback) {','private async void OnDisconnected(SteamClient.DisconnectedCallback callback) {\n\t\tif (LootLazyBridge.Enabled) LootLazyBridge.StopRequested(this);');
+patch('Steam/Bot.cs','private async Task Destroy(bool force = false)','internal async Task Destroy(bool force = false)');
+patch('Steam/Bot.cs','private EResult LastLogOnResult;','internal EResult LastLogOnResult;');
+patch('Steam/Bot.cs','private void Disconnect(bool reconnect = false) {','private void Disconnect(bool reconnect = false) {\n\t\tif (LootLazyBridge.Enabled) LootLazyBridge.StopRequested(this);');
+patch('Steam/Storage/BotDatabase.cs','string json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);','LootLazyVault.CheckPath(filePath);\n\t\t\tstring json = LootLazyVault.Decode(filePath, await File.ReadAllTextAsync(filePath).ConfigureAwait(false));');
+patch('Helpers/SerializableFile.cs','string newFilePath = $"{filePath}.new";','LootLazyVault.CheckPath(filePath);\n\t\tLootLazyVault.CheckPath(filePath + ".new");\n\t\tjson = LootLazyVault.Encode(filePath, json);\n\t\tstring newFilePath = $"{filePath}.new";');
+fs.copyFileSync(path.join(root,'engine/LootLazyBridge.cs'),path.join(base,'LootLazyBridge.cs'));
+console.log('Applied reviewed LootLazy adapter patches to a temporary copy; upstream snapshot unchanged.');

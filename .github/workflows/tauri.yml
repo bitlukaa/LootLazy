@@ -29,6 +29,13 @@ jobs:
         run: ./tools/build-helper.ps1
       - name: Format
         run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build integrated Steam engine
+        run: ./tools/build-steam-engine.ps1
+      - name: Account engine regressions
+        run: npm run test:accounts
       - name: Rust regressions
         run: ./tools/test-tauri.ps1
       - name: Update replacement regressions
@@ -36,7 +43,7 @@ jobs:
       - name: Protected signing key path fixture
         run: ./tools/test-signing-migration.ps1
       - name: Build portable application
-        run: ./tools/build-tauri.ps1
+        run: ./tools/build-tauri.ps1 -ReuseSteamEngine
       - name: Build Setup installer
         run: ./tools/build-setup.ps1
       - name: Uninstall cleanup regressions

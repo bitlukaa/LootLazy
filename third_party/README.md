@@ -19,3 +19,14 @@ This import is a development foundation. It does not enable accounts, bundle an 
 binary, change LootLazy's current runtime, or publish a new application release.
 See [integration review](../docs/engineering/steam-accounts.md) for the implementation
 contract and remaining work. Do not publish the unmodified engine as a finished feature.
+
+## SteamKit corresponding source
+
+`SteamKit2-3.4.0-source.zip` is the complete GitHub source archive at commit
+`1c7bc9c41a529e8fbb1e6890f1e4dbcdc5200cb7`, matching the pinned NuGet package.
+Archive SHA-256: `c045860464c17627b1f6b4469f659df2672e37b00e08860c1db036182019aaf0`.
+It retains SteamRE's original copyright and LGPL license. The complete license
+and dependency notices are included in the application's notices file.
+You may modify and rebuild/relink the library and application; LootLazy adds no
+restriction on debugging modifications to LGPL components. See the engine build
+instructions for replacing the package with a locally rebuilt version.

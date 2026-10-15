@@ -1,13 +1,13 @@
 {
-  "version": "3.6.22",
+  "version": "3.7.0",
   "en": [
-    "The Setup uninstaller now removes application data and generated helpers when data deletion is selected.",
-    "Data deletion is selected by default; you can uncheck it to retain data. Updates preserve saved data.",
-    "Run the new Setup over your existing installation once to replace the uninstaller. An in-app executable update alone does not replace it."
+    "Preview: manage several Steam accounts from the new Steam Accounts tab.",
+    "Sign in, confirm Steam Guard, choose games, and control each account independently.",
+    "Steam desktop is optional for account sessions. Existing Steam Library sessions still work as before."
   ],
   "ar": [
-    "أداة الإزالة في Setup تحذف بيانات التطبيق والملفات المساعدة عند اختيار حذف البيانات.",
-    "حذف البيانات محدد افتراضيًا ويمكن إلغاؤه للاحتفاظ بها. التحديث يحافظ على البيانات.",
-    "شغّل Setup الجديد فوق التثبيت الحالي مرة واحدة لتحديث أداة الإزالة؛ تحديث ملف التطبيق وحده لا يستبدلها."
+    "نسخة تجريبية: إدارة عدة حسابات Steam من تبويب حسابات Steam الجديد.",
+    "سجّل الدخول وأكّد Steam Guard واختر الألعاب وتحكّم في كل حساب بشكل مستقل.",
+    "جلسات الحسابات لا تحتاج تطبيق Steam المكتبي. جلسات مكتبة Steam الحالية تعمل كالمعتاد."
   ]
 }

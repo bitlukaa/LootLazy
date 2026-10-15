@@ -15,3 +15,8 @@ for (const file of lock.files) {
   if (actual.get(file.path) !== file.gitBlob) throw Error('Upstream blob mismatch: ' + file.path);
 }
 console.log(`Verified ${actual.size} unmodified ASF source files at ${lock.commit}.`);
+
+const crypto=require('node:crypto');
+const steamkit=fs.readFileSync(path.join(root,'third_party/SteamKit2-3.4.0-source.zip'));
+if(crypto.createHash('sha256').update(steamkit).digest('hex')!=='c045860464c17627b1f6b4469f659df2672e37b00e08860c1db036182019aaf0')throw Error('SteamKit corresponding source archive mismatch');
+console.log('Verified corresponding SteamKit 3.4.0 source archive.');

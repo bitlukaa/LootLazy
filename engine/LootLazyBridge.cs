@@ -1,0 +1,285 @@
+// LootLazy integration adapter. Upstream ASF remains under Apache-2.0.
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using ArchiSteamFarm.Core;
+using ArchiSteamFarm.Steam;
+
+namespace ArchiSteamFarm;
+
+internal static class LootLazyVault {
+    private const string Prefix = "LootLazy-DPAPI-v1:";
+    internal static bool ProtectedPath(string path) => Path.GetExtension(path) == ".db" && Path.GetFileName(path).StartsWith("ll_", StringComparison.Ordinal);
+    internal static string Encode(string path, string value) {
+        if (!ProtectedPath(path)) return value;
+        byte[] bytes = Encoding.UTF8.GetBytes(value);
+        try { return Prefix + Convert.ToBase64String(ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser)); }
+        finally { CryptographicOperations.ZeroMemory(bytes); }
+    }
+    internal static string Decode(string path, string value) {
+        if (!ProtectedPath(path)) return value;
+        if (!value.StartsWith(Prefix, StringComparison.Ordinal)) throw new CryptographicException("Unprotected account database rejected");
+        byte[] bytes = ProtectedData.Unprotect(Convert.FromBase64String(value[Prefix.Length..]), null, DataProtectionScope.CurrentUser);
+        try { return Encoding.UTF8.GetString(bytes); }
+        finally { CryptographicOperations.ZeroMemory(bytes); }
+    }
+    internal static void CheckPath(string path) {
+        string? current = Path.GetFullPath(path);
+        while (current != null) {
+            if ((File.Exists(current) || Directory.Exists(current)) && (File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0) throw new IOException("Linked state path rejected");
+            current = Path.GetDirectoryName(current);
+        }
+    }
+}
+
+internal static class LootLazyBridge {
+    internal static bool Enabled => true;
+    private sealed record Account(string Id, string Label, string Login, uint[] Games);
+    private sealed record Challenge(string Id, ASF.EUserInputType Type, TaskCompletionSource<string?> Completion);
+    private sealed class Session {
+        internal uint[] Games = [];
+        internal DateTimeOffset Started;
+        internal int Minutes;
+        internal bool Blocked;
+    }
+    private static readonly Dictionary<string, Account> Accounts = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, Challenge> Challenges = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, Session> Sessions = new(StringComparer.Ordinal);
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    private static readonly SemaphoreSlim PlayLock = new(1, 1);
+    private static bool OfflineTest;
+    private static string Metadata => Path.Combine(Directory.GetCurrentDirectory(), "accounts.json");
+    private static void Fail(string code) => throw new InvalidOperationException(code);
+    private static string Text(JsonElement body, string key) => body.ValueKind == JsonValueKind.Object && body.TryGetProperty(key, out JsonElement value) && value.ValueKind == JsonValueKind.String ? value.GetString()! : "";
+    private static bool ValidId(string id) => id.StartsWith("ll_", StringComparison.Ordinal) && id.Length == 35 && id[3..].All(Uri.IsHexDigit);
+    private static string ConfigPath(string id) => Path.Combine("config", id + ".json");
+    private static void Save() {
+        LootLazyVault.CheckPath(Metadata);
+        LootLazyVault.CheckPath(Metadata + ".new");
+        File.WriteAllText(Metadata + ".new", JsonSerializer.Serialize(Accounts.Values, JsonOptions));
+        File.Move(Metadata + ".new", Metadata, true);
+    }
+    private static void WriteConfig(Account account) {
+        string path = ConfigPath(account.Id);
+        LootLazyVault.CheckPath(path);
+        File.WriteAllText(path, JsonSerializer.Serialize(new { Enabled = false, SteamLogin = account.Login, UseLoginKeys = true, FarmingPreferences = 9, RemoteCommunication = 0, BotBehaviour = 64, TradeCheckPeriod = 0, AcceptGifts = false, GamesPlayedWhileIdle = Array.Empty<uint>() }));
+    }
+    internal static async Task<string?> InputAsync(ASF.EUserInputType type, string id) {
+        if (!ValidId(id) || Bot.Bots?.TryGetValue(id, out var inputBot) != true || !inputBot.KeepRunning) return null;
+        // QR code login is intentionally unavailable in this adapter. Password/Guard remain supported.
+        if (type == ASF.EUserInputType.QrCodeLogin) return "N";
+        var challenge = new Challenge(Guid.NewGuid().ToString("N"), type, new(TaskCreationOptions.RunContinuationsAsynchronously));
+        if (Challenges.TryRemove(id, out var old)) old.Completion.TrySetResult(null);
+        Challenges[id] = challenge;
+        try { return await challenge.Completion.Task.WaitAsync(TimeSpan.FromMinutes(3)).ConfigureAwait(false); }
+        catch (TimeoutException) { return null; }
+        finally { if (Challenges.TryGetValue(id, out var current) && current.Id == challenge.Id) Challenges.TryRemove(id, out _); }
+    }
+    internal static void StopRequested(Bot bot) {
+        if (Sessions.TryGetValue(bot.BotName, out var session)) session.Games = [];
+    }
+    internal static void Occupied(Bot bot) {
+        if (Sessions.TryGetValue(bot.BotName, out var session)) { session.Games = []; session.Blocked = true; }
+    }
+    internal static async Task ResetGames(Bot bot) {
+        if (!bot.IsConnectedAndLoggedOn) return;
+        await PlayLock.WaitAsync().ConfigureAwait(false);
+        try {
+            uint[] games = Sessions.TryGetValue(bot.BotName, out var session) ? session.Games : [];
+            if (!bot.IsPlayingPossible) { Occupied(bot); return; }
+            await bot.ArchiHandler.PlayGames(games).ConfigureAwait(false);
+        } finally { PlayLock.Release(); }
+    }
+    private static object Snapshot() {
+        var result = Accounts.Values.Select(account => {
+            Bot? bot = null;
+            Bot.Bots?.TryGetValue(account.Id, out bot);
+            Challenges.TryGetValue(account.Id, out var input);
+            Sessions.TryGetValue(account.Id, out var session);
+            bool connected = bot?.IsConnectedAndLoggedOn == true;
+            bool running = connected && bot!.IsPlayingPossible && session?.Games.Length > 0;
+            string state = input != null ? "input" : running ? "running" : connected && !bot!.IsPlayingPossible ? "blocked" : connected ? "ready" : bot?.KeepRunning == true ? "connecting" : "offline";
+            return new { id = account.Id, label = account.Label, login = account.Login, games = account.Games, state, connected, active = bot?.KeepRunning == true, steamId = bot?.SSteamID ?? "0", input = input == null ? null : new { id = input.Id, type = input.Type.ToString() }, elapsedSeconds = running ? Math.Max(0, (long)(DateTimeOffset.UtcNow - session!.Started).TotalSeconds) : 0, minutes = session?.Minutes ?? 0, error = bot != null && !bot.KeepRunning && bot.LastLogOnResult is not (SteamKit2.EResult.Invalid or SteamKit2.EResult.OK) ? "accounts_login_failed" : null };
+        }).ToArray();
+        return new { protocol = 1, accounts = result, active = result.Any(account => account.active) };
+    }
+    private static Account Find(JsonElement body) {
+        string id = Text(body, "id");
+        if (!ValidId(id) || !Accounts.TryGetValue(id, out var account)) { Fail("accounts_missing"); return null!; }
+        return account;
+    }
+    private static async Task<object> Handle(string command, JsonElement body) {
+        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
+        if (command == "status") return Snapshot();
+        if (command == "add") {
+            string label = Text(body, "label").Trim(), login = Text(body, "login").Trim();
+            if (Accounts.Count >= 20 || label.Length is < 1 or > 48 || label.Any(char.IsControl) || login.Length is < 1 or > 64 || login.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_')) Fail("accounts_invalid");
+            if (Accounts.Values.Any(account => account.Login.Equals(login, StringComparison.OrdinalIgnoreCase))) Fail("accounts_duplicate");
+            var account = new Account("ll_" + Guid.NewGuid().ToString("N"), label, login, []);
+            WriteConfig(account);
+            if (!OfflineTest) await Bot.RegisterBot(account.Id).ConfigureAwait(false);
+            Accounts.Add(account.Id, account);
+            Save();
+            return Snapshot();
+        }
+        var entry = Find(body);
+        Bot? selected = null;
+        Bot.Bots?.TryGetValue(entry.Id, out selected);
+        if (command == "remove") {
+            if (Challenges.TryRemove(entry.Id, out var pending)) pending.Completion.TrySetResult(null);
+            Sessions.TryRemove(entry.Id, out _);
+            if (selected != null) {
+                await selected.Stop(true).ConfigureAwait(false);
+                if (!await selected.DeleteAllRelatedFiles().ConfigureAwait(false)) Fail("accounts_remove_failed");
+                await selected.Destroy(true).ConfigureAwait(false);
+            }
+            if (OfflineTest) File.Delete(ConfigPath(entry.Id));
+            Accounts.Remove(entry.Id);
+            Save();
+            return Snapshot();
+        }
+        if (command == "games") {
+            if ((Sessions.TryGetValue(entry.Id, out var playing) && playing.Games.Length > 0) || (selected?.KeepRunning == true && !selected.IsConnectedAndLoggedOn) || Challenges.ContainsKey(entry.Id)) Fail("accounts_stop_first");
+            if (!body.TryGetProperty("games", out var values) || values.ValueKind != JsonValueKind.Array || values.GetArrayLength() > 32) Fail("accounts_invalid");
+            uint[] games = values.EnumerateArray().Select(value => value.GetUInt32()).Distinct().ToArray();
+            if (games.Any(id => id == 0)) Fail("accounts_invalid");
+            Accounts[entry.Id] = entry with { Games = games };
+            Save();
+            return Snapshot();
+        }
+        if (OfflineTest || selected == null) { Fail("accounts_not_ready"); return null!; }
+        if (command == "signin") {
+            if (selected.KeepRunning) Fail("accounts_stop_first");
+            Sessions.TryRemove(entry.Id, out _);
+            string password = Text(body, "password");
+            if (password.Length > 256) Fail("accounts_invalid");
+            if (password.Length > 0) selected.SetUserInput(ASF.EUserInputType.Password, password);
+            await selected.Start().ConfigureAwait(false);
+        } else if (command == "input") {
+            if (!Challenges.TryGetValue(entry.Id, out var challenge) || challenge.Id != Text(body, "challengeId") || challenge.Completion.Task.IsCompleted) Fail("accounts_input_expired");
+            string value = Text(body, "value");
+            if (value.Length is < 1 or > 256) Fail("accounts_invalid");
+            challenge!.Completion.TrySetResult(value);
+            // Status clears after ASF consumes and validates the input; never echo it.
+        } else if (command == "start") {
+            if (!selected.IsConnectedAndLoggedOn) Fail("accounts_not_ready");
+            if (!selected.IsPlayingPossible) Fail("accounts_playing_elsewhere");
+            if (entry.Games.Length == 0) Fail("accounts_choose_games");
+            foreach (uint id in entry.Games) {
+                if (ASF.GlobalDatabase?.GetPackageIDs(id, selected.OwnedPackages.Keys)?.Count is not > 0) Fail("accounts_not_owned");
+            }
+            int minutes = body.TryGetProperty("minutes", out var duration) ? duration.GetInt32() : 0;
+            if (minutes is < 0 or > 1440) Fail("accounts_invalid");
+            Sessions[entry.Id] = new Session { Games = entry.Games.ToArray(), Started = DateTimeOffset.UtcNow, Minutes = minutes };
+            try { await ResetGames(selected).ConfigureAwait(false); }
+            catch { Sessions.TryRemove(entry.Id, out _); throw; }
+        } else if (command == "stop") {
+            if (Challenges.TryRemove(entry.Id, out var pending)) pending.Completion.TrySetResult(null);
+            StopRequested(selected);
+            if (selected.IsConnectedAndLoggedOn) await ResetGames(selected).ConfigureAwait(false);
+            await selected.Stop(true).ConfigureAwait(false);
+            Sessions.TryRemove(entry.Id, out _);
+        } else { Fail("accounts_invalid"); }
+        return Snapshot();
+    }
+    private static async Task ExpireSessions(CancellationToken token) {
+        while (!token.IsCancellationRequested) {
+            await Task.Delay(1000, token).ConfigureAwait(false);
+            foreach (var pair in Sessions) {
+                var session = pair.Value;
+                if (session.Minutes == 0 || session.Games.Length == 0 || DateTimeOffset.UtcNow - session.Started < TimeSpan.FromMinutes(session.Minutes)) continue;
+                session.Games = [];
+                if (Bot.Bots?.TryGetValue(pair.Key, out var bot) == true) await ResetGames(bot).ConfigureAwait(false);
+            }
+        }
+    }
+    private static async Task<int> Main(string[] args) {
+        using var output = new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true };
+        Console.SetOut(TextWriter.Null);
+        Console.SetError(TextWriter.Null);
+        if (args.Length == 1 && args[0] == "--self-test") {
+            const string secret = "{\"BackingRefreshToken\":\"fixture-refresh-token\",\"BackingSteamGuardData\":\"fixture-guard-secret\"}";
+            string encrypted = LootLazyVault.Encode("ll_test.db", secret);
+            if (encrypted.Contains("fixture", StringComparison.Ordinal) || LootLazyVault.Decode("ll_test.db", encrypted) != secret) return 2;
+            try { LootLazyVault.Decode("ll_test.db", secret); return 3; } catch (CryptographicException) { }
+            string fixture = Path.Combine(Path.GetTempPath(), "lootlazy-vault-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(fixture);
+            try {
+                string database = Path.Combine(fixture, "ll_fixture.db");
+                if (!await Helpers.SerializableFile.Write(database, secret).ConfigureAwait(false)) return 4;
+                string persisted = await File.ReadAllTextAsync(database).ConfigureAwait(false);
+                if (persisted.Contains("fixture-refresh", StringComparison.Ordinal) || LootLazyVault.Decode(database, persisted) != secret || File.Exists(database + ".new")) return 5;
+                if (await Steam.Storage.BotDatabase.CreateOrLoad(database).ConfigureAwait(false) == null) return 6;
+            } finally { Directory.Delete(fixture, true); }
+            await output.WriteLineAsync("Vault round-trip, actual database persistence, plaintext rejection and secret-absence tests passed.").ConfigureAwait(false);
+            return 0;
+        }
+        if (args.Length != 3 || args[0] is not ("--bridge" or "--offline-test") || !int.TryParse(args[2], out int parentId)) return 2;
+        OfflineTest = args[0] == "--offline-test";
+        try {
+            using var parent = Process.GetProcessById(parentId);
+            parent.EnableRaisingEvents = true;
+            parent.Exited += (_, _) => Environment.Exit(0);
+            if (parent.HasExited) return 0;
+            LootLazyVault.CheckPath(args[1]);
+            Directory.CreateDirectory(args[1]);
+            Directory.SetCurrentDirectory(Path.GetFullPath(args[1]));
+            Directory.CreateDirectory("config");
+            LootLazyVault.CheckPath(Path.Combine(Directory.GetCurrentDirectory(), "config"));
+            LootLazyVault.CheckPath(Metadata);
+            if (File.Exists(Metadata)) {
+                if (new FileInfo(Metadata).Length > 262144) return 2;
+                foreach (var account in JsonSerializer.Deserialize<Account[]>(File.ReadAllText(Metadata), JsonOptions) ?? []) {
+                    if (!ValidId(account.Id) || account.Games.Length > 32 || Accounts.Count >= 20) return 2;
+                    Accounts.Add(account.Id, account);
+                    WriteConfig(account);
+                }
+            }
+            foreach (string path in new[] { "config/ASF.json", "config/ASF.db", "NLog.config" }) LootLazyVault.CheckPath(path);
+            File.WriteAllText("config/ASF.json", "{\"Headless\":true,\"IPC\":false,\"AutoRestart\":false,\"UpdateChannel\":0,\"UpdatePeriod\":0,\"OptimizationMode\":1,\"PluginsUpdateList\":[],\"SteamOwnerID\":0}");
+            File.WriteAllText("NLog.config", "<nlog xmlns=\"http://www.nlog-project.org/schemas/NLog.xsd\"><targets/><rules/></nlog>");
+            if (!File.Exists("config/ASF.db")) File.WriteAllText("config/ASF.db", "{}");
+            if (!OfflineTest) await Program.Init(["--path", Directory.GetCurrentDirectory(), "--no-restart", "--no-config-watch", "--no-config-migrate", "--no-steam-parental-generation"]).ConfigureAwait(false);
+            if (!OfflineTest) foreach (var account in Accounts.Values) await Bot.RegisterBot(account.Id).ConfigureAwait(false);
+            using var cancellation = new CancellationTokenSource();
+            var expiry = ExpireSessions(cancellation.Token);
+            await output.WriteLineAsync(JsonSerializer.Serialize(new { ready = true, protocol = 1 })).ConfigureAwait(false);
+            // Read bounded frames without exposing requests to ASF logging or an HTTP endpoint.
+            var reader = Console.In;
+            var frame = new StringBuilder();
+            var buffer = new char[1];
+            while (await reader.ReadAsync(buffer.AsMemory()).ConfigureAwait(false) > 0) {
+                char character = buffer[0];
+                if (character == '\r') continue;
+                if (character != '\n') { if (frame.Length >= 16384) return 2; frame.Append(character); continue; }
+                long id = 0;
+                try {
+                    using var document = JsonDocument.Parse(frame.ToString(), new JsonDocumentOptions { MaxDepth = 8 });
+                    var request = document.RootElement;
+                    id = request.GetProperty("id").GetInt64();
+                    if (id < 1 || request.GetProperty("protocol").GetInt32() != 1) Fail("accounts_protocol");
+                    string command = request.GetProperty("command").GetString() ?? "";
+                    var body = request.TryGetProperty("body", out var requestBody) ? requestBody : default;
+                    object result = await Handle(command, body).ConfigureAwait(false);
+                    await output.WriteLineAsync(JsonSerializer.Serialize(new { id, ok = true, result }, JsonOptions)).ConfigureAwait(false);
+                } catch (Exception error) {
+                    string code = error is InvalidOperationException && error.Message.StartsWith("accounts_", StringComparison.Ordinal) ? error.Message : "accounts_failed";
+                    await output.WriteLineAsync(JsonSerializer.Serialize(new { id, ok = false, error = code })).ConfigureAwait(false);
+                } finally { frame.Clear(); }
+            }
+            await cancellation.CancelAsync().ConfigureAwait(false);
+            try { await expiry.ConfigureAwait(false); } catch (OperationCanceledException) { }
+            foreach (var challenge in Challenges.Values) challenge.Completion.TrySetResult(null);
+            if (!OfflineTest) await Program.Shutdown().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            return 0;
+        } catch { return 2; }
+    }
+}

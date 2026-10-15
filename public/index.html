@@ -66,6 +66,7 @@
   <div><h1 data-i18n="tab_steam">Idle Steam</h1></div>
   <div class="sim-modes" role="group" data-i18n-aria-label="steam_sub_mode">
    <button class="sim-mode active" data-steam-sub-mode="library"><span id="steam-mode-library-icon"></span><span data-i18n="steam_mode_library">Steam Library</span></button>
+   <button class="sim-mode" data-steam-sub-mode="accounts"><span id="steam-mode-accounts-icon" aria-hidden="true"></span><span data-i18n="accounts_title">Steam Accounts</span></button>
    <button class="sim-mode" data-steam-sub-mode="active"><span id="steam-mode-active-icon"></span><span data-i18n="steam_mode_active">Active sessions</span><span id="steam-active-nav-badge" class="count-badge" hidden>0</span></button>
   </div>
  </div>
@@ -85,6 +86,27 @@
   </section>
  </div>
  </div>
+<div id="steam-accounts-mode-view" hidden>
+ <p class="quests-reminder muted" data-i18n="accounts_intro">Run your Steam accounts independently. The Steam desktop app is not required.</p>
+ <p id="accounts-loading" class="muted" hidden data-i18n="accounts_loading">Starting account manager…</p>
+ <p id="accounts-error" class="error-banner" role="alert" hidden></p>
+ <div class="accounts-grid">
+  <section class="panel"><div class="panel-heading"><h2 data-i18n="accounts_title">Steam Accounts</h2><div class="account-heading-actions"><button id="accounts-retry" class="icon-button" type="button" data-i18n-aria-label="accounts_retry"></button><button id="accounts-add" class="button button-secondary" type="button"><span data-i18n="accounts_add">Add account</span></button></div></div><p id="accounts-empty" class="muted" data-i18n="accounts_empty">Add your first Steam account.</p><div id="accounts-list" class="accounts-list"></div></section>
+  <section class="panel"><p id="account-no-selection" class="muted" data-i18n="accounts_select">Select an account to manage its games.</p>
+   <div id="account-setup" hidden><div class="panel-heading"><div><h2 id="account-title"></h2><p id="account-login" class="muted"></p></div><span id="account-state" class="account-state"></span></div>
+    <p id="account-auth-error" class="error-banner" role="alert" hidden></p>
+    <form id="account-signin-form" class="account-signin"><label><span data-i18n="accounts_password">Password</span><input id="account-password" type="password" maxlength="256" autocomplete="current-password" data-i18n-placeholder="accounts_password_hint"></label><button id="account-signin" class="button button-secondary" type="submit"><span data-i18n="accounts_signin">Sign in</span></button></form>
+    <form id="account-input-form" class="account-signin" hidden><label><span id="account-input-label"></span><input id="account-code" type="text" maxlength="256" autocomplete="one-time-code" required></label><button id="account-submit-input" class="button button-secondary" type="submit" data-i18n="accounts_continue">Continue</button></form>
+    <p class="muted account-security" data-i18n="accounts_security">Login sessions are saved securely for this Windows user. Your password is not saved.</p>
+    <h3 class="account-games-title" data-i18n="accounts_games">Selected games</h3><p class="muted" data-i18n="accounts_owned_hint">Choose games owned by this account.</p>
+    <div class="search-field account-search"><span id="account-search-icon" aria-hidden="true"></span><input id="account-search" type="search" autocomplete="off" data-i18n-placeholder="search_placeholder" data-i18n-aria-label="search_placeholder"></div><div id="account-search-results" class="account-search-results"></div>
+    <p id="account-games-hint" class="muted" hidden data-i18n="accounts_games_locked">Stop the session before changing games.</p><p id="account-no-games" class="muted" data-i18n="accounts_choose_games">Choose at least one game.</p><div id="account-games"></div>
+    <div class="account-duration"><label for="account-duration" data-i18n="duration">Run duration</label><select id="account-duration"><option value="0" data-i18n="idle_continuous">Continuous</option><option value="15" data-i18n="idle_15m">15 min</option><option value="30" data-i18n="idle_30m">30 min</option><option value="60" data-i18n="idle_1h">1 hour</option></select><strong id="account-running-time" class="clock-digits" hidden></strong></div>
+    <div class="session-actions"><button id="account-start" class="button button-primary" type="button" hidden><span data-i18n="rotation_start">Start</span></button><button id="account-stop" class="button button-danger" type="button" hidden><span data-i18n="quest_stop">Stop</span></button><button id="account-remove" class="button button-quiet" type="button"><span data-i18n="accounts_remove">Remove account</span></button></div>
+   </div>
+  </section>
+ </div>
+</div>
  <div id="steam-active-mode-view" class="steam-active-view" hidden>
   <section id="steam-sessions-panel" class="panel rotation-panel">
    <div class="rotation-summary">
@@ -100,6 +122,7 @@
     <p data-i18n="steam_no_active_hint">Select a game from your Steam library to start idling.</p>
    </div>
    <div id="steam-list" class="rotation-list" hidden></div>
+   <section id="accounts-active-panel" hidden><h3 data-i18n="accounts_title">Steam Accounts</h3><div id="accounts-active-list"></div></section>
   </section>
  </div>
 </section>
@@ -162,7 +185,9 @@
 </div>
 <dialog id="duration-dialog"><form id="duration-edit-form"><div class="dialog-heading"><h2 data-i18n="edit_duration">Edit duration</h2><button type="button" id="duration-dialog-close" class="icon-button" data-i18n-aria-label="cancel">×</button></div><p id="duration-edit-game" class="muted"></p><div class="duration-custom"><label><span data-i18n="hours">Hours</span><input id="edit-hours" type="number" min="0" max="24" required></label><span class="time-separator">:</span><label><span data-i18n="minutes">Minutes</span><input id="edit-minutes" type="number" min="0" max="59" required></label></div><div class="dialog-actions"><button type="button" id="duration-dialog-cancel" class="button button-quiet" data-i18n="cancel">Cancel</button><button type="submit" class="button button-primary" data-i18n="save_apply">Save</button></div></form></dialog>
 
+<dialog id="account-add-dialog"><form id="account-add-form"><h2 data-i18n="accounts_add">Add account</h2><label><span data-i18n="accounts_label">Account label</span><input id="account-new-label" type="text" maxlength="48" required></label><label><span data-i18n="accounts_login">Steam login name</span><input id="account-new-login" type="text" maxlength="64" pattern="[A-Za-z0-9_]+" autocomplete="username" required></label><div class="dialog-actions"><button id="account-add-cancel" class="button button-quiet" type="button" data-i18n="cancel">Cancel</button><button class="button button-primary" type="submit" data-i18n="accounts_add">Add account</button></div></form></dialog>
+<dialog id="account-remove-dialog"><h2 data-i18n="accounts_remove">Remove account</h2><p data-i18n="accounts_remove_warning">Disconnect this account and delete its saved login session from this device?</p><div class="dialog-actions"><button id="account-remove-cancel" class="button button-quiet" type="button" data-i18n="cancel">Cancel</button><button id="account-remove-confirm" class="button button-danger" type="button" data-i18n="accounts_remove">Remove account</button></div></dialog>
 <div id="toast-container" role="status" aria-live="polite"></div>
-<script src="js/desktop.js"></script><script src="js/icons.js"></script><script src="js/i18n.js"></script><script src="js/notifications.js"></script><script src="js/app.js"></script><script src="js/rotations.js"></script>
+<script src="js/desktop.js"></script><script src="js/icons.js"></script><script src="js/i18n.js"></script><script src="js/notifications.js"></script><script src="js/app.js"></script><script src="js/rotations.js"></script><script src="js/steam-accounts.js"></script>
 </body></html>
 
