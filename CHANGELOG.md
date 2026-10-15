@@ -1,5 +1,10 @@
 # Release history
 
+## 3.6.21 — October 15, 2026
+
+- Default Game Time to Continuous in both the initial interface and session state.
+- Verify fresh launches and reopening after selecting a timed duration.
+
 ## 3.6.20 — October 15, 2026
 
 - Avoid rewriting unchanged quest DOM attributes and labels during polling; verify idle button pixels across automatic status checks.
