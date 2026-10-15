@@ -1,0 +1,97 @@
+<Project>
+	<PropertyGroup>
+		<Version>6.3.10.6</Version>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<ApplicationIcon>../resources/ASF.ico</ApplicationIcon>
+		<Authors>JustArchi</Authors>
+		<CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+		<Company>JustArchiNET</Company>
+		<Copyright>Copyright © 2015-$([System.DateTime]::UtcNow.Year) $(Company)</Copyright>
+		<Description>ASF is a C# application with primary purpose of idling Steam cards from multiple accounts simultaneously.</Description>
+		<Deterministic>true</Deterministic>
+		<ErrorReport>none</ErrorReport>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<LangVersion>preview</LangVersion>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<NeutralLanguage>en</NeutralLanguage>
+		<NoWarn>CA1028,CA1031,CS1591</NoWarn>
+		<Nullable>enable</Nullable>
+		<PackageIcon>../resources/ASF.ico</PackageIcon>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/$(Company)/ArchiSteamFarm</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageReleaseNotes>$(PackageProjectUrl)/releases</PackageReleaseNotes>
+		<PublishDocumentationFile>false</PublishDocumentationFile>
+		<PublishDocumentationFiles>false</PublishDocumentationFiles>
+		<RepositoryBranch>main</RepositoryBranch>
+		<RepositoryType>Git</RepositoryType>
+		<RepositoryUrl>$(PackageProjectUrl).git</RepositoryUrl>
+		<RollForward>LatestMajor</RollForward>
+		<RuntimeIdentifiers>linux-arm;linux-arm64;linux-x64;osx-arm64;osx-x64;win-arm64;win-x64</RuntimeIdentifiers>
+		<TargetFramework>net10.0</TargetFramework>
+		<TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(ASFVariant)' != ''">
+		<DefineConstants>$(DefineConstants);ASF_VARIANT_$(ASFVariant.Replace('-', '_').ToUpperInvariant())</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(PublishTrimmed)' == 'true'">
+		<DefineConstants>$(DefineConstants);ASF_RUNTIME_TRIMMED</DefineConstants>
+
+		<!-- Required for protobuf-net -->
+		<_DefaultValueAttributeSupport>true</_DefaultValueAttributeSupport>
+
+		<!-- TODO: Workaround for https://github.com/dotnet/runtime/issues/118630, evaluate if possible to remove later -->
+		<EnableConfigurationBindingGenerator>false</EnableConfigurationBindingGenerator>
+	</PropertyGroup>
+
+	<!-- Default configuration for fast-debugging builds -->
+	<PropertyGroup Condition="'$(Configuration)' == 'DebugFast'">
+		<AnalysisMode>AllDisabledByDefault</AnalysisMode>
+		<DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+	</PropertyGroup>
+
+	<!-- Default configuration for release builds -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+		<DebugSymbols>false</DebugSymbols>
+		<DebugType>none</DebugType>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<WarningsAsErrors />
+		<WarningsNotAsErrors>CS8002,IL2026,IL2104,NU1901,NU1902,NU1903,NU1904</WarningsNotAsErrors>
+	</PropertyGroup>
+
+	<!-- Enable public signing -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<AssemblyOriginatorKeyFile>../resources/ArchiSteamFarm.snk.pub</AssemblyOriginatorKeyFile>
+		<DefineConstants>$(DefineConstants);ASF_SIGNED_BUILD</DefineConstants>
+		<PublicSign>true</PublicSign>
+		<SignAssembly>true</SignAssembly>
+	</PropertyGroup>
+
+	<!-- Private SNK signing, if provided with secret -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release' AND EXISTS('resources/ArchiSteamFarm.snk')">
+		<AssemblyOriginatorKeyFile>../resources/ArchiSteamFarm.snk</AssemblyOriginatorKeyFile>
+		<DefineConstants>$(DefineConstants);ASF_SIGNED_BUILD</DefineConstants>
+		<PublicSign>false</PublicSign>
+		<SignAssembly>true</SignAssembly>
+	</PropertyGroup>
+
+	<!-- Trimming functionality as described on https://learn.microsoft.com/dotnet/core/deploying/trimming/trimming-options -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<DebuggerSupport>false</DebuggerSupport>
+		<EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+		<EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+		<EventSourceSupport>false</EventSourceSupport>
+		<HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+		<MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+		<StackTraceSupport>false</StackTraceSupport>
+		<UseNativeHttpHandler>true</UseNativeHttpHandler>
+		<TrimMode>partial</TrimMode>
+	</PropertyGroup>
+</Project>

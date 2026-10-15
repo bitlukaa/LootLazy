@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<DefaultItemExcludes>$(DefaultItemExcludes);config/**;debug/**;logs/**;overlay/**</DefaultItemExcludes>
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+
+	<!-- TODO: It seems CA1515 is no longer respected inside editorconfig, might be possible to remove later -->
+	<PropertyGroup>
+		<NoWarn>$(NoWarn),CA1515</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AngleSharp" />
+		<PackageReference Include="CryptSharpStandard" />
+		<PackageReference Include="Humanizer" />
+		<PackageReference Include="JetBrains.Annotations.Sources" PrivateAssets="all" />
+		<PackageReference Include="Markdig.Signed" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+		<PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+		<PackageReference Include="Net.Codecrete.QrCodeGenerator" />
+		<PackageReference Include="Nito.AsyncEx.Coordination" />
+		<PackageReference Include="NLog.Web.AspNetCore" />
+		<PackageReference Include="Scalar.AspNetCore" />
+		<PackageReference Include="SteamKit2" />
+		<PackageReference Include="System.Composition" />
+		<PackageReference Include="System.Security.Cryptography.ProtectedData" />
+		<PackageReference Include="Tmds.DBus.Protocol" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<TrimmerRootDescriptor Include="TrimmerRoots.xml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Localization\Strings.resx" EmitFormatMethods="true" Public="true" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="..\LICENSE.txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</Content>
+		<Content Include="overlay\all\**\*.*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</Content>
+		<Content Include="..\ASF-ui\dist\**\*.*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>www\%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(ASFVariant)' != '' AND Exists($([System.IO.Path]::Combine('overlay', 'variant-base', $(ASFVariant.Split('-')[0]))))">
+		<Content Include="overlay/variant-base/$(ASFVariant.Split('-')[0])/**/*.*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(ASFVariant)' != '' AND Exists($([System.IO.Path]::Combine('overlay', 'variant-specific', $(ASFVariant))))">
+		<Content Include="overlay/variant-specific/$(ASFVariant)/**/*.*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</Content>
+	</ItemGroup>
+</Project>

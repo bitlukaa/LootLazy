@@ -1,0 +1,22 @@
+version: "1.0"
+linter: jetbrains/qodana-dotnet:latest
+profile:
+  name: qodana.recommended
+exclude:
+  - name: All
+    paths:
+      - ArchiSteamFarm/Localization
+      - ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization
+      - ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization
+      - ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization
+  - name: AsyncVoidMethod
+  - name: CA1515
+    paths:
+      - ArchiSteamFarm
+  - name: InternalOrPrivateMemberNotDocumented
+  - name: InvertIf
+  - name: NullableWarningSuppressionIsUsed
+  - name: ReplaceAsyncWithTaskReturn
+  - name: SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
+  - name: SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+  - name: SwitchStatementMissingSomeEnumCasesNoDefault

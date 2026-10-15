@@ -1,0 +1,2013 @@
+{
+  "repository": "https://github.com/JustArchiNET/ArchiSteamFarm",
+  "tag": "6.3.10.6",
+  "commit": "c156c7ba6a2ebbfce5bdf70d9f1a69ac77e23ee9",
+  "license": "Apache-2.0",
+  "sourceDirectory": "third_party/ArchiSteamFarm",
+  "excludedSubmodules": [
+    "ASF-ui",
+    "wiki"
+  ],
+  "files": [
+    {
+      "path": ".dockerignore",
+      "gitBlob": "ce025a5ae4f325b73a5ec1b92386c0990af63da3"
+    },
+    {
+      "path": ".editorconfig",
+      "gitBlob": "b3cecbe6e49da25540b23dbbcf64bb1077028862"
+    },
+    {
+      "path": ".gitattributes",
+      "gitBlob": "5f98e62482f5c5251a3b0d31505dcb1103601be3"
+    },
+    {
+      "path": ".github/CODE_OF_CONDUCT.md",
+      "gitBlob": "f2f71b4d44486ca8c65600507412ba2c34b13602"
+    },
+    {
+      "path": ".github/CONTRIBUTING.md",
+      "gitBlob": "6ce07c14b2cb2c67c03d303e633289f90f5673e5"
+    },
+    {
+      "path": ".github/FUNDING.yml",
+      "gitBlob": "4848859577069bd430d74c4d65f5dcc807ab03c1"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/Bug-report.yml",
+      "gitBlob": "20a8e0db445c73dd4fa5cea00f84d57a96791f34"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/Enhancement-idea.yml",
+      "gitBlob": "6a7f247d55a7c5c58ea97031baa4c79479932b2f"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/Wiki-suggestion.yml",
+      "gitBlob": "3f383932a6868a5d3d476c8ee21ae61b932fcfde"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "gitBlob": "fc151c32bd9240d11776fa139f51156630e22cc7"
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "gitBlob": "805e26609df5f7f3f1b958c87bd3ea313301d8a1"
+    },
+    {
+      "path": ".github/RELEASE_TEMPLATE.md",
+      "gitBlob": "fbd0a86a6cb1d824f28b448857a661f767cf1788"
+    },
+    {
+      "path": ".github/SECURITY.md",
+      "gitBlob": "9efe38997c8f4e8c52962e44e6de6482d36ea791"
+    },
+    {
+      "path": ".github/SUPPORT.md",
+      "gitBlob": "4e0bb28fe59e9a954057d81e10496c7c4e84327f"
+    },
+    {
+      "path": ".github/crowdin.yml",
+      "gitBlob": "196ebcb07e38c9731de5f4c52b2fc9484a24b4ca"
+    },
+    {
+      "path": ".github/qodana.yaml",
+      "gitBlob": "f52a19b7a55681d39632221e355730ec871ffdec"
+    },
+    {
+      "path": ".github/renovate.json5",
+      "gitBlob": "dc19855a37d3503fecf2a903325fa2243e30dcc7"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "gitBlob": "a21458816ffb3de08ec320a828ac50aea83c2bad"
+    },
+    {
+      "path": ".github/workflows/crowdin-ci.yml",
+      "gitBlob": "aa6935ab4cab27a5ddda5b89e13b88abd97adff4"
+    },
+    {
+      "path": ".github/workflows/docker-ci.yml",
+      "gitBlob": "0fa72137fc77db78837937395379c5caa66b0895"
+    },
+    {
+      "path": ".github/workflows/docker-publish-latest.yml",
+      "gitBlob": "fa8256eadd22498a3d9f642984111c8ad6163e4e"
+    },
+    {
+      "path": ".github/workflows/docker-publish-main.yml",
+      "gitBlob": "45a8d3e575c309478729e663b5a9de0d4cda6c3a"
+    },
+    {
+      "path": ".github/workflows/docker-publish-released.yml",
+      "gitBlob": "84a35cab76f5612453a5f5bb5dcd1da09d0896ad"
+    },
+    {
+      "path": ".github/workflows/docker-publish-stable.yml",
+      "gitBlob": "b7424d6fdf0e78e6d9293115752ca79263c7c815"
+    },
+    {
+      "path": ".github/workflows/lock-threads.yml",
+      "gitBlob": "4ec5725f1734d3b940d61bf604597e1d8bee40e6"
+    },
+    {
+      "path": ".github/workflows/publish.yml",
+      "gitBlob": "075c931ebe67860c9cf956dc5020b686ed252867"
+    },
+    {
+      "path": ".github/workflows/translations.yml",
+      "gitBlob": "27f894e68a7ee1f4aaaceca2fe4f7bbf1559ffae"
+    },
+    {
+      "path": ".gitignore",
+      "gitBlob": "bda77b86bb28d73d2ce31035fcf4554019053630"
+    },
+    {
+      "path": ".gitmodules",
+      "gitBlob": "30ef0784ccbad05e74e2bebd66a444a5a26e734d"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.ExamplePlugin/ArchiSteamFarm.CustomPlugins.ExamplePlugin.csproj",
+      "gitBlob": "4f830a2e1f059609c7706d0550bc200d4b831a44"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.ExamplePlugin/AssemblyInfo.cs",
+      "gitBlob": "50e32eae9fa7cd01efb419f3c7ff76d74e20ca18"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.ExamplePlugin/CatAPI.cs",
+      "gitBlob": "12df3173fb5e39f28b87de2a2b6644918289da44"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.ExamplePlugin/CatController.cs",
+      "gitBlob": "4e757b7300a74758b268dd7a82c1c23b1b62fcf2"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.ExamplePlugin/ExamplePlugin.cs",
+      "gitBlob": "c5cd89ea8007b865f95d6138cf9078150ed7c7f6"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.ExamplePlugin/MeowResponse.cs",
+      "gitBlob": "2cbc02f4e1788aa898e2b639b5a80eddccfb6451"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.PeriodicGC/ArchiSteamFarm.CustomPlugins.PeriodicGC.csproj",
+      "gitBlob": "a20f2ad07955931d6d768380bec2f3bdc850a8f8"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.PeriodicGC/AssemblyInfo.cs",
+      "gitBlob": "50e32eae9fa7cd01efb419f3c7ff76d74e20ca18"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.PeriodicGC/PeriodicGCPlugin.cs",
+      "gitBlob": "836ccbeeb6e4c6b75bb195bbe1b2a40a4187ca4c"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.SignInWithSteam/ArchiSteamFarm.CustomPlugins.SignInWithSteam.csproj",
+      "gitBlob": "4daeca1e8c33eb525ceba4b91b7786f3b0244736"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.SignInWithSteam/AssemblyInfo.cs",
+      "gitBlob": "50e32eae9fa7cd01efb419f3c7ff76d74e20ca18"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.SignInWithSteam/Data/SignInWithSteamRequest.cs",
+      "gitBlob": "502d3f6adf9f39fe5bb5e051035c837ee3891e64"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.SignInWithSteam/Data/SignInWithSteamResponse.cs",
+      "gitBlob": "c9db0f0b4df3d4e9bdd202e21bccdc5f7fe70a1d"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.SignInWithSteam/SignInWithSteamController.cs",
+      "gitBlob": "7c2ee64be3231cef0588cab27b36f759af2b0137"
+    },
+    {
+      "path": "ArchiSteamFarm.CustomPlugins.SignInWithSteam/SignInWithSteamPlugin.cs",
+      "gitBlob": "a99091e1ea2021093a69aaf6378580d16c0260d6"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/ArchiSteamFarm.OfficialPlugins.ItemsMatcher.csproj",
+      "gitBlob": "cc63270f3988852d1f9f8045585a2560d36b7464"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/AssemblyInfo.cs",
+      "gitBlob": "50e32eae9fa7cd01efb419f3c7ff76d74e20ca18"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Backend.cs",
+      "gitBlob": "a7ded0d74294dfe4b7541cce0d3a7cba30e92969"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/BotCache.cs",
+      "gitBlob": "0650891b72fdb5757d0809f7aae7e884547acf91"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Commands.cs",
+      "gitBlob": "a648c578175cff7198c4eece3be8ff0d07348971"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/AnnouncementDiffCheckRequest.cs",
+      "gitBlob": "f2610190b08fc7d88ea8443d9bfdac9bf675ca01"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/AnnouncementDiffRequest.cs",
+      "gitBlob": "8208222d31caa25f092b1200602097ab8cfb5357"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/AnnouncementRequest.cs",
+      "gitBlob": "1e8a5008a9bf7111af701daade3b8a183bb68ff9"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/AnnouncementRequestBase.cs",
+      "gitBlob": "c3f5f57161410115077e68e607a522d17cc9ee1a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/AssetForListing.cs",
+      "gitBlob": "293f1f2b978f45606decdbac25cc1ebcb54a15fd"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/AssetForMatching.cs",
+      "gitBlob": "923a16acc04a289deb6b83f84c647727e66caabb"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/AssetInInventory.cs",
+      "gitBlob": "7789146603850347e6319d54065bcf1d1a439a58"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/BackgroundTaskResponse.cs",
+      "gitBlob": "02a65e2a67819fce7013883f9d2bf52318f5dd03"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/HeartBeatRequest.cs",
+      "gitBlob": "1c27f43a60e12000b6e7e97625dd97476f4502ee"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/InventoriesRequest.cs",
+      "gitBlob": "7dd2ee0c23d69d549bb502bd39cf49a5b0727038"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/ListedUser.cs",
+      "gitBlob": "81a74334d9174ba3c04c0f2e9d3eed3847e32494"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/SetPart.cs",
+      "gitBlob": "012a9daaa2753b56d6f7fdb62ee745f5d46409b7"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Data/SetPartsRequest.cs",
+      "gitBlob": "68cb025a65dc51c55f5abb7594c461068eadfc70"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/ItemsMatcherPlugin.cs",
+      "gitBlob": "13418dc42cc7712ff2cc372e2a13ec265f0995c0"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/README.md",
+      "gitBlob": "4d3bb618e6ee019d1d307d76a79e581836e1fb6a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.be-BY.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.bg-BG.resx",
+      "gitBlob": "ed86a7a4bd91d8b179aba943d639f62d34d7b8b8"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.bs-Latn.resx",
+      "gitBlob": "f228b4a260806776da0c0d4262eaf1414354bc74"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.ca-ES.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.cs-CZ.resx",
+      "gitBlob": "cc1d5e3d3ad5653d601b7a1cc43c5f9d057a90a8"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.da-DK.resx",
+      "gitBlob": "599f13f4dbbefcf6e271ebaa226f6a84c001f11d"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.de-DE.resx",
+      "gitBlob": "e07d180a0a59d138f8bcbad64877eb45f12f97e8"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.el-GR.resx",
+      "gitBlob": "284d1d7906e7d57985d142447a66794318e9d35b"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.es-ES.resx",
+      "gitBlob": "683a22f1c04a952de1ba3548c611a58e13f93a88"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.fa-IR.resx",
+      "gitBlob": "13ab28863bd250ade8a0752f64323b45fe3c0901"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.fi-FI.resx",
+      "gitBlob": "afdf20040a9fa3f942a19dde7a7ddeb151bdaf24"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.fr-FR.resx",
+      "gitBlob": "37aa4a9f3183d8faa69da5734801668c4589c47b"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.he-IL.resx",
+      "gitBlob": "7129088938ea372247b420aca8bbc63e6add1875"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.hr-HR.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.hu-HU.resx",
+      "gitBlob": "989b81eac67c6f1d88ebe4dce3616afa42c9a62b"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.id-ID.resx",
+      "gitBlob": "0d873d6e4aeeee10142dff445df49d88746838ce"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.it-IT.resx",
+      "gitBlob": "9e356214d7c30df08c85357f6b271f883f22801e"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.ja-JP.resx",
+      "gitBlob": "c828c3dd0101ccfa813641d9d80e64f3d363f15c"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.ka-GE.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.ko-KR.resx",
+      "gitBlob": "053562f73974a55194e2e4f4db4980da2fb498ed"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.lt-LT.resx",
+      "gitBlob": "1997790acd603c481a43827b48d1ecc56ca79506"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.lv-LV.resx",
+      "gitBlob": "d424ffa4328d359e2533f306ac7a76a829872a5c"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.nl-NL.resx",
+      "gitBlob": "3c7f0b4c91cc013aee0deca65b5450cd749f13e8"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.no-NO.resx",
+      "gitBlob": "756360005752b9aa7984d32a3f2141c87c326978"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.pl-PL.resx",
+      "gitBlob": "f52c3cb9fe6841cfdf4139067d7b54c24750a202"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.pt-BR.resx",
+      "gitBlob": "b139e3115044bf10a6c9ff176d98f56624d897b4"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.pt-PT.resx",
+      "gitBlob": "c7d928a18ccc106f06c6f279efdc477c132e527a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.qps-Ploc.resx",
+      "gitBlob": "600b171f0957fca484df4e27d9efec07e959172a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.resx",
+      "gitBlob": "19eb0733ea358ad8d5c0b6402d12c8fc90a73c6e"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.ro-RO.resx",
+      "gitBlob": "fa62ff94794b92ed7f461d98ead03d9affa26c6d"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.ru-RU.resx",
+      "gitBlob": "4f94064bee249176e3ba08c04eb4d716f52b6cd9"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.sk-SK.resx",
+      "gitBlob": "862ec3bb6d9d64af1e02b47b7f50603f1a979d53"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.sr-Latn.resx",
+      "gitBlob": "86a8355f298e5c8f2a4c2a6b95f0cf7f9bf9d2a7"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.sv-SE.resx",
+      "gitBlob": "9273732afff7b7dbf7441cc6ab3ab3469d3c9c58"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.th-TH.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.tr-TR.resx",
+      "gitBlob": "ce643f124992769cc81be44aa582c63404917482"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.uk-UA.resx",
+      "gitBlob": "21cbd01cc00f8432451404f4f6759e3d4f81bf24"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.vi-VN.resx",
+      "gitBlob": "73b8628d486a947565476a62472f7ba60fa0703a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.zh-Hans.resx",
+      "gitBlob": "7c5c91d8c9b0df61d5b8c27311b02776c7b6aa84"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.zh-Hant-HK.resx",
+      "gitBlob": "7d70cdd6e24b04898151e0c1549d02c31d57d1bb"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/Localization/Strings.zh-Hant.resx",
+      "gitBlob": "5b9903de4ca9c3e840e86328f1ffcd09fe078ba3"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/MatchingUtilities.cs",
+      "gitBlob": "3e3c31fd5f638bccffcb6f99ec5e19c5bc07486a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.ItemsMatcher/RemoteCommunication.cs",
+      "gitBlob": "09329c53a8d7e79232194e2c1e956831cf2dc0c5"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/ArchiSteamFarm.OfficialPlugins.MobileAuthenticator.csproj",
+      "gitBlob": "cc63270f3988852d1f9f8045585a2560d36b7464"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/AssemblyInfo.cs",
+      "gitBlob": "50e32eae9fa7cd01efb419f3c7ff76d74e20ca18"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Commands.cs",
+      "gitBlob": "b751de9881d2027b8fb554706d9fe0b6417874d2"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/README.md",
+      "gitBlob": "4d3bb618e6ee019d1d307d76a79e581836e1fb6a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.be-BY.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.bg-BG.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.bs-Latn.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.ca-ES.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.cs-CZ.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.da-DK.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.de-DE.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.el-GR.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.es-ES.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.fa-IR.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.fi-FI.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.fr-FR.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.he-IL.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.hr-HR.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.hu-HU.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.id-ID.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.it-IT.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.ja-JP.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.ka-GE.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.ko-KR.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.lt-LT.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.lv-LV.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.nl-NL.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.no-NO.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.pl-PL.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.pt-BR.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.pt-PT.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.qps-Ploc.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.resx",
+      "gitBlob": "a57d63f0e1de161208816d051a838ca3454a5c58"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.ro-RO.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.ru-RU.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.sk-SK.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.sr-Latn.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.sv-SE.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.th-TH.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.tr-TR.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.uk-UA.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.vi-VN.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.zh-Hans.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.zh-Hant-HK.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/Localization/Strings.zh-Hant.resx",
+      "gitBlob": "0500d5ad2b6ead98bce4c15fd94397f9a9a9bdab"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/MaFileData.cs",
+      "gitBlob": "746da6cbcd4981f8152e47131b75973f3bd60f2e"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/MaFileSessionData.cs",
+      "gitBlob": "298e3bea665809a1c8df88873a6a7119ce8c197f"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/MobileAuthenticatorPlugin.cs",
+      "gitBlob": "a50d94ab53ce5d993a284fbf6fc30e29f7bf739a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.MobileAuthenticator/MobileAuthenticatorWebHandler.cs",
+      "gitBlob": "0c3b6ad42b34600d9b25c682a6a46f9a2cd38b3f"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.Monitoring/ArchiSteamFarm.OfficialPlugins.Monitoring.csproj",
+      "gitBlob": "18299a5963830fad100d68d4640b27c78ed2c0fd"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.Monitoring/AssemblyInfo.cs",
+      "gitBlob": "50e32eae9fa7cd01efb419f3c7ff76d74e20ca18"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.Monitoring/MonitoringPlugin.cs",
+      "gitBlob": "6999e36779e70d19fe26e5da1630078a2cfccfae"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.Monitoring/TagNames.cs",
+      "gitBlob": "07f8864a16a7e1ca044c557e08edf54e98b139c7"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.Monitoring/TradeStatistics.cs",
+      "gitBlob": "cc4c71f7da621b3e6f12a3490c00ba7649755537"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.Monitoring/Units.cs",
+      "gitBlob": "fecc28085fc8ffa49469c2c45765ca5fc1f2d285"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.Monitoring/overlay/all/www/grafana-dashboard.json",
+      "gitBlob": "2ad7508332679cb90754da6931080c192cc2c8b9"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/ArchiSteamFarm.OfficialPlugins.SteamTokenDumper.csproj",
+      "gitBlob": "cc63270f3988852d1f9f8045585a2560d36b7464"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/AssemblyInfo.cs",
+      "gitBlob": "50e32eae9fa7cd01efb419f3c7ff76d74e20ca18"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Data/SubmitRequest.cs",
+      "gitBlob": "2cbf72f3dcb9aca481614d3735aba941ea8ff8ff"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Data/SubmitResponse.cs",
+      "gitBlob": "1278c752a483d28d9b57895887d9b182c902b34d"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Data/SubmitResponseData.cs",
+      "gitBlob": "c35152da33a917f0fd238df452a1ab4ab69886b9"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/GlobalCache.cs",
+      "gitBlob": "1ec4d31aed651818993bc544614089591028b64c"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/GlobalConfigExtension.cs",
+      "gitBlob": "9816577e9f688d9c6ae6afea07b0cadead85b25a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/README.md",
+      "gitBlob": "4d3bb618e6ee019d1d307d76a79e581836e1fb6a"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.be-BY.resx",
+      "gitBlob": "520027867733dd34e3d69a9ff64ab91b94900ea8"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.bg-BG.resx",
+      "gitBlob": "fca42b467fd443e3db104dbdc0902a9c20a03cbd"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.bs-Latn.resx",
+      "gitBlob": "1507cd5e1c072e49d4ae80f1189367c0075e9c01"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.ca-ES.resx",
+      "gitBlob": "0049f25f49408b373aa8a3124f3a16eef419490e"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.cs-CZ.resx",
+      "gitBlob": "c93c7a86e31637a362a5d691ee0d76a1db2493bf"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.da-DK.resx",
+      "gitBlob": "cfb5491b81dd444e63dcc1aa5d9ddb265b2835ff"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.de-DE.resx",
+      "gitBlob": "7902a0a663102dda9dc0edf7fa5e2870f3815a43"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.el-GR.resx",
+      "gitBlob": "df1856d3d76ee47e21b6a89fd2fc0507dae0bca0"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.es-ES.resx",
+      "gitBlob": "d95361761c9d37a62a8c39eebba3083352a7fd43"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.fa-IR.resx",
+      "gitBlob": "c48721b5f2b13e76bf5661374b9ea893d827b4dd"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.fi-FI.resx",
+      "gitBlob": "b252cc87761c709ce0219017e9338ac37116e68c"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.fr-FR.resx",
+      "gitBlob": "f3ec60b72f33418dce3d02410ea9f52b40ed433f"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.he-IL.resx",
+      "gitBlob": "4771a2c56b3b156cdb0468c927f75466f0794181"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.hr-HR.resx",
+      "gitBlob": "b82997bc4ebc3011b0d3259b4c49f53dbf62c0df"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.hu-HU.resx",
+      "gitBlob": "ad3fadfd87a11b5f5ac857c3c27644c1a3aa8470"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.id-ID.resx",
+      "gitBlob": "5d09a0470bc59782c3190f0d4bbb860eb1e85868"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.it-IT.resx",
+      "gitBlob": "57e2c146396c2961148403e049dec6e4872e30d1"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.ja-JP.resx",
+      "gitBlob": "5d2a66166dc7640fecb9e47fe7615a2650bdfdeb"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.ka-GE.resx",
+      "gitBlob": "0049f25f49408b373aa8a3124f3a16eef419490e"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.ko-KR.resx",
+      "gitBlob": "6d450bb22c56755dbdea4e08cc860ae422044e63"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.lt-LT.resx",
+      "gitBlob": "c7149298b4bb78d98fa5aa71095180cb93fe506b"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.lv-LV.resx",
+      "gitBlob": "90f7add6125c0c319f6f5553a7fe43ef817a1c43"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.nl-NL.resx",
+      "gitBlob": "fee8d63b7158fb82e460aba24c90c9ea5ee63689"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.no-NO.resx",
+      "gitBlob": "e972220fd52a129320defd5ec4ad18342c5cbb7c"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.pl-PL.resx",
+      "gitBlob": "9ff89a013e84f3746d2ba01d9901e2e982c20e94"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.pt-BR.resx",
+      "gitBlob": "b6661672ec209038b0efb39f320c44c9404af5e8"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.pt-PT.resx",
+      "gitBlob": "4f0e2ca999299dc7600f9939dc728776b063ec69"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.qps-Ploc.resx",
+      "gitBlob": "932a493812dfd314acc5624bcc229183fd281ae4"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.resx",
+      "gitBlob": "b2a71775ec769a74550c58a13e22fbcb29880de0"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.ro-RO.resx",
+      "gitBlob": "faa571a35bb0c73e5466f3d8e1ccf96edeff0b4b"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.ru-RU.resx",
+      "gitBlob": "08fdbd4726956427c702adb4d57ac0ec4e59f960"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.sk-SK.resx",
+      "gitBlob": "b975e12c665cbaf3c1f11bbe2668e8c0453ecaaa"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.sr-Latn.resx",
+      "gitBlob": "d83c057255966566e6e651046e0e344bbb27d992"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.sv-SE.resx",
+      "gitBlob": "9ade8001fce0aa43002fe9b76e17e626c30997d7"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.th-TH.resx",
+      "gitBlob": "0049f25f49408b373aa8a3124f3a16eef419490e"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.tr-TR.resx",
+      "gitBlob": "5dbc1e0bda010c5272658bd4bbf16e03a7db6de0"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.uk-UA.resx",
+      "gitBlob": "66f3c56164becd9bfb61a1fe358af361faebdbcc"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.vi-VN.resx",
+      "gitBlob": "bed02c2a8fb5009ff06628c9547aa870ede7ae9e"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.zh-Hans.resx",
+      "gitBlob": "63c798a58cab6c0c00a8f1990803bf2397ac472f"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.zh-Hant-HK.resx",
+      "gitBlob": "0049f25f49408b373aa8a3124f3a16eef419490e"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/Localization/Strings.zh-Hant.resx",
+      "gitBlob": "e256e4af819bd2247df0adea8a31f171371287c2"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/SharedInfo.cs",
+      "gitBlob": "e2f95b1d25cadd3217155fedadb2cf767b03a637"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/SteamTokenDumperConfig.cs",
+      "gitBlob": "d09d85a9f150a3bb18b30498b587cf907d215275"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/SteamTokenDumperController.cs",
+      "gitBlob": "18a22c608164e51868626b5ec5fff4a73615834d"
+    },
+    {
+      "path": "ArchiSteamFarm.OfficialPlugins.SteamTokenDumper/SteamTokenDumperPlugin.cs",
+      "gitBlob": "29f79aa45a81dd1bdf088afb347d65a3c3f15f7c"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/ArchiCryptoHelper.cs",
+      "gitBlob": "7fb75a4eae299a43e4343673fa7d5ca6446a685b"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/ArchiSteamFarm.Tests.csproj",
+      "gitBlob": "b5812c73199cbb910dbfc89547b4de5f8ae36827"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/AssemblyInfo.cs",
+      "gitBlob": "7df72c43ad6ba218df3ac3df84aa10803b9d5bb7"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/Bot.cs",
+      "gitBlob": "846499e5154ac1f95da2549468196d7531f886af"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/ConcurrentTests.cs",
+      "gitBlob": "01b97cc1004caa086130c77daf0194e66e4646c5"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/GitHubPluginUpdates.cs",
+      "gitBlob": "8c29a66b0e9d68b0194deb7dc9762b2e66ccff67"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/MobileAuthenticator.cs",
+      "gitBlob": "e711b36bee40677b94fe4a93d24c52d5324cb62c"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/QrCodeHelper.cs",
+      "gitBlob": "703b299f3144b60d32a4842b112fbcb0e212fe3b"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/SerializableFile.cs",
+      "gitBlob": "3a109522338db42edb84cdd0202578a6fed324d0"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/SteamChatMessage.cs",
+      "gitBlob": "824d4348ed2237bd59e2b69754d213400f8dbe74"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/SteamUtilities.cs",
+      "gitBlob": "95dfceb797a8b66d9b9b57ae4bd555d839f228e5"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/TestContextBase.cs",
+      "gitBlob": "beb3f872af1ed2b92d389441a2f5321e097ae68e"
+    },
+    {
+      "path": "ArchiSteamFarm.Tests/Trading.cs",
+      "gitBlob": "9c1874e00168480eb3a80b76a48c00217e8caf02"
+    },
+    {
+      "path": "ArchiSteamFarm.slnx",
+      "gitBlob": "1a641b428551dc2ccd747bc5fd9fe832a0c54437"
+    },
+    {
+      "path": "ArchiSteamFarm.slnx.DotSettings",
+      "gitBlob": "65c29516a22c20ce51871e29155e3925c4d2741a"
+    },
+    {
+      "path": "ArchiSteamFarm/ArchiSteamFarm.csproj",
+      "gitBlob": "69c45f0157cd22488e5b8bebe5aa7303ab92a955"
+    },
+    {
+      "path": "ArchiSteamFarm/AssemblyInfo.cs",
+      "gitBlob": "733a04cc889853d18fde743f5a1497bd7bfe3cd5"
+    },
+    {
+      "path": "ArchiSteamFarm/Collections/ConcurrentEnumerator.cs",
+      "gitBlob": "4aa8f8abb5a1d81ce4cead5d449ab53d63f52885"
+    },
+    {
+      "path": "ArchiSteamFarm/Collections/ConcurrentHashSet.cs",
+      "gitBlob": "6a8933759896559e0f855e885b4c009140b0dba9"
+    },
+    {
+      "path": "ArchiSteamFarm/Collections/ConcurrentList.cs",
+      "gitBlob": "e3bbd208c2a15ad5798bdcbd9069abfe0c853ad3"
+    },
+    {
+      "path": "ArchiSteamFarm/Collections/FixedSizeConcurrentQueue.cs",
+      "gitBlob": "9be759bdd60e22a1942e86058ea527ff51c5b1cd"
+    },
+    {
+      "path": "ArchiSteamFarm/Collections/ObservableConcurrentDictionary.cs",
+      "gitBlob": "9cd68d385c80172293311f2999584343e5a16295"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/ASF.cs",
+      "gitBlob": "e48a9c3a74d3cda6bd9ee0795c8e90c6e40a942e"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/AprilFools.cs",
+      "gitBlob": "34b0a0816d45df9f6b61dd881756678d85757c8d"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/ArchiNet.cs",
+      "gitBlob": "5834a8303c69cc2d9f2305bf31b13b90e121c5ae"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/BuildInfo.cs",
+      "gitBlob": "718cc30c137bec7a75aa8cf2d5f74b10217a04b3"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/Debugging.cs",
+      "gitBlob": "38148bb10588d662f93795dcc05bd600b2c5720c"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/Events.cs",
+      "gitBlob": "00bdae5a5cff59661e7d900315fe944d2c33291f"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/GeneratedRegexes.cs",
+      "gitBlob": "78ad52b40e62d80baae38a04f0a191860523b0f1"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/NativeMethods.cs",
+      "gitBlob": "30540de2f4df3851a6c3e5751cca5e9806ea2e72"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/OS.cs",
+      "gitBlob": "d6c8a043ae23aba4870db525f7b83c591901e9b7"
+    },
+    {
+      "path": "ArchiSteamFarm/Core/Utilities.cs",
+      "gitBlob": "025964324ae1b5c7479aa00e87ae7385ad76d1fa"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/ArchiCacheable.cs",
+      "gitBlob": "43fe885a935366c9adee8a86e720ff28c4af5848"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/ArchiCryptoHelper.cs",
+      "gitBlob": "3c74713285f4b89fa87bf8b3bbe76f4e9d15def9"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/CrossProcessFileBasedSemaphore.cs",
+      "gitBlob": "e3e811b1dc79b574dc68733a61bae52810201c85"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/ECacheFallback.cs",
+      "gitBlob": "e4c440e55d7dba3cfc1d80664063ef47d35eec40"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/ICrossProcessSemaphore.cs",
+      "gitBlob": "7ace67494abdfec0efd632c6cd2922c042f4374c"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/Json/BooleanNormalizationConverter.cs",
+      "gitBlob": "5c41fdfcd2ceffd57a83c0ae6c18edaee694ecb8"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/Json/GuidJsonConverter.cs",
+      "gitBlob": "7d7088a0adc5f8fb7649642318888406ba25905b"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/Json/JsonDisallowNullAttribute.cs",
+      "gitBlob": "9ae93c06cade2e30f75e54a8d8921244ab0d4b39"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/Json/JsonUtilities.cs",
+      "gitBlob": "0a9d2ac6db252279999b667885673dab2630dc69"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/QrCodeHelper.cs",
+      "gitBlob": "7a53bcf5bf4fdbc47bd585974969e4695ef6b511"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/SemaphoreLock.cs",
+      "gitBlob": "e0396fbaa79cfc7e5c39e9a78ee3aef8828e2ad3"
+    },
+    {
+      "path": "ArchiSteamFarm/Helpers/SerializableFile.cs",
+      "gitBlob": "c26f71a825bc97d53be2a7fc042bd6c2e2540f55"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/ArchiKestrel.cs",
+      "gitBlob": "6cbbd69e2807d0beb1c4b3a2b548f39dbc285acd"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/ASFController.cs",
+      "gitBlob": "fdbe39d6cc6b96b1ca944e737387d919f081256c"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/ArchiController.cs",
+      "gitBlob": "c6550ff84dd3fec06344de5e05c13a7204fa71e5"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/BotController.cs",
+      "gitBlob": "ff963a71c79290bef992b06ef4c120a86fde3ff7"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/CommandController.cs",
+      "gitBlob": "aba26115d1f0403708f15abd8bff7438971e4cbe"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/GitHubController.cs",
+      "gitBlob": "9924154e1d9415e424b04b5df5b59fd98cb7dd83"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/HealthCheckController.cs",
+      "gitBlob": "92b2f4549d8993f577eed9110c38f89327d1c4b3"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/IPCBansController.cs",
+      "gitBlob": "2b1f0e6628f131b9cb232f01bc5d0317391e90a8"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/NLogController.cs",
+      "gitBlob": "ee6c5ad65a77f4bc5a42e139a1ce36faf1b666a5"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/PluginsController.cs",
+      "gitBlob": "cae0a78fe893fe61b2ada90c9318b4bad301a285"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/StorageController.cs",
+      "gitBlob": "b6de7287944ed7f152777ac7fa6c68660aba2ddb"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/StructureController.cs",
+      "gitBlob": "b955bf3a0c57dfa1d03ccb4f76f1ed7e978c80d1"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/TwoFactorAuthenticationController.cs",
+      "gitBlob": "c5270d12be312c876ab624e3402830bb39a8d388"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Controllers/Api/TypeController.cs",
+      "gitBlob": "586d281db5720a121b21f47fb064ba73da6ba22e"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Integration/ApiAuthenticationMiddleware.cs",
+      "gitBlob": "b6644347ab9ea1b022b19f25a6ba12a8382ccc47"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Integration/CustomSwaggerAttribute.cs",
+      "gitBlob": "7ae4be8be91e81b34e05b0d8179f87e99e0ee430"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Integration/SwaggerItemsMinMaxAttribute.cs",
+      "gitBlob": "95eb8d1c5d62efe9a781c5c75169724fa381ac4c"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Integration/SwaggerSecurityCriticalAttribute.cs",
+      "gitBlob": "08a64109a5d96aa5917696cc5db80668498a5e84"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Integration/SwaggerSteamIdentifierAttribute.cs",
+      "gitBlob": "46e7c0af13917e9c144e7b64dd1f0471dd912648"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Integration/SwaggerValidValuesAttribute.cs",
+      "gitBlob": "e6ca1b13abe07808519abca780dcce9f71e8f426"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/OpenApi/DocumentTransformer.cs",
+      "gitBlob": "ef13fbb5b26d691c5924947dd41c1d74719b6e3c"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/OpenApi/OperationTransformer.cs",
+      "gitBlob": "d99f8c1c6a4736a8a0a6ab91b63e46dae7d76b01"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/OpenApi/SchemaTransformer.cs",
+      "gitBlob": "f98f7b688fa1a51a794c76af71ed32bf887d2887"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/ASFEncryptRequest.cs",
+      "gitBlob": "9b40b35159064bc384535e821fa07b56aeaf452d"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/ASFHashRequest.cs",
+      "gitBlob": "55d8bc3400d557e2bfd27e297607f88fa1d532cb"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/ASFRequest.cs",
+      "gitBlob": "b214eb57b8e099d2c46a126d34c080a867afbd76"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/BotAddLicenseRequest.cs",
+      "gitBlob": "51b454f03e08a911ad8f5778f4a59310da76172f"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/BotGamesToRedeemInBackgroundRequest.cs",
+      "gitBlob": "cc8e9739c88116615ad7b072c1271faa40cac747"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/BotInputRequest.cs",
+      "gitBlob": "051be2668e9e3c6d6388a2e17f7c834e1f445cb6"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/BotPauseRequest.cs",
+      "gitBlob": "5215a3548f84f90a2a27f78b1529a7a8ae27add4"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/BotRedeemRequest.cs",
+      "gitBlob": "a6ceae107ef4878887a989120a35c383f775f81d"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/BotRemoveLicenseRequest.cs",
+      "gitBlob": "fd521c7b594f5fbd24d3a08f6e5c2cab00da77d4"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/BotRenameRequest.cs",
+      "gitBlob": "001bec75581dae36b0eb73b6f2a6f3bbbec09693"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/BotRequest.cs",
+      "gitBlob": "705341ae653fd244629d29d0e9b5286894435714"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/CommandRequest.cs",
+      "gitBlob": "a2b6bd43466631ebe0535797867496bf3a5b9902"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/PluginUpdateRequest.cs",
+      "gitBlob": "1a15d650e6e02d48648b3cc7bbcdf0be53e564e3"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/TwoFactorAuthenticationConfirmationsRequest.cs",
+      "gitBlob": "9e8aec675024793ce5b3fab438819763ba5cc375"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Requests/UpdateRequest.cs",
+      "gitBlob": "c82ddf806260c7f75ed58f3360868461e5299358"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/ASFResponse.cs",
+      "gitBlob": "23e11d1e5a19b36ffa7570739707c2e62f0a08f2"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/AddLicenseResult.cs",
+      "gitBlob": "ef57e3d6255facba8121f88d31bfab18484cb9bf"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/BotAddLicenseResponse.cs",
+      "gitBlob": "31e09416d3e88ea54a9830cdb6c8d06938554253"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/BotInventoryResponse.cs",
+      "gitBlob": "7587296797698f673a6a66959132c64e34d913a0"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/BotRemoveLicenseResponse.cs",
+      "gitBlob": "370437c7df38a252d1645564c89aab2e4f2cd88b"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/GamesToRedeemInBackgroundResponse.cs",
+      "gitBlob": "2371a40fe4f1135d45ebbc3d05d9f579fa3b49d1"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/GenericResponse.cs",
+      "gitBlob": "3ddde29075f38f64aff38e029b9c14e7b4724aa7"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/GitHubReleaseResponse.cs",
+      "gitBlob": "f32455eec16b9712e92861e1f4ed5c427b07ba55"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/HealthCheckResponse.cs",
+      "gitBlob": "00b9afcebaf021d085753793bfbaa94216f28b2e"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/LogResponse.cs",
+      "gitBlob": "d4b5a56d5d06021ea930ab8bc1568182e263c8e6"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/StatusCodeResponse.cs",
+      "gitBlob": "b64fbc1c75566c85d3eff78529af8f1c51ef9ccc"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/TypeProperties.cs",
+      "gitBlob": "446a3a6a862514d90c2e1642f85e095d92ba8d70"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/Responses/TypeResponse.cs",
+      "gitBlob": "f88cf0d7bf1810b85102e3547d5982dbbb16747d"
+    },
+    {
+      "path": "ArchiSteamFarm/IPC/WebUtilities.cs",
+      "gitBlob": "66cf4da69a68af10c81aa27a312cc7d7813e98ac"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/README.md",
+      "gitBlob": "4d3bb618e6ee019d1d307d76a79e581836e1fb6a"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.be-BY.resx",
+      "gitBlob": "4002aaf7767934d0aa8ba6e1bdba886ab917e200"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.bg-BG.resx",
+      "gitBlob": "348dcc2a3fff8ff5e47f3d89dba77be4e19831c8"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.bs-Latn.resx",
+      "gitBlob": "c806fcc2895532cb0227515b92b2b0a0d77ccca1"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.ca-ES.resx",
+      "gitBlob": "d258cc2fa7c9b4355c16212f124b07799730f400"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.cs-CZ.resx",
+      "gitBlob": "f60b366e81c81c2b3094baf5f3a3f1b6c8358cde"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.da-DK.resx",
+      "gitBlob": "11c9c612196c52ca849236c73191e9ab1d609e30"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.de-DE.resx",
+      "gitBlob": "94d3e5d5101589869585539493f1a3eac5e13623"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.el-GR.resx",
+      "gitBlob": "1edff67fdd6ab106bfd0c1820079a2f0273d1e6c"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.es-ES.resx",
+      "gitBlob": "27c13870f32ea452a470d7aea715fad9f4568b4a"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.fa-IR.resx",
+      "gitBlob": "a354755fb479c8fb5eab2681f8f531ff9da52e12"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.fi-FI.resx",
+      "gitBlob": "b17790cc82e01e2360fe91d04a3dbbe316efe5b5"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.fr-FR.resx",
+      "gitBlob": "fef8ac98db079cc3dfeb6f49474825e5ae671024"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.he-IL.resx",
+      "gitBlob": "0f1792320c146704c88d14e4fe34a0bd88e1fdec"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.hr-HR.resx",
+      "gitBlob": "f5df032edf9db718578b8364c3fb38c8c4877178"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.hu-HU.resx",
+      "gitBlob": "a98293d7bbc37cb33654ea7725aa301bb3f19aac"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.id-ID.resx",
+      "gitBlob": "fcf4f9f666ce3841528d619fb6e92ecfc2a47f7a"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.it-IT.resx",
+      "gitBlob": "487751aa0130e72456e80c032913ad1a8859b753"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.ja-JP.resx",
+      "gitBlob": "73b0382c41f3325e7cb0a9f7eee10142991b741c"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.ka-GE.resx",
+      "gitBlob": "7a7b222421901a98988ce1b85927753611f0630e"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.ko-KR.resx",
+      "gitBlob": "3ff4c20a4c24c6ce385c37ab08086a21222b94fc"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.lt-LT.resx",
+      "gitBlob": "eef418c9b3d3704c340930d2f3801c4604927a7b"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.lv-LV.resx",
+      "gitBlob": "40110b456906ab8013c64d15544251a476ece27b"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.nl-NL.resx",
+      "gitBlob": "d0f32086301535e25585938fab242746a86fac30"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.no-NO.resx",
+      "gitBlob": "f16139856886dd58789c59ded9ef74a8d6d477dc"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.pl-PL.resx",
+      "gitBlob": "64a06c6f5fdbafaa6f4fd8dc7386fd06d5644428"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.pt-BR.resx",
+      "gitBlob": "5f954b62d70a31ec0d43d466ebb69254f268a994"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.pt-PT.resx",
+      "gitBlob": "e3e4fd0f88dc796859de965e145577402878ba6d"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.qps-Ploc.resx",
+      "gitBlob": "bf0531dca07302b0884d273fac37364c9ecd36ad"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.resx",
+      "gitBlob": "94c462775cfb48166976636fdb2ca4079ef4a80d"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.ro-RO.resx",
+      "gitBlob": "153163aed54c8f5713553ebbb2c17d87b3b80478"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.ru-RU.resx",
+      "gitBlob": "5903a4ca2f82aa6ea0b2547400bcbfd61a84bbd9"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.sk-SK.resx",
+      "gitBlob": "06d376b66b1ad1103bf49ed4814f6dc2a69dedca"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.sr-Latn.resx",
+      "gitBlob": "fc10a684958a88fe098c8f0fde2592f4d4cb7f9b"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.sv-SE.resx",
+      "gitBlob": "d6d136728197b16f47f08ba483ba83fd6d51e8f0"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.th-TH.resx",
+      "gitBlob": "f902563bd9f6f60c327a23f8085829b67b4715c0"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.tr-TR.resx",
+      "gitBlob": "8bf9a0aa27109a057af1c283bcc3d0ea9cf2c978"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.uk-UA.resx",
+      "gitBlob": "4b90e4899f97c845de41f1bca8532b69d3a182d2"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.vi-VN.resx",
+      "gitBlob": "401fba9f960fbb17b9308d9e5d8587e0da551729"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.zh-Hans.resx",
+      "gitBlob": "0b7434710f4e9107b54b972f8c0c2edede94f488"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.zh-Hant-HK.resx",
+      "gitBlob": "aa312be0cf4f796cebe14c024b9d636a77237e27"
+    },
+    {
+      "path": "ArchiSteamFarm/Localization/Strings.zh-Hant.resx",
+      "gitBlob": "ba1c39ebac24d6f1b16c1af1de776291efc2005d"
+    },
+    {
+      "path": "ArchiSteamFarm/NLog/ArchiLogger.cs",
+      "gitBlob": "e3be93e5ee3d59fb5d3607f3811f98bab369313e"
+    },
+    {
+      "path": "ArchiSteamFarm/NLog/Logging.cs",
+      "gitBlob": "41e1f17d7708de0265535f475e9ed8614baf1e80"
+    },
+    {
+      "path": "ArchiSteamFarm/NLog/Targets/HistoryTarget.cs",
+      "gitBlob": "a049466cbd058ee28ae7c3a460bbf711ee88411c"
+    },
+    {
+      "path": "ArchiSteamFarm/NLog/Targets/SteamTarget.cs",
+      "gitBlob": "9ffdbf19899ce24fa3c39d51909196a042bfeab5"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IASF.cs",
+      "gitBlob": "0388cc78a78c949f17d76957d7e4308ee94de3b6"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBot.cs",
+      "gitBlob": "720f5e23244530ec11ba01a2d2f9380dc6cfcff9"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotCardsFarmerInfo.cs",
+      "gitBlob": "4fdf10c9e2511574df902cb7b98873d7a11a578d"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotCommand2.cs",
+      "gitBlob": "ae7e6cf977dd06bf40899d4f6bb831e3793781e8"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotConnection.cs",
+      "gitBlob": "e8d10aa51cb4228b2b32d6a9e6d809ca69c52f25"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotCustomMachineInfoProvider.cs",
+      "gitBlob": "69f2dbf5f28f13e6a375d1c463ef6bf76a9eb9c6"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotFriendRequest.cs",
+      "gitBlob": "f41b713f61aece8bf91397f7db1ff7eb06e11b2a"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotIdentity.cs",
+      "gitBlob": "aa5ecce0c0bc7ccdfebfa405db16773265ce04e1"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotMessage.cs",
+      "gitBlob": "26c521edf84bc00dcc1a82ffb486770cceb36683"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotModules.cs",
+      "gitBlob": "767c8929482cf9ecfe9544810c698afeafa233bd"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotSteamClient.cs",
+      "gitBlob": "9da91c5e7c2c3cdc910ea16de835af2708e30c3c"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotTradeOffer2.cs",
+      "gitBlob": "7f7ce49240ebc7bfac869ad901341149550f140c"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotTradeOfferResults.cs",
+      "gitBlob": "5ee8a5fcf19e0b8792004423c8810fd85aaec6c1"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotUserNotifications.cs",
+      "gitBlob": "9a7b2b67bcd9c05cc5ee7faa3e5195b19604e5f3"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IBotsComparer.cs",
+      "gitBlob": "078ae62966951196122fd6eca42fc74fa38bcdce"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/ICrossProcessSemaphoreProvider.cs",
+      "gitBlob": "6f8460d79be5a3774d9066bb5f08113a5fb8ad02"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IGitHubPluginUpdates.cs",
+      "gitBlob": "884ee081f16c6edcada2650ab99489395fcc4eb3"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IOfficialGitHubPluginUpdates.cs",
+      "gitBlob": "ef83a07073cbeac50b73914996e7e3fdefdc0bb9"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IPlugin.cs",
+      "gitBlob": "011ef4e6f21bea7a2ac330ea04e519c072f1ab2f"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IPluginUpdates.cs",
+      "gitBlob": "b6cd6d081c7ef7abb6e1a07bcae06bf2b8eb405f"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/ISteamPICSChanges.cs",
+      "gitBlob": "c41fc2924a8db9bd4a8025079ccdadcb2727dd1f"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IUpdateAware.cs",
+      "gitBlob": "9f472e71bf972327045f7114b9c21a6a742e6fe3"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IWebInterface.cs",
+      "gitBlob": "782b06f45bb51472111d7ce1c458dc38f52786bc"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/Interfaces/IWebServiceProvider.cs",
+      "gitBlob": "e8e30c0432bd503db8dd5e91953a9cf2e232d9cb"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/OfficialPlugin.cs",
+      "gitBlob": "232919ffcfaf2d48c6bed4548fc7e344dea6f37c"
+    },
+    {
+      "path": "ArchiSteamFarm/Plugins/PluginsCore.cs",
+      "gitBlob": "a30c0a58e265feaeda7c29ac9252d738d497faa2"
+    },
+    {
+      "path": "ArchiSteamFarm/Program.cs",
+      "gitBlob": "3788b691dc0722f84de4e0a793a6b3c6ced18739"
+    },
+    {
+      "path": "ArchiSteamFarm/SharedInfo.cs",
+      "gitBlob": "bc399bf92b2f9c7fc244908271bf9cde8946f713"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Bot.cs",
+      "gitBlob": "15a25ee8eda9d15a3de5c8c4865ead22fae4b7cd"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Cards/CardsFarmer.cs",
+      "gitBlob": "32272a2ec257a9805dd43351bfae61bf9ace78ee"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Cards/Game.cs",
+      "gitBlob": "046dbddd9388f3f5159e32a674fd7dc2bc363d9f"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/APIWrappedResponse.cs",
+      "gitBlob": "d419ecd657a0fe0ca6190529f784b2842d6e2a62"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/Asset.cs",
+      "gitBlob": "5a2edbf255036384f39a0b6766a7238cbd919728"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/BooleanResponse.cs",
+      "gitBlob": "37daacc522f396e0353cc26083f14df9be62e526"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/BoosterCreatorEntry.cs",
+      "gitBlob": "743fd7d1b837c56e04773e44a171d4b491e0c364"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/Confirmation.cs",
+      "gitBlob": "c5dc3b67203040020137b66ffb0b18f80776497c"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/ConfirmationsResponse.cs",
+      "gitBlob": "26ec43c31cf0966f809cda25f0fb5c668ee54fc8"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/EAssetRarity.cs",
+      "gitBlob": "d82701b6214bec981bc843af4fa9a42c921284d6"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/EAssetType.cs",
+      "gitBlob": "91b395ffe03d30b540192cecc86a0ceed2a6406c"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/InventoryAppData.cs",
+      "gitBlob": "0bfe8bb2a32bd2254a7f88d78e2ff9a7c00cb9c2"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/InventoryContextData.cs",
+      "gitBlob": "c72ee6eaccf0736df885e726287ca23eb2d6ef02"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/InventoryDescription.cs",
+      "gitBlob": "f2ed3e847791d8003d351a5df49ff4e53e0b5046"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/InventoryResponse.cs",
+      "gitBlob": "9ba082374d4199155aad9ed6aa1a2f09b95b22e8"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/ItemAction.cs",
+      "gitBlob": "fa5072ce919e5084d7cd84a71a3dae9dc2c633da"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/ItemDescription.cs",
+      "gitBlob": "69229c92a1c997bc6c08f3e8c724976ace86a9e7"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/LicenseData.cs",
+      "gitBlob": "cd0b81ee6a375ee63f339a6531c08e8fb0719037"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/OptionalResultResponse.cs",
+      "gitBlob": "404b96ed5f4b9fd036e7465fa5c32bb3923d5d84"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/RedeemWalletResponse.cs",
+      "gitBlob": "307439d391290b84fbe464bff584f13ee19817a2"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/ResultResponse.cs",
+      "gitBlob": "ac1f40835868e84d0fbdb6348c628bd539dc545e"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/StoreUserData.cs",
+      "gitBlob": "c96a44557f757782925cc57947fa4f1f00be958f"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/Tag.cs",
+      "gitBlob": "f38cf41a77a76508797528789c7334d9e9d9470c"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/TradeOffer.cs",
+      "gitBlob": "b82e0bf0a62a660b2c40138606eaf0b0b7fd43ac"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/TradeOfferAcceptResponse.cs",
+      "gitBlob": "805d95a412660223eeaa9688585dd38d60befbdd"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/TradeOfferSendRequest.cs",
+      "gitBlob": "d95cf0307982bcfef332447e721855bb520639b2"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/TradeOfferSendResponse.cs",
+      "gitBlob": "434efc0c609c2c7d2e606056c1760f2db243be59"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/TradeOffersResponse.cs",
+      "gitBlob": "0ea28da34b69a2bbdf0e848d5f16f9f007a7c477"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Data/UserPrivacy.cs",
+      "gitBlob": "145b80a004380033a9e6a6bb7035bf68c00cbb89"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/EAccess.cs",
+      "gitBlob": "653dcaec09cc4bac76171ef81c5d4fb3e3340c89"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Exchange/ParseTradeResult.cs",
+      "gitBlob": "9f4f6cd749589b76f161dd5d27b3592e45755904"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Exchange/Trading.cs",
+      "gitBlob": "d1c0fbfeb80aace1612903c10969aed52f0bb556"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/ArchiHandler.cs",
+      "gitBlob": "a7a93e0663b5311d5b14f188dd37c8eaa2659898"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/ArchiWebHandler.cs",
+      "gitBlob": "9bd9f938bf24a3b9686253d36fa3b5d3e481bec7"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/BotCredentialsProvider.cs",
+      "gitBlob": "6c78d5d68a03b6f3410bf00a8aad0e5e88fd62ef"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/CMsgs/CMsgClientAcknowledgeClanInvite.cs",
+      "gitBlob": "f3f27d220312f63778debc771f4a91d551d0958c"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/Callbacks/GetClientAppListCallback.cs",
+      "gitBlob": "6141efd8717f7245af500d455c3f4fd943cde7c0"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/Callbacks/SharedLibraryLockStatusCallback.cs",
+      "gitBlob": "f5acde7ead8bbd1cc75514d985cdb6b4868d985f"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/Callbacks/UserNotificationsCallback.cs",
+      "gitBlob": "03a93b0a3e63e9fc0b1a3fbd16a764c17f6afe91"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/SteamChatMessage.cs",
+      "gitBlob": "ab650894430941e51923794ad0056d65541af183"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/SteamPICSChanges.cs",
+      "gitBlob": "e55a8de97604ea2619cacc3d6284eecfaf958134"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Integration/SteamUtilities.cs",
+      "gitBlob": "a0261bb5713dca3440dddf0aa59752f18d2e94dc"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Interaction/Actions.cs",
+      "gitBlob": "84855b7f4f045efbf59d7a5db199fb189d7419d7"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Interaction/Commands.cs",
+      "gitBlob": "bd76e2ff36c3a9f9243d53e4b57a3c643fcd5b03"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Interaction/EGameIdentifier.cs",
+      "gitBlob": "372be1220c9d05d801e2ba7c7b88efab4e0b15a6"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Security/BotAuthenticationException.cs",
+      "gitBlob": "00a098511804a33434164e3d8f80ad92379bb7c6"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Security/MobileAuthenticator.cs",
+      "gitBlob": "54eb71668eb4a207834f5983c6dd49a572abc4e7"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/SteamKit2/InMemoryServerListProvider.cs",
+      "gitBlob": "9885ffc876413742abb8f1fcdbaba3059d9f5548"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/SteamKit2/ServerRecordEndPoint.cs",
+      "gitBlob": "565406dbf7f6421b00b2da679ca9142aeabec4f1"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Storage/BotConfig.cs",
+      "gitBlob": "cd92b514921d0b5f174f87ce8d8a8d68ca2456a7"
+    },
+    {
+      "path": "ArchiSteamFarm/Steam/Storage/BotDatabase.cs",
+      "gitBlob": "142b2e48fb8ad546e9de5fde644569aa0a1c52ca"
+    },
+    {
+      "path": "ArchiSteamFarm/Storage/CrashFile.cs",
+      "gitBlob": "f8a3306f5f3dfb3178eed5e87b5eb7afa00b2a31"
+    },
+    {
+      "path": "ArchiSteamFarm/Storage/GenericDatabase.cs",
+      "gitBlob": "6ce5b5a6087de98bbac4c61720600b6177f45e12"
+    },
+    {
+      "path": "ArchiSteamFarm/Storage/GlobalConfig.cs",
+      "gitBlob": "7a1da604890d86453ed6f02e731b9c99e1ba7aa7"
+    },
+    {
+      "path": "ArchiSteamFarm/Storage/GlobalDatabase.cs",
+      "gitBlob": "61f695e5e80f181cdfb89171de724cf0f77a6c4c"
+    },
+    {
+      "path": "ArchiSteamFarm/Storage/PackageData.cs",
+      "gitBlob": "efe91feec315be6c1ea7e6ceae72e559a2db2f05"
+    },
+    {
+      "path": "ArchiSteamFarm/TrimmerRoots.xml",
+      "gitBlob": "bd0a52467b86e1682de359d3627603017bb1c314"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/GitHub/Data/ReleaseAsset.cs",
+      "gitBlob": "1ab801cae382d71fb4c3439cfcac2c7d02666a85"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/GitHub/Data/ReleaseResponse.cs",
+      "gitBlob": "ac55408e1762660bd7baac2e97eff92dd429b457"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/GitHub/GitHubService.cs",
+      "gitBlob": "054b31e51d20b301884ebe76d586de7c0cb4ab52"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/Responses/BasicResponse.cs",
+      "gitBlob": "016e99c1238d025dbb8f8d86a1ff5195183e525c"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/Responses/BinaryResponse.cs",
+      "gitBlob": "ed82f80f491c6a014497444e20b0cffab7c2ff49"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/Responses/HtmlDocumentResponse.cs",
+      "gitBlob": "93edcbd2e234c8c4989283442a50ae421c7ada56"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/Responses/ObjectResponse.cs",
+      "gitBlob": "0ba2daf0c2c399304b89b2124cdc206e5df98a2a"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/Responses/StreamResponse.cs",
+      "gitBlob": "e14de53f62c461e31d8dd5e398ffa3a923e41233"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/WebBrowser.cs",
+      "gitBlob": "c48c03b550dd56b1822966c61e12f8b8a73137c0"
+    },
+    {
+      "path": "ArchiSteamFarm/Web/WebBrowserUtilities.cs",
+      "gitBlob": "5557446305bcac54665ac7ebfc82291c07dbc742"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/all/Changelog.html",
+      "gitBlob": "5a7b3d0694eeee0c213104a28f1aaaf2dc2c5ca1"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/all/ConfigGenerator.html",
+      "gitBlob": "db5fdc6937891e4ed4095d1a1f26e572074abd7d"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/all/Manual.html",
+      "gitBlob": "d4eb70ab329672453dc54b925f8d022ff185f4cd"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/all/UI.html",
+      "gitBlob": "1697630bfffff3a7a1fc929253b1e142ae6b2208"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/all/config/.gitkeep",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/all/logs/.gitkeep",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/all/plugins/.gitkeep",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-base/linux/ArchiSteamFarm-Service.sh",
+      "gitBlob": "54c1c83244684265a50d9bc6ff4bf9c3e34016a4"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-base/linux/ArchiSteamFarm.desktop",
+      "gitBlob": "068a4cec99fd07057927c721bfc5cba789c7d088"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-base/linux/ArchiSteamFarm@.service",
+      "gitBlob": "d90696eb85a6bd65d0f5ceed8755ad17d79dc9b4"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-base/osx/ArchiSteamFarm-Service.sh",
+      "gitBlob": "e2aaff756e8445813acac9d59705d521894d54dd"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-base/win/desktop.ini",
+      "gitBlob": "af1ebddc9cd88da9188a1aaaa40974cb8e24dcaf"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-specific/docker/ArchiSteamFarm.sh",
+      "gitBlob": "ec1ac7337a02b992c6ba908e74c8cc00931c2a27"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-specific/generic/ArchiSteamFarm-Service.sh",
+      "gitBlob": "c2192378bab13a6049c4f7555f712677d258846f"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-specific/generic/ArchiSteamFarm.cmd",
+      "gitBlob": "f4133d08c7948a4adf2d30279c0e0aff290d0aad"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-specific/generic/ArchiSteamFarm.desktop",
+      "gitBlob": "f7436a57e18db7de9056cd863e0ea46d98a5cfd9"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-specific/generic/ArchiSteamFarm.sh",
+      "gitBlob": "ec1ac7337a02b992c6ba908e74c8cc00931c2a27"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-specific/generic/ArchiSteamFarm@.service",
+      "gitBlob": "af75ff01cb9846d889e9c69fb818c5414a28a560"
+    },
+    {
+      "path": "ArchiSteamFarm/overlay/variant-specific/generic/desktop.ini",
+      "gitBlob": "e835c22e80cf2ca6d58846e80bf6538ea92a7bbf"
+    },
+    {
+      "path": "Directory.Build.props",
+      "gitBlob": "9d23408b653ded969d6341cc3a999605699bcfd1"
+    },
+    {
+      "path": "Directory.Packages.props",
+      "gitBlob": "257b9dbf288aa079c952e2c89ab7b7d0fb0353c1"
+    },
+    {
+      "path": "Dockerfile",
+      "gitBlob": "131cc673689e201685a7fe73455d94023f2199e8"
+    },
+    {
+      "path": "Dockerfile.Service",
+      "gitBlob": "6eb700126172863f38514e2352c4e11398b4b487"
+    },
+    {
+      "path": "LICENSE.txt",
+      "gitBlob": "d645695673349e3947e8e5ae42332d0ac3164cd7"
+    },
+    {
+      "path": "README.md",
+      "gitBlob": "469d2b6e310ab7fff603f2ee8d89f5bed088c82c"
+    },
+    {
+      "path": "cc.sh",
+      "gitBlob": "bdedff1c898bcc96ed6b7d0c2089e4363b430530"
+    },
+    {
+      "path": "resources/ASF-troll.png",
+      "gitBlob": "7f07316fda3df4120a57cc684979f1226f6d4ac0"
+    },
+    {
+      "path": "resources/ASF.ico",
+      "gitBlob": "3f14e7df4cc7807ff2e0ef9e50a28dc0160dff2b"
+    },
+    {
+      "path": "resources/ASF.psd",
+      "gitBlob": "a839d737918d3649104ba0e4896a499464a5d1b3"
+    },
+    {
+      "path": "resources/ASF_144x144-monochrome.png",
+      "gitBlob": "1c9827d07b76db95e5c71d6965be82de0dbe59b4"
+    },
+    {
+      "path": "resources/ASF_184x184.jpg",
+      "gitBlob": "95e58a360b648792aff437d8a917753bc34e0a11"
+    },
+    {
+      "path": "resources/ASF_184x184.png",
+      "gitBlob": "a15ad07b72a379062dbb8da213cfa8ba8d524af0"
+    },
+    {
+      "path": "resources/ASF_512x512.png",
+      "gitBlob": "a6ec809bfc07f065de4e33f820ccb705b482d61c"
+    },
+    {
+      "path": "resources/ArchiSteamFarm.snk.pub",
+      "gitBlob": "f99c582d33907b33ca69c8f443d175b6f078b1d9"
+    },
+    {
+      "path": "resources/flags/de-DE.png",
+      "gitBlob": "f078fdfe235b39b383fe17908a95a2d46bdd24a6"
+    },
+    {
+      "path": "resources/flags/en-US.png",
+      "gitBlob": "4e47eaaf0c21b900d12ebb3e9a15d7c5352e4cda"
+    },
+    {
+      "path": "resources/flags/es-ES.png",
+      "gitBlob": "23e714120a9a931537ef4fb2fd9deda83f4a68ae"
+    },
+    {
+      "path": "resources/flags/lol-US.png",
+      "gitBlob": "114db59482648349712d651d237fe54506985be4"
+    },
+    {
+      "path": "resources/flags/pt-BR.png",
+      "gitBlob": "8b18eb2c5ee4dff8f9d320133435bbc7c15ca152"
+    },
+    {
+      "path": "resources/flags/ru-RU.png",
+      "gitBlob": "6418bf8590354e6fda37a9f0fcf120e7be04b116"
+    },
+    {
+      "path": "resources/flags/zh-CN.png",
+      "gitBlob": "5e09030df10e5b828105350bf786475d95aee331"
+    },
+    {
+      "path": "resources/flags/zh-TW.png",
+      "gitBlob": "c319e3e2537a94084c5ca04d8ca77e6e18c63bea"
+    },
+    {
+      "path": "run.sh",
+      "gitBlob": "9ea6571ced65a9308429904cdb9d338abf6b542d"
+    },
+    {
+      "path": "tools/zip_exec/README.md",
+      "gitBlob": "1b291966667b06e1e154c529f33902cef4ad1d00"
+    },
+    {
+      "path": "tools/zip_exec/license.txt",
+      "gitBlob": "b51e92a0e4544a866281f7135aacce849eb534d6"
+    },
+    {
+      "path": "tools/zip_exec/zip_exec.cpp",
+      "gitBlob": "7f7196e3a4fd236579ec18a360ab0df03461d7ed"
+    },
+    {
+      "path": "tools/zip_exec/zip_exec.exe",
+      "gitBlob": "d9092f37f5ce71033f6c3cd9607b77436e0599f2"
+    }
+  ]
+}
