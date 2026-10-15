@@ -33,7 +33,7 @@
      svg.setAttribute('viewBox','0 0 '+size+' '+size);svg.setAttribute('role','img');svg.setAttribute('aria-label',t('accounts_qr_signin'));svg.setAttribute('shape-rendering','crispEdges');background.setAttribute('width',String(size));background.setAttribute('height',String(size));background.setAttribute('fill','#fff');let d='';rows.forEach((row,y)=>[...row].forEach((bit,x)=>{if(bit==='1')d+='M'+(x+4)+' '+(y+4)+'h1v1h-1z';}));path.setAttribute('d',d);path.setAttribute('fill','#000');svg.append(background,path);el('account-qr-code').replaceChildren(svg);el('account-qr-code').dataset.signature=signature;
     }el('account-qr-status').textContent=t('accounts_qr_wait');
    }else{el('account-qr-code').replaceChildren();delete el('account-qr-code').dataset.signature;el('account-qr-status').textContent=t('accounts_qr_loading');}
-  }catch(error){if(sequence===qrSequence){el('account-qr-code').replaceChildren();el('account-qr-status').textContent=message(error);}}finally{qrBusy=false;}
+  }catch(error){if(sequence===qrSequence){el('account-qr-code').replaceChildren();delete el('account-qr-code').dataset.signature;el('account-qr-status').textContent=message(error);}}finally{qrBusy=false;}
  }
  async function startQr(id){qrAccount=id;++qrSequence;delete el('account-qr-code').dataset.signature;el('account-qr-code').replaceChildren();el('account-qr-status').textContent=t('accounts_qr_loading');el('account-qr-dialog').showModal();if(await call('signin',{id,method:'qr'})){if(qrAccount===id)readQr();else await call('stop',{id});}else if(qrAccount===id)closeQr(false);}
  function openPassword(){const account=selected();if(!account)return;el('account-signin-form').reset();el('account-login-name-field').hidden=!!account.login;el('account-login-name').required=!account.login;el('account-login-dialog').showModal();el(account.login?'account-password':'account-login-name').focus();}
@@ -130,7 +130,7 @@
    el(dialog).addEventListener('close',()=>el(form).reset());
    const prefix=dialog.replace('-dialog','');for(const suffix of ['close','cancel']){const control=el(prefix+'-'+suffix);control.onclick=()=>el(dialog).close();if(suffix==='close')control.innerHTML=getIcon('x');}
   }
-  function setAddMethod(){const qr=el('account-new-method').value==='qr';for(const kind of ['login','password']){el('account-new-'+kind+'-field').hidden=qr;el('account-new-'+kind).required=!qr;el('account-new-'+kind).value='';}}
+  function setAddMethod(){const qr=el('account-new-method').value==='qr';el('account-new-password-hint').hidden=qr;for(const kind of ['login','password']){el('account-new-'+kind+'-field').hidden=qr;el('account-new-'+kind).required=!qr;el('account-new-'+kind).value='';}}
   el('account-new-method').onchange=setAddMethod;
   el('account-add-form').onsubmit=async event=>{event.preventDefault();const method=el('account-new-method').value,label=el('account-new-label').value.trim(),login=method==='qr'?'':el('account-new-login').value.trim(),password=el('account-new-password').value;el('account-new-password').value='';el('account-add-dialog').close();const existing=new Set(model.accounts.map(account=>account.id));if(await call('add',{label,login,method})){const account=model.accounts.find(value=>!existing.has(value.id));if(account){model.selected=account.id;render();if(method==='qr')await startQr(account.id);else await call('signin',{id:account.id,password});}}};
   el('account-signin-open').onclick=openPassword;

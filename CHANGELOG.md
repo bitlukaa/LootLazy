@@ -4,6 +4,7 @@
 
 - Platform status and notifications now share the main navigation header.
 - Stable and Beta confirmations use the same centered cards and visible close icons.
+- Sign in with a Steam mobile QR code, with password and Guard available as an alternative.
 - Add and sign in to an account from one dialog; passwords and Guard prompts no longer clutter the games page.
 - Choose quick picks from the signed-in account’s library. New badges disappear after first successful use.
 

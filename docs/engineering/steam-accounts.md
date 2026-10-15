@@ -183,3 +183,23 @@ Account search now uses `ArchiHandler.GetOwnedGames` for the signed-in account,
 not the public store catalog. Library loading runs in a bounded background task,
 so a slow Steam response cannot block other account controls. Selection and Start
 both validate ownership against that account’s authenticated library.
+
+## QR authentication
+
+QR is the default in Add account and needs only a local label. The approved Steam
+account identity is recorded after connection. Existing accounts must approve the
+same Steam login; duplicate identities are rejected. Password and Guard remain an
+explicit alternative, including a username field when a QR-only account is still
+unbound. Passwords are never written to account metadata.
+
+The bridge opts into ASF's QR flow despite headless mode only after a UI request.
+Its private qr command returns a bounded module matrix for one account, never the
+challenge URL. The existing QR encoder runs locally; no image service receives
+the challenge. The UI renders a black-on-white SVG with a four-module quiet zone,
+updates rotating challenges, removes the matrix on completion/cancel, and ignores
+late responses. Cancel, Escape and password fallback stop that login attempt.
+Attempts expire after three minutes; parent exit also ends the owned worker.
+
+QR encoder/trusted-origin checks, offline registration and protocol validation,
+and renderer cancellation/success/fallback are automated. Real Steam approval
+and credited playtime still require local user testing; fixtures do not prove them.
