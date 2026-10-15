@@ -10,7 +10,7 @@
     "test:ui": "node tools/verify-tauri-ui.js",
     "test:localization": "node --test tests/localization.test.js",
     "package": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/package-tauri.ps1",
-    "test:renderer": "node tools/verify-rotations-ui.js && node tools/verify-quest-controls.js",
+    "test:renderer": "node tools/verify-rotations-ui.js && node tools/verify-quest-controls.js && node tools/verify-quest-idle.js",
     "test:unit": "node --test tests/localization.test.js tests/ui-settings.test.js tests/steam-ui.test.js"
   },
   "keywords": [

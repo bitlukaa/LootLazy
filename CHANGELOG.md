@@ -2,6 +2,8 @@
 
 ## 3.6.20 — October 15, 2026
 
+- Avoid rewriting unchanged quest DOM attributes and labels during polling; verify idle button pixels across automatic status checks.
+
 - Recognize native string errors as well as Error objects during update installation.
 - Explain that all active sessions must be stopped before installing an update.
 

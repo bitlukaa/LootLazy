@@ -2,10 +2,12 @@
   "version": "3.6.20",
   "en": [
     "Update errors now preserve the specific reason returned by the native application.",
-    "If sessions are running, the app asks you to stop them before installing the update."
+    "If sessions are running, the app asks you to stop them before installing the update.",
+    "Unchanged quest status no longer rewrites the controls; idle pixel checks verify stable text and icons across automatic polls."
   ],
   "ar": [
     "إظهار السبب الحقيقي لفشل بدء التحديث بدل رسالة عامة.",
-    "عند وجود جلسات نشطة، تظهر رسالة تطلب إيقافها قبل تثبيت التحديث."
+    "عند وجود جلسات نشطة، تظهر رسالة تطلب إيقافها قبل تثبيت التحديث.",
+    "منع إعادة رسم أزرار الكويستات عند ثبات الحالة، مع اختبار ثبات النص والأيقونات أثناء الخمول."
   ]
 }
