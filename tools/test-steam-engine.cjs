@@ -14,6 +14,9 @@ async function launch(parentId=process.pid){
 (async()=>{
  let run=await launch();assert.equal((await run.raw('not-json')).error,'accounts_failed');assert.equal((await run.raw(JSON.stringify({id:99,protocol:2,command:'add',body:{label:'Rejected',login:'reject_login'}}))).error,'accounts_protocol');assert.deepEqual((await run.call('status')).result.accounts,[]);
  for(const body of [{label:'Test',login:'../../outside'},{label:'',login:'safe_login'},{label:'x'.repeat(49),login:'safe_login'}])assert.equal((await run.call('add',body)).error,'accounts_invalid');
+ assert.equal((await run.call('add',{label:'No login',login:''})).error,'accounts_invalid');
+ const qrAdded=await run.call('add',{label:'QR pending',login:'',method:'qr'});assert.equal(qrAdded.ok,true);const qrId=qrAdded.result.accounts[0].id;
+ assert.equal((await run.call('qr',{id:qrId})).error,'accounts_not_ready');assert.equal((await run.call('remove',{id:qrId})).ok,true);
  let result=await run.call('add',{label:'Account one',login:'test_login'});assert.equal(result.ok,true);const id=result.result.accounts[0].id;assert.match(id,/^ll_[a-f0-9]{32}$/);
  assert.equal((await run.call('add',{label:'Duplicate',login:'TEST_LOGIN'})).error,'accounts_duplicate');
  result=await run.call('games',{id,games:[570,730,570]});assert.deepEqual(result.result.accounts[0].games,[570,730]);

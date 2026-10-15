@@ -13,6 +13,7 @@ async function launch(){
  let run=await launch();assert.deepEqual((await run.call('status')).accounts,[]);
  const added=await run.call('add',{label:'Offline fixture',login:'lootlazy_offline_fixture'}),id=added.accounts[0].id;assert.equal(added.accounts[0].active,false,'Registration must not authenticate automatically');
  assert.deepEqual((await run.call('remove',{id})).accounts,[]);await run.close();
+ const qrRun=await launch();const qr=await qrRun.call('add',{label:'QR pending fixture',login:'',method:'qr'});assert.equal(qr.accounts[0].error,null);assert.equal(qr.accounts[0].active,false);assert.equal((await qrRun.call('qr',{id:qr.accounts[0].id})).rows,null);await qrRun.call('remove',{id:qr.accounts[0].id});await qrRun.close();
  const brokenId='ll_'+'f'.repeat(32);fs.writeFileSync(path.join(fixture,'accounts.json'),JSON.stringify([{id:brokenId,label:'Recovery fixture',login:'lootlazy_recovery_fixture',games:[]}]))
  for(const suffix of ['.db','.db.new'])fs.writeFileSync(path.join(fixture,'config',brokenId+suffix),'unusable-fixture-database');
  run=await launch();const status=await run.call('status');assert.equal(status.accounts[0].active,false);assert.equal(status.accounts[0].error,'accounts_restore_failed');

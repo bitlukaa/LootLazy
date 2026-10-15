@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ArchiSteamFarm.Core;
 using ArchiSteamFarm.Steam;
+using Net.Codecrete.QrCodeGenerator;
 
 namespace ArchiSteamFarm;
 
@@ -50,6 +51,31 @@ internal static class LootLazyBridge {
         internal int Minutes;
         internal bool Blocked;
     }
+    private static readonly ConcurrentDictionary<string, DateTimeOffset> QrLogins = new(StringComparer.Ordinal);
+    internal static bool WantsQrLogin(Bot bot) => QrLogins.TryGetValue(bot.BotName, out var deadline) && deadline > DateTimeOffset.UtcNow;
+    private static bool ValidLogin(string login) => login.Length is > 0 and <= 64 && login.All(c => char.IsAsciiLetterOrDigit(c) || c == '_');
+    private static string[] EncodeQr(Uri uri) {
+        if (uri.Scheme != "https" || uri.Host != "s.team" || uri.Port != 443 || !string.IsNullOrEmpty(uri.UserInfo) || !uri.AbsolutePath.StartsWith("/q/", StringComparison.Ordinal) || uri.AbsoluteUri.Length > 512) throw new InvalidOperationException("accounts_invalid");
+        var code = QrCode.EncodeText(uri.AbsoluteUri, QrCode.Ecc.Medium);
+        if (code.Size > 97) throw new InvalidOperationException("accounts_invalid");
+        return Enumerable.Range(0, code.Size).Select(y => new string(Enumerable.Range(0, code.Size).Select(x => code.GetModule(x,y) ? '1' : '0').ToArray())).ToArray();
+    }
+    // Only the protocol thread persists identities; ASF callbacks never mutate account metadata.
+    private static async Task BindQrIdentities() {
+        foreach (var entry in Accounts.Values.ToArray()) {
+            if (Bot.Bots?.TryGetValue(entry.Id, out var bot) != true || !bot.IsConnectedAndLoggedOn || !QrLogins.ContainsKey(entry.Id)) continue;
+            string login = bot.BotConfig.SteamLogin ?? "";
+            if (!ValidLogin(login) || Accounts.Values.Any(other => other.Id != entry.Id && other.Login.Equals(login, StringComparison.OrdinalIgnoreCase))) {
+                QrLogins.TryRemove(entry.Id, out _); await bot.Stop(true).ConfigureAwait(false); continue;
+            }
+            if (entry.Login != login) {
+                var updated = entry with { Login = login };
+                WriteConfig(updated); Accounts[entry.Id] = updated;
+                try { Save(); } catch { Accounts[entry.Id] = entry; throw; }
+            }
+            QrLogins.TryRemove(entry.Id, out _);
+        }
+    }
     private static readonly Dictionary<string, Account> Accounts = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, Challenge> Challenges = new(StringComparer.Ordinal);
     private sealed record Library(ulong SteamId, Dictionary<uint, string> Games);
@@ -78,8 +104,7 @@ internal static class LootLazyBridge {
     }
     internal static async Task<string?> InputAsync(ASF.EUserInputType type, string id) {
         if (!ValidId(id) || Bot.Bots?.TryGetValue(id, out var inputBot) != true || !inputBot.KeepRunning) return null;
-        // QR code login is intentionally unavailable in this adapter. Password/Guard remain supported.
-        if (type == ASF.EUserInputType.QrCodeLogin) return "N";
+        if (type == ASF.EUserInputType.QrCodeLogin) return WantsQrLogin(inputBot) ? "Y" : "N";
         var challenge = new Challenge(Guid.NewGuid().ToString("N"), type, new(TaskCreationOptions.RunContinuationsAsynchronously));
         if (Challenges.TryRemove(id, out var old)) old.Completion.TrySetResult(null);
         Challenges[id] = challenge;
@@ -146,12 +171,13 @@ internal static class LootLazyBridge {
         return new { games = Array.Empty<object>(), total = 0, loading = LibraryRequests.ContainsKey(id), active = true, error = LibraryErrors.ContainsKey(id) ? "accounts_library_failed" : null };
     }
     private static async Task<object> Handle(string command, JsonElement body) {
-        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
+        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
+        await BindQrIdentities().ConfigureAwait(false);
         if (command == "status") return Snapshot();
         if (command == "add") {
             string label = Text(body, "label").Trim(), login = Text(body, "login").Trim();
-            if (Accounts.Count >= 20 || label.Length is < 1 or > 48 || label.Any(char.IsControl) || login.Length is < 1 or > 64 || login.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_')) Fail("accounts_invalid");
-            if (Accounts.Values.Any(account => account.Login.Equals(login, StringComparison.OrdinalIgnoreCase))) Fail("accounts_duplicate");
+            if (Accounts.Count >= 20 || label.Length is < 1 or > 48 || label.Any(char.IsControl) || (!ValidLogin(login) && !(login.Length == 0 && Text(body, "method") == "qr"))) Fail("accounts_invalid");
+            if (login.Length > 0 && Accounts.Values.Any(account => account.Login.Equals(login, StringComparison.OrdinalIgnoreCase))) Fail("accounts_duplicate");
             var account = new Account("ll_" + Guid.NewGuid().ToString("N"), label, login, []);
             WriteConfig(account);
             if (!OfflineTest) await Bot.RegisterBot(account.Id).ConfigureAwait(false);
@@ -163,6 +189,7 @@ internal static class LootLazyBridge {
         Bot? selected = null;
         Bot.Bots?.TryGetValue(entry.Id, out selected);
         if (command == "remove") {
+            QrLogins.TryRemove(entry.Id, out _);
             if (Challenges.TryRemove(entry.Id, out var pending)) pending.Completion.TrySetResult(null);
             Sessions.TryRemove(entry.Id, out _);
             Libraries.TryRemove(entry.Id, out _); LibraryRequests.TryRemove(entry.Id, out _); LibraryErrors.TryRemove(entry.Id, out _);
@@ -191,6 +218,10 @@ internal static class LootLazyBridge {
             return Snapshot();
         }
         if (OfflineTest || selected == null) { Fail(OfflineTest ? "accounts_not_ready" : "accounts_restore_failed"); return null!; }
+        if (command == "qr") {
+            string[]? rows = WantsQrLogin(selected) && selected.KeepRunning && !selected.IsConnectedAndLoggedOn && selected.QrChallengeURL is Uri uri ? EncodeQr(uri) : null;
+            return new { rows, active = Bot.Bots!.Values.Any(bot => bot.KeepRunning) };
+        }
         if (command == "library") { if (!selected.IsConnectedAndLoggedOn) { Fail("accounts_not_ready"); return null!; } return LibraryResult(selected, body); }
         if (command == "signin") {
             if (selected.KeepRunning) Fail("accounts_stop_first");
@@ -198,6 +229,17 @@ internal static class LootLazyBridge {
             Libraries.TryRemove(entry.Id, out _); LibraryRequests.TryRemove(entry.Id, out _); LibraryErrors.TryRemove(entry.Id, out _);
             string password = Text(body, "password");
             if (password.Length > 256) Fail("accounts_invalid");
+            bool qr = Text(body, "method") == "qr";
+            if (!qr && entry.Login.Length == 0) {
+                string login = Text(body, "login").Trim();
+                if (!ValidLogin(login)) Fail("accounts_invalid");
+                if (Accounts.Values.Any(other => other.Id != entry.Id && other.Login.Equals(login, StringComparison.OrdinalIgnoreCase))) Fail("accounts_duplicate");
+                entry = entry with { Login = login }; WriteConfig(entry); Accounts[entry.Id] = entry; Save();
+            }
+            if (!qr && !ValidLogin(entry.Login)) Fail("accounts_invalid");
+            if (qr) QrLogins[entry.Id] = DateTimeOffset.UtcNow.AddMinutes(3); else QrLogins.TryRemove(entry.Id, out _);
+            selected.BotConfig.SteamLogin = entry.Login;
+            selected.BotConfig.IsSteamLoginSet = false;
             if (password.Length > 0) selected.SetUserInput(ASF.EUserInputType.Password, password);
             await selected.Start().ConfigureAwait(false);
         } else if (command == "input") {
@@ -219,6 +261,8 @@ internal static class LootLazyBridge {
             try { await ResetGames(selected).ConfigureAwait(false); }
             catch { Sessions.TryRemove(entry.Id, out _); throw; }
         } else if (command == "stop") {
+            QrLogins.TryRemove(entry.Id, out _);
+            selected.SetUserInput(ASF.EUserInputType.QrCodeLogin, "N");
             if (Challenges.TryRemove(entry.Id, out var pending)) pending.Completion.TrySetResult(null);
             StopRequested(selected);
             if (selected.IsConnectedAndLoggedOn) await ResetGames(selected).ConfigureAwait(false);
@@ -230,6 +274,13 @@ internal static class LootLazyBridge {
     private static async Task ExpireSessions(CancellationToken token) {
         while (!token.IsCancellationRequested) {
             await Task.Delay(1000, token).ConfigureAwait(false);
+            foreach (var pair in QrLogins) {
+                if (pair.Value > DateTimeOffset.UtcNow || (Bot.Bots?.TryGetValue(pair.Key, out var connectedBot) == true && connectedBot.IsConnectedAndLoggedOn)) continue;
+                if (((ICollection<KeyValuePair<string, DateTimeOffset>>)QrLogins).Remove(pair) && Bot.Bots?.TryGetValue(pair.Key, out var qrBot) == true && !qrBot.IsConnectedAndLoggedOn) {
+                    qrBot.SetUserInput(ASF.EUserInputType.QrCodeLogin, "N");
+                    try { await qrBot.Stop(true).ConfigureAwait(false); } catch { Environment.Exit(2); }
+                }
+            }
             foreach (var pair in Sessions) {
                 var session = pair.Value;
                 if (session.Minutes == 0 || session.Games.Length == 0 || DateTimeOffset.UtcNow - session.Started < TimeSpan.FromMinutes(session.Minutes)) continue;
@@ -246,6 +297,11 @@ internal static class LootLazyBridge {
         Console.SetOut(TextWriter.Null);
         Console.SetError(TextWriter.Null);
         if (args.Length == 1 && args[0] == "--self-test") {
+            var rows = EncodeQr(new Uri("https://s.team/q/1/fixture"));
+            if (rows.Length < 21 || rows.Length > 97 || rows.Any(row => row.Length != rows.Length || row.Any(bit => bit is not ('0' or '1')))) return 7;
+            foreach (var invalid in new[] { "http://s.team/q/fixture", "https://example.com/q/fixture", "https://s.team/not-a-challenge", "https://x@s.team/q/fixture" }) {
+                try { EncodeQr(new Uri(invalid)); return 8; } catch (InvalidOperationException) { }
+            }
             const string secret = "{\"BackingRefreshToken\":\"fixture-refresh-token\",\"BackingSteamGuardData\":\"fixture-guard-secret\"}";
             string encrypted = LootLazyVault.Encode("ll_test.db", secret);
             if (encrypted.Contains("fixture", StringComparison.Ordinal) || LootLazyVault.Decode("ll_test.db", encrypted) != secret) return 2;

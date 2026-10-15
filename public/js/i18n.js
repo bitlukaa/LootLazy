@@ -827,3 +827,6 @@ let currentLang = localStorage.getItem('lootlazy_lang') === 'ar' ? 'ar' : 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 
 function number(value){return Number(value).toLocaleString(currentLang==='ar'?'ar-EG':'en-US');}
+
+Object.assign(I18N.en,{"accounts_method":"Sign-in method","accounts_qr_signin":"Sign in with QR","accounts_password_signin":"Use password","accounts_qr_hint":"Open Steam on your phone, scan this code and approve the sign-in.","accounts_qr_loading":"Preparing a secure code…","accounts_qr_wait":"Waiting for approval in Steam…","accounts_qr_expired":"This sign-in has ended. Close this window and try again."});
+Object.assign(I18N.ar,{"accounts_method":"طريقة تسجيل الدخول","accounts_qr_signin":"الدخول باستخدام QR","accounts_password_signin":"استخدام كلمة المرور","accounts_qr_hint":"افتح Steam على هاتفك، وامسح الرمز ثم وافق على تسجيل الدخول.","accounts_qr_loading":"جارٍ تجهيز رمز آمن…","accounts_qr_wait":"بانتظار الموافقة من Steam…","accounts_qr_expired":"انتهت محاولة الدخول. أغلق النافذة وحاول مرة أخرى."});

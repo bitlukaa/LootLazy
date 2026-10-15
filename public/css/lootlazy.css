@@ -355,3 +355,5 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 @media(max-width:920px){.lootlazy-navbar{flex-wrap:wrap}.lootlazy-navbar .navigation{flex:1 1 100%;justify-content:center;flex-wrap:wrap;overflow:visible}}
 
 #account-game-setup .account-games-heading{margin-top:0}
+
+#account-qr-dialog{width:380px;margin:auto}#account-qr-dialog p{line-height:1.6;margin:14px 0}.account-qr-code{width:220px;min-height:220px;margin:18px auto;display:grid;place-items:center}.account-qr-code svg{display:block;width:220px;height:220px;border:1px solid var(--line);border-radius:8px}#account-new-method{width:100%}

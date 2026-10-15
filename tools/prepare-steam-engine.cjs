@@ -17,5 +17,9 @@ patch('Steam/Bot.cs','private EResult LastLogOnResult;','internal EResult LastLo
 patch('Steam/Bot.cs','private void Disconnect(bool reconnect = false) {','private void Disconnect(bool reconnect = false) {\n\t\tif (LootLazyBridge.Enabled) LootLazyBridge.StopRequested(this);');
 patch('Steam/Storage/BotDatabase.cs','string json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);','LootLazyVault.CheckPath(filePath);\n\t\t\tstring json = LootLazyVault.Decode(filePath, await File.ReadAllTextAsync(filePath).ConfigureAwait(false));');
 patch('Helpers/SerializableFile.cs','string newFilePath = $"{filePath}.new";','LootLazyVault.CheckPath(filePath);\n\t\tLootLazyVault.CheckPath(filePath + ".new");\n\t\tjson = LootLazyVault.Encode(filePath, json);\n\t\tstring newFilePath = $"{filePath}.new";');
+patch('Steam/Bot.cs','private async Task<bool> WantsQrCodeLogin() {','private async Task<bool> WantsQrCodeLogin() {\n\t\tif (LootLazyBridge.Enabled) return LootLazyBridge.WantsQrLogin(this);');
+patch('Steam/Bot.cs','string.IsNullOrEmpty(RefreshToken) && await WantsQrCodeLogin()', '(LootLazyBridge.WantsQrLogin(this) || string.IsNullOrEmpty(RefreshToken)) && await WantsQrCodeLogin()');
+patch('Steam/Bot.cs','ArchiLogger.LogGenericWarning(Strings.FormatQrCodeLoginUrl(authSession.ChallengeURL));','if (!LootLazyBridge.Enabled) ArchiLogger.LogGenericWarning(Strings.FormatQrCodeLoginUrl(authSession.ChallengeURL));');
+patch('Steam/Bot.cs','await Logging.WriteToConsole(QrCodeHelper.GenerateAscii(authSession.ChallengeURL)).ConfigureAwait(false);','if (!LootLazyBridge.Enabled) await Logging.WriteToConsole(QrCodeHelper.GenerateAscii(authSession.ChallengeURL)).ConfigureAwait(false);');
 fs.copyFileSync(path.join(root,'engine/LootLazyBridge.cs'),path.join(base,'LootLazyBridge.cs'));
 console.log('Applied reviewed LootLazy adapter patches to a temporary copy; upstream snapshot unchanged.');
