@@ -805,6 +805,8 @@ Object.assign(I18N.en,{"notifications_view_all":"View all notifications","notifi
 Object.assign(I18N.ar,{"notifications_view_all":"عرض جميع الإشعارات","notification_session_title":"انتهت الجلسة","notification_update_title":"تحديث جديد","catalog_error":"تعذّر تحديث الألعاب. مكتبتك المحفوظة ما زالت متاحة."});
 Object.assign(I18N.en,{notifications_mark_read:"Mark as read"});
 Object.assign(I18N.ar,{notifications_mark_read:"تحديد كمقروءة"});
+Object.assign(I18N.en,{feature_new:"New"});
+Object.assign(I18N.ar,{feature_new:"جديد"});
 let currentLang = localStorage.getItem('lootlazy_lang') === 'ar' ? 'ar' : 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 
