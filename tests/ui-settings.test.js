@@ -66,3 +66,7 @@ test('update installation explains active sessions for native string and Error r
 test('other native update failures preserve their reason and unknown failures stay generic',async()=>{
  for(const code of ['updates_busy','updates_unavailable','updates_download_failed','updates_checksum_failed','updates_signature_failed','updates_save_failed','updates_install_failed','unknown_error']){const messages=[],button={};const fn=run('installUpdate',{state:{},$:()=>button,t:key=>key,request:async()=>{throw code},toast:message=>messages.push(message)});await fn();assert.deepEqual(messages,[code==='unknown_error'?'updates_install_failed':code]);assert.equal(button.disabled,false);}
 });
+
+test('update discovery cannot race an active download or restart',async()=>{let calls=0;const fn=run('loadUpdates',{updatesBusy:false,state:{installingUpdate:true},request:async()=>{calls++;},$:()=>{throw Error('No UI change during installation');}});await fn(true);assert.equal(calls,0);});
+
+test('a pending update check cannot replace installer state with a busy error',async()=>{const state={update:{status:'available'}};let renders=0;const fn=run('loadUpdates',{updatesBusy:false,state,$:()=>({}),busy:()=>{},request:async()=>{state.installingUpdate=true;throw Error('updates_busy');},renderUpdates:()=>{renders++;},window:{lootlazyDiagnostic:true}});await fn(true);assert.equal(state.update.status,'available');assert.equal(renders,0);});

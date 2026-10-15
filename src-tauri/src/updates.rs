@@ -65,36 +65,146 @@ fn parse_target(
         json!({"status":if version>current || (rollback && version!=current) {"available"}else{"up_to_date"},"latestVersion":version.to_string(),"notes":release["body"].as_str().unwrap_or("").chars().take(8000).collect::<String>(),"downloadUrl":url.as_str(),"canInstall":binary.is_some(),"binaryUrl":binary.as_ref().map(|value|value["binaryUrl"].clone()),"sha256":binary.as_ref().map(|value|value["sha256"].clone()),"binarySize":binary.as_ref().map(|value|value["binarySize"].clone()),"signatureUrl":binary.as_ref().map(|value|value["signatureUrl"].clone())}),
     )
 }
-fn fetch(channel: &str, rollback: bool) -> Result<Value, String> {
+#[derive(Debug)]
+enum TransferFailure {
+    Transport(&'static str),
+    Http(u16),
+    Rejected,
+    Truncated,
+    TooLarge,
+}
+impl TransferFailure {
+    fn retryable(&self) -> bool {
+        matches!(
+            self,
+            Self::Transport(_) | Self::Truncated | Self::Http(408 | 425 | 500..=599 | 618)
+        )
+    }
+    fn reason(&self) -> String {
+        match self {
+            Self::Transport(kind) => (*kind).into(),
+            Self::Http(status) => format!("http_{status}"),
+            Self::Rejected => "request_rejected".into(),
+            Self::Truncated => "truncated_response".into(),
+            Self::TooLarge => "response_too_large".into(),
+        }
+    }
+}
+fn retry_transfer<T>(
+    mut attempt: impl FnMut() -> Result<T, TransferFailure>,
+    mut pause: impl FnMut(Duration),
+) -> Result<T, TransferFailure> {
+    for index in 0..3 {
+        match attempt() {
+            Ok(value) => return Ok(value),
+            Err(error) if index < 2 && error.retryable() => {
+                pause(Duration::from_millis(if index == 0 { 350 } else { 900 }))
+            }
+            Err(error) => return Err(error),
+        }
+    }
+    unreachable!()
+}
+fn response_bytes(
+    client: &reqwest::blocking::Client,
+    url: &str,
+    limit: u64,
+    expected: Option<u64>,
+) -> Result<Vec<u8>, TransferFailure> {
+    let mut response = client
+        .get(url)
+        .header(
+            "Accept",
+            if url.starts_with("https://api.github.com/") {
+                "application/vnd.github+json"
+            } else {
+                "application/octet-stream"
+            },
+        )
+        .send()
+        .map_err(|error| {
+            if error.is_redirect() || error.is_builder() {
+                TransferFailure::Rejected
+            } else {
+                TransferFailure::Transport(if error.is_timeout() {
+                    "timeout"
+                } else if error.is_connect() {
+                    "connection_failed"
+                } else {
+                    "request_failed"
+                })
+            }
+        })?;
+    if response.status().as_u16() != 200 {
+        return Err(TransferFailure::Http(response.status().as_u16()));
+    }
+    if response
+        .content_length()
+        .is_some_and(|length| length > limit)
+    {
+        return Err(TransferFailure::TooLarge);
+    }
+    let mut bytes = Vec::new();
+    (&mut response)
+        .take(limit + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| TransferFailure::Transport("body_interrupted"))?;
+    if bytes.len() as u64 > limit {
+        return Err(TransferFailure::TooLarge);
+    }
+    if expected.is_some_and(|length| bytes.len() as u64 != length) {
+        return Err(TransferFailure::Truncated);
+    }
+    Ok(bytes)
+}
+fn transfer(
+    root: &std::path::Path,
+    operation: &str,
+    client: &reqwest::blocking::Client,
+    url: &str,
+    limit: u64,
+    expected: Option<u64>,
+) -> Result<Vec<u8>, TransferFailure> {
+    let mut attempts = 0;
+    retry_transfer(
+        || {
+            attempts += 1;
+            response_bytes(client, url, limit, expected).inspect_err(|error| {
+                crate::diagnostics::record(
+                    root,
+                    operation,
+                    &format!(
+                        "update_network attempt={attempts} reason={}",
+                        error.reason()
+                    ),
+                );
+            })
+        },
+        std::thread::sleep,
+    )
+}
+fn cacheable(value: &Value) -> bool {
+    matches!(value["status"].as_str(), Some("available" | "up_to_date"))
+}
+fn fetch(root: &std::path::Path, channel: &str, rollback: bool) -> Result<Value, String> {
     let client = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(10))
+        .connect_timeout(Duration::from_secs(8))
+        .timeout(Duration::from_secs(20))
         .redirect(reqwest::redirect::Policy::none())
         .user_agent(format!("LootLazy/{}", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|e| e.to_string())?;
-    let mut response = client
-        .get(if channel == "beta" {
-            "https://api.github.com/repos/bitlukaa/LootLazy/releases?per_page=50"
-        } else {
-            ENDPOINT
-        })
-        .header("Accept", "application/vnd.github+json")
-        .send()
-        .map_err(|e| e.to_string())?;
-    match response.status().as_u16() {
-        404 => return Ok(json!({"status":"restricted"})),
-        403 | 429 => return Ok(json!({"status":"rate_limited"})),
-        200 => {}
-        _ => return Err("Update source unavailable".into()),
-    }
-    let mut bytes = Vec::new();
-    (&mut response)
-        .take(512 * 1024 + 1)
-        .read_to_end(&mut bytes)
-        .map_err(|e| e.to_string())?;
-    if bytes.len() > 512 * 1024 {
-        return Err("Update response too large".into());
-    }
+    let endpoint = if channel == "beta" {
+        "https://api.github.com/repos/bitlukaa/LootLazy/releases?per_page=50"
+    } else {
+        ENDPOINT
+    };
+    let bytes = match transfer(root, "updates/check", &client, endpoint, 512 * 1024, None) {
+        Ok(bytes) => bytes,
+        Err(TransferFailure::Http(404)) => return Ok(json!({"status":"restricted"})),
+        Err(TransferFailure::Http(403 | 429)) => return Ok(json!({"status":"rate_limited"})),
+        Err(error) => return Err(error.reason()),
+    };
     let document: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
     select_release(&document, env!("CARGO_PKG_VERSION"), channel, rollback)
 }
@@ -160,12 +270,16 @@ pub fn check_for(root: &std::path::Path) -> Value {
         }
     }
     let mut value = info_for(root);
-    let result = fetch(channel, rollback).unwrap_or(json!({"status":"offline"}));
+    let result = fetch(root, channel, rollback).unwrap_or(json!({"status":"offline"}));
     for (key, item) in result.as_object().unwrap() {
         value[key] = item.clone();
     }
     value["checkedAt"] = json!(chrono::Utc::now().to_rfc3339());
-    *cached = Some((Instant::now(), key, value.clone()));
+    *cached = if cacheable(&value) {
+        Some((Instant::now(), key, value.clone()))
+    } else {
+        None
+    };
     value
 }
 fn trusted_asset_url(value: &str, name: &str) -> Result<url::Url, String> {
@@ -242,7 +356,8 @@ pub fn stage(root: &std::path::Path) -> Result<Value, String> {
         "LootLazy.exe",
     )?;
     let client = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(120))
+        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(300))
         .redirect(reqwest::redirect::Policy::custom(|attempt| {
             if attempt.previous().len() > 3
                 || attempt.url().scheme() != "https"
@@ -263,20 +378,24 @@ pub fn stage(root: &std::path::Path) -> Result<Value, String> {
         .user_agent(format!("LootLazy/{}", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|error| error.to_string())?;
-    let mut response = client
-        .get(url)
-        .send()
-        .map_err(|_| "updates_download_failed")?
-        .error_for_status()
-        .map_err(|_| "updates_download_failed")?;
     let expected = release["binarySize"]
         .as_u64()
         .ok_or("Invalid update size")?;
-    let mut bytes = Vec::new();
-    (&mut response)
-        .take(expected + 1)
-        .read_to_end(&mut bytes)
-        .map_err(|_| "updates_download_failed")?;
+    let bytes = transfer(
+        root,
+        "updates/download",
+        &client,
+        url.as_str(),
+        expected,
+        Some(expected),
+    )
+    .map_err(|error| {
+        if matches!(error, TransferFailure::TooLarge) {
+            "updates_checksum_failed"
+        } else {
+            "updates_download_failed"
+        }
+    })?;
     let hash = format!("{:x}", Sha256::digest(&bytes));
     if bytes.len() as u64 != expected
         || hash
@@ -294,16 +413,21 @@ pub fn stage(root: &std::path::Path) -> Result<Value, String> {
             .ok_or("updates_signature_failed")?,
         "LootLazy.exe.sig",
     )?;
-    let mut signature_response = client
-        .get(signature_url)
-        .send()
-        .and_then(|response| response.error_for_status())
-        .map_err(|_| "updates_signature_failed")?;
-    let mut signature = Vec::new();
-    (&mut signature_response)
-        .take(4097)
-        .read_to_end(&mut signature)
-        .map_err(|_| "updates_signature_failed")?;
+    let signature = transfer(
+        root,
+        "updates/signature",
+        &client,
+        signature_url.as_str(),
+        4096,
+        None,
+    )
+    .map_err(|error| {
+        if matches!(error, TransferFailure::TooLarge) {
+            "updates_signature_failed"
+        } else {
+            "updates_download_failed"
+        }
+    })?;
     crate::update_signature::verify(
         &signature,
         release["latestVersion"].as_str().unwrap_or(""),
@@ -351,6 +475,90 @@ mod tests {
     use super::*;
     fn release(version: &str) -> Value {
         json!({"tag_name":format!("v{version}"),"draft":false,"prerelease":false,"body":"New features","assets":[{"name":format!("LootLazy-{version}.zip"),"browser_download_url":format!("{RELEASES}/download/v{version}/LootLazy-{version}.zip")}]})
+    }
+    #[test]
+    fn transient_failures_retry_but_http_rejections_do_not() {
+        for failure in [
+            TransferFailure::Transport("timeout"),
+            TransferFailure::Http(502),
+            TransferFailure::Truncated,
+        ] {
+            let mut count = 0;
+            let mut pauses = 0;
+            let result = retry_transfer(
+                || {
+                    count += 1;
+                    if count == 1 {
+                        Err(match &failure {
+                            TransferFailure::Http(code) => TransferFailure::Http(*code),
+                            TransferFailure::Truncated => TransferFailure::Truncated,
+                            _ => TransferFailure::Transport("timeout"),
+                        })
+                    } else {
+                        Ok(42)
+                    }
+                },
+                |_| pauses += 1,
+            );
+            assert_eq!(result.unwrap(), 42);
+            assert_eq!(count, 2);
+            assert_eq!(pauses, 1);
+        }
+        for code in [401, 403, 404, 429] {
+            let mut count = 0;
+            let result = retry_transfer::<()>(
+                || {
+                    count += 1;
+                    Err(TransferFailure::Http(code))
+                },
+                |_| panic!("Permanent HTTP error was retried"),
+            );
+            assert!(result.is_err());
+            assert_eq!(count, 1);
+        }
+        let mut count = 0;
+        let result = retry_transfer::<()>(
+            || {
+                count += 1;
+                Err(TransferFailure::Transport("timeout"))
+            },
+            |_| {},
+        );
+        assert!(result.is_err());
+        assert_eq!(count, 3);
+        assert!(!TransferFailure::TooLarge.retryable());
+        assert!(!TransferFailure::Rejected.retryable());
+        assert!(!cacheable(&json!({"status":"offline"})));
+        assert!(!cacheable(&json!({"status":"rate_limited"})));
+        assert!(cacheable(&json!({"status":"available"})));
+    }
+    #[test]
+    fn interrupted_http_response_is_retried_from_a_fresh_request() {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+        let server = TcpListener::bind("127.0.0.1:0").unwrap();
+        let endpoint = format!("http://{}/fixture", server.local_addr().unwrap());
+        let worker = std::thread::spawn(move || {
+            for response in [
+                "HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nConnection: close\r\n\r\nab",
+                "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nConnection: close\r\n\r\nabcd",
+            ] {
+                let (mut socket, _) = server.accept().unwrap();
+                let mut request = [0u8; 2048];
+                let _ = socket.read(&mut request);
+                socket.write_all(response.as_bytes()).unwrap();
+            }
+        });
+        let client = reqwest::blocking::Client::builder()
+            .no_proxy()
+            .timeout(Duration::from_secs(3))
+            .build()
+            .unwrap();
+        let result =
+            retry_transfer(|| response_bytes(&client, &endpoint, 4, Some(4)), |_| {}).unwrap();
+        assert_eq!(result, b"abcd");
+        worker.join().unwrap();
     }
     #[test]
     fn beta_selects_highest_valid_version_and_stable_rejects_prereleases() {
