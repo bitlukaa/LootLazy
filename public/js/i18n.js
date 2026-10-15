@@ -817,6 +817,12 @@ Object.assign(I18N.en,{accounts_library_loading:"Loading this account’s games�
 Object.assign(I18N.ar,{accounts_library_loading:"جارٍ تحميل ألعاب الحساب…",accounts_library_failed:"تعذّر تحميل مكتبة الحساب. اضغط تحديث للمحاولة مجددًا.",accounts_owned_hint:"سجّل الدخول لتصفح ألعاب هذا الحساب والبحث فيها."});
 Object.assign(I18N.en,{feature_new:"New"});
 Object.assign(I18N.ar,{feature_new:"جديد"});
+Object.assign(I18N.en,{"accounts_verify": "Verify sign-in", "accounts_password_private": "Your password is used only to sign in and is not saved.", "accounts_add_signin": "Add & sign in", "accounts_quick_picks": "Quick picks from your library"});
+Object.assign(I18N.ar,{"accounts_verify": "تأكيد تسجيل الدخول", "accounts_password_private": "تُستخدم كلمة المرور لتسجيل الدخول فقط ولا يتم حفظها.", "accounts_add_signin": "إضافة وتسجيل الدخول", "accounts_quick_picks": "اختيارات سريعة من مكتبتك"});
+Object.assign(I18N.en,{accounts_library_ready_hint:"Choose games from this account’s library."});
+Object.assign(I18N.ar,{accounts_library_ready_hint:"اختر الألعاب من مكتبة هذا الحساب."});
+Object.assign(I18N.en,{accounts_library_empty:"No games are available in this account’s library yet."});
+Object.assign(I18N.ar,{accounts_library_empty:"لا توجد ألعاب متاحة في مكتبة هذا الحساب حتى الآن."});
 let currentLang = localStorage.getItem('lootlazy_lang') === 'ar' ? 'ar' : 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 

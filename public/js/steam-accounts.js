@@ -3,17 +3,18 @@
  const model = {accounts:[],selected:null,loaded:false,busy:false,polling:false,searchSequence:0,searchTimer:null,names:{},signature:'',libraryFor:null,libraryLoading:false};
  try { model.names=JSON.parse(localStorage.getItem('lootlazy_account_games')||'{}'); } catch { model.names={}; }
  const message = error => { const key=String(error?.message||error).split(':')[0].trim(); return t(key.startsWith('accounts_')&&I18N.en[key]?key:'accounts_failed'); };
- function showError(error) { el('accounts-error').textContent=message(error);el('accounts-error').hidden=false; }
+ function showError(error) { el('accounts-error').textContent=message(error);el('accounts-error').hidden=false;if(el('account-verify-dialog').open){el('account-verify-error').textContent=message(error);el('account-verify-error').hidden=false;} }
  function selected(){return model.accounts.find(account=>account.id===model.selected);}
  async function call(command,body={}) {
   if(model.busy)return false;
-  model.busy=true;el('accounts-error').hidden=true;render();
+  model.busy=true;el('accounts-error').hidden=true;el('account-verify-error').hidden=true;render();
   try { const response=await request('/api/steam-accounts/'+command,body);apply(response);return true; }
   catch(error){showError(error);return false;}
   finally{model.busy=false;render();}
  }
  function apply(response) {
   model.accounts=Array.isArray(response?.accounts)?response.accounts:[];model.loaded=true;
+  if(model.accounts.some(account=>account.connected))window.lootlazyFeatures?.markUsed('steam-accounts-v1');
   if(!model.accounts.some(account=>account.id===model.selected))model.selected=model.accounts[0]?.id||null;
   render();
  }
@@ -56,15 +57,16 @@
   const isRunning=account.state==='running',isWaiting=['connecting','input'].includes(account.state);
   const gamesEditable=account.connected&&!isRunning&&!isWaiting;
   el('account-refresh-library').disabled=model.busy||!gamesEditable;
-  el('account-signin-form').hidden=account.active;el('account-input-form').hidden=!account.input;
+  el('account-auth-actions').hidden=account.active&&!account.input;el('account-signin-open').hidden=account.active;el('account-confirm-open').hidden=!account.input;el('account-game-setup').hidden=!account.connected;
+  if(!account.input&&el('account-verify-dialog').open)el('account-verify-dialog').close();
   el('account-start').hidden=!account.connected||isRunning;el('account-stop').hidden=!account.active;
   el('account-running-time').hidden=!isRunning;el('account-running-time').textContent=clock(account.elapsedSeconds||0);
   el('account-duration').disabled=model.busy||isRunning;
-  el('account-search').disabled=model.busy||!gamesEditable;
-  for(const id of ['account-signin','account-submit-input','account-start','account-stop','account-remove'])el(id).disabled=model.busy;
+  el('account-search').disabled=model.busy||!gamesEditable;el('account-search').closest('.search-field').hidden=isRunning;el('account-library-hint').textContent=t('accounts_library_ready_hint');el('account-library-hint').hidden=isRunning;el('account-quick-games').hidden=!gamesEditable||!el('account-quick-picks').querySelector('button');
+  for(const id of ['account-signin','account-signin-open','account-confirm-open','account-submit-input','account-start','account-stop','account-remove'])el(id).disabled=model.busy;
   el('account-start').disabled=model.busy||!account.games?.length||account.state==='blocked';
   el('account-games-hint').hidden=gamesEditable||!account.connected;
-  if(account.input){const type=account.input.type;el('account-input-label').textContent=t('accounts_input_'+type);el('account-code').type=['Password','SteamParentalCode'].includes(type)?'password':'text';el('account-code').autocomplete=type==='Password'?'current-password':'one-time-code';el('account-input-form').dataset.challenge=account.input.id;}
+  if(account.input){const type=account.input.type;el('account-input-label').textContent=t('accounts_input_'+type);el('account-code').type=['Password','SteamParentalCode'].includes(type)?'password':'text';el('account-code').autocomplete=type==='Password'?'current-password':'one-time-code';el('account-input-form').dataset.challenge=account.input.id;if(model.shownChallenge!==account.input.id&&!el('steam-accounts-mode-view').hidden){model.shownChallenge=account.input.id;el('account-verify-error').hidden=true;el('account-verify-dialog').showModal();el('account-code').focus();}}
   const gameSignature=JSON.stringify([account.id,account.games,model.names,gamesEditable,model.busy,currentLang]);
   if(el('account-games').dataset.signature!==gameSignature){
    el('account-games').dataset.signature=gameSignature;const games=document.createDocumentFragment();
@@ -73,23 +75,26 @@
     const remove=button(t('accounts_remove_game'),'x',()=>call('games',{id:account.id,games:account.games.filter(value=>value!==id)}),'icon-button');remove.setAttribute('aria-label',t('accounts_remove_game')+': '+name.textContent);remove.disabled=model.busy||!gamesEditable;row.append(name,remove);games.append(row);
    }el('account-games').replaceChildren(games);el('account-no-games').hidden=!!account.games?.length;
   }
-  for(const control of el('account-search-results').querySelectorAll('button'))control.disabled=model.busy||!gamesEditable;
+  for(const control of el('account-game-setup').querySelectorAll('#account-search-results button,#account-quick-picks button'))control.disabled=model.busy||!gamesEditable;
   if(gamesEditable&&model.libraryFor!==account.id&&!model.busy){model.libraryFor=account.id;queueMicrotask(()=>search());}
  }
  async function search(refresh=false){
   const account=selected(),query=el('account-search').value.trim(),sequence=++model.searchSequence;
   if(!account?.connected||account.state==='running')return;
-  el('account-search-results').replaceChildren();
+  el('account-search-results').replaceChildren();el('account-quick-picks').replaceChildren();el('account-quick-games').hidden=true;
   try{
    const result=await request('/api/steam-accounts/library',{id:account.id,query,refresh});
    const games=result.games;model.libraryLoading=!!result.loading;
    if(result.error)throw Error(result.error);
    if(sequence!==model.searchSequence||selected()?.id!==account.id)return;
    const fragment=document.createDocumentFragment();
-   for(const game of games||[]){const id=Number(game.steamId||game.id);if(!Number.isInteger(id)||id<1||account.games?.includes(id))continue;
-    const row=button(game.name,'plus',async()=>{if(model.busy)return;model.names[id]=game.name;localStorage.setItem('lootlazy_account_games',JSON.stringify(model.names));if(await call('games',{id:account.id,games:[...(selected()?.games||[]),id]})){el('account-search').value='';el('account-search-results').replaceChildren();}},'account-search-result');fragment.append(row);
+   const available=(games||[]).filter(game=>{const id=Number(game.steamId||game.id);return Number.isInteger(id)&&id>0&&!account.games?.includes(id);});
+   const choices=query?available:[...available].sort((a,b)=>{const rank=id=>[730,570,440].includes(Number(id))?[730,570,440].indexOf(Number(id)):3;return rank(a.steamId||a.id)-rank(b.steamId||b.id);}).slice(0,3);
+   for(const game of choices){const id=Number(game.steamId||game.id);
+    const row=button(game.name,'plus',async()=>{if(model.busy)return;model.names[id]=game.name;localStorage.setItem('lootlazy_account_games',JSON.stringify(model.names));if(await call('games',{id:account.id,games:[...(selected()?.games||[]),id]})){el('account-search').value='';search();}},query?'account-search-result':'button button-secondary account-quick-pick');fragment.append(row);
    }
-   if(!fragment.childNodes.length){const empty=document.createElement('p');empty.className='muted';empty.textContent=t(model.libraryLoading?'accounts_library_loading':'accounts_no_results');fragment.append(empty);}el('account-search-results').replaceChildren(fragment);render();
+   if(!fragment.childNodes.length&&(query||model.libraryLoading||!(games||[]).length)){const empty=document.createElement('p');empty.className='muted';empty.textContent=t(model.libraryLoading?'accounts_library_loading':query?'accounts_no_results':'accounts_library_empty');fragment.append(empty);}
+   if(!query&&choices.length){el('account-quick-picks').replaceChildren(fragment);el('account-quick-games').hidden=false;}else el('account-search-results').replaceChildren(fragment);render();
   }catch(error){if(sequence===model.searchSequence)showError(error);}
  }
  function renderActive(){
@@ -102,10 +107,15 @@
  function translateAccounts(){model.signature='';render();}
  document.addEventListener('DOMContentLoaded',()=>{
   el('accounts-add').onclick=()=>{el('account-add-form').reset();el('account-add-dialog').showModal();el('account-new-label').focus();};
-  el('account-add-cancel').onclick=()=>el('account-add-dialog').close();
-  el('account-add-form').onsubmit=async event=>{event.preventDefault();const label=el('account-new-label').value.trim(),login=el('account-new-login').value.trim();el('account-add-dialog').close();if(await call('add',{label,login}))model.selected=model.accounts.at(-1)?.id;render();};
+  for(const [dialog,form]of [['account-add-dialog','account-add-form'],['account-login-dialog','account-signin-form'],['account-verify-dialog','account-input-form']]){
+   el(dialog).addEventListener('close',()=>el(form).reset());
+   const prefix=dialog.replace('-dialog','');for(const suffix of ['close','cancel']){const control=el(prefix+'-'+suffix);control.onclick=()=>el(dialog).close();if(suffix==='close')control.innerHTML=getIcon('x');}
+  }
+  el('account-add-form').onsubmit=async event=>{event.preventDefault();const label=el('account-new-label').value.trim(),login=el('account-new-login').value.trim(),password=el('account-new-password').value;el('account-new-password').value='';el('account-add-dialog').close();const existing=new Set(model.accounts.map(account=>account.id));if(await call('add',{label,login})){const account=model.accounts.find(value=>!existing.has(value.id));if(account){model.selected=account.id;render();await call('signin',{id:account.id,password});}}};
+  el('account-signin-open').onclick=()=>{el('account-signin-form').reset();el('account-login-dialog').showModal();el('account-password').focus();};
+  el('account-confirm-open').onclick=()=>{el('account-verify-error').hidden=true;el('account-verify-dialog').showModal();el('account-code').focus();};
   el('accounts-retry').onclick=()=>{model.loaded=false;open();};
-  el('account-signin-form').onsubmit=async event=>{event.preventDefault();const account=selected();if(!account)return;const password=el('account-password').value;el('account-password').value='';await call('signin',{id:account.id,password});};
+  el('account-signin-form').onsubmit=async event=>{event.preventDefault();const account=selected();if(!account)return;const password=el('account-password').value;el('account-password').value='';el('account-login-dialog').close();await call('signin',{id:account.id,password});};
   el('account-input-form').onsubmit=async event=>{event.preventDefault();const account=selected();if(!account)return;const value=el('account-code').value,challengeId=el('account-input-form').dataset.challenge;el('account-code').value='';await call('input',{id:account.id,challengeId,value});};
   el('account-start').onclick=()=>{const account=selected();if(account)call('start',{id:account.id,minutes:Number(el('account-duration').value)});};
   el('account-stop').onclick=()=>{const account=selected();if(account)call('stop',{id:account.id});};
@@ -113,7 +123,7 @@
   el('account-remove-cancel').onclick=()=>el('account-remove-dialog').close();
   el('account-remove-confirm').onclick=async()=>{const account=selected();el('account-remove-dialog').close();if(account)await call('remove',{id:account.id});};
   el('account-search').oninput=()=>{clearTimeout(model.searchTimer);++model.searchSequence;model.searchTimer=setTimeout(()=>search(),300);};
-  for(const [id,icon]of [['accounts-add','plus'],['accounts-retry','refresh'],['account-start','play'],['account-stop','stop'],['account-remove','x'],['account-signin','play']]){const span=document.createElement('span');span.innerHTML=getIcon(icon);el(id).prepend(span);}
+  for(const [id,icon]of [['accounts-add','plus'],['accounts-retry','refresh'],['account-start','play'],['account-stop','stop'],['account-remove','x'],['account-signin','play'],['account-signin-open','play']]){const span=document.createElement('span');span.innerHTML=getIcon(icon);el(id).prepend(span);}
   el('account-refresh-library').onclick=()=>search(true);el('account-refresh-library').innerHTML=getIcon('refresh');
   el('account-search-icon').innerHTML=getIcon('search');el('steam-mode-accounts-icon').innerHTML=getIcon('users');
   setInterval(poll,3000);

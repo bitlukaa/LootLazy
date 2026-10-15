@@ -339,3 +339,19 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .dialog-close{width:30px;height:30px;flex-shrink:0}.dialog-close svg{width:15px;height:15px}
 .feature-new-badge{display:inline-flex;align-items:center;border-radius:5px;background:var(--selected);color:var(--accent);font-size:9px;font-weight:600;padding:2px 5px;white-space:nowrap}
 @media(max-width:1050px){.lootlazy-navbar .navigation .nav-tab{padding-inline:8px}.lootlazy-navbar{gap:8px}.navbar-tools .navbar-status-wrap{gap:7px;padding-inline:7px}}
+
+#account-add-dialog,#account-login-dialog,#account-verify-dialog{width:380px;margin:auto}
+#account-add-dialog label,#account-login-dialog label,#account-verify-dialog label{display:grid;gap:7px;margin-top:16px}
+#account-add-dialog p,#account-login-dialog p{margin-top:12px;line-height:1.6;font-size:11px}
+.account-auth-actions{display:flex;gap:8px;margin-top:16px}.account-security{line-height:1.6}
+#account-game-setup{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+#account-quick-games{margin-top:14px}#account-quick-games h3{font-size:11px;color:var(--muted);margin-bottom:8px}
+#account-quick-picks{display:flex;flex-wrap:wrap;gap:7px}.account-quick-pick{min-height:32px;padding:6px 9px;font-size:11px}
+#account-remove{margin-top:18px}
+
+.lootlazy-navbar{flex-wrap:nowrap}
+.lootlazy-navbar .navigation{flex:1 1 0%;flex-wrap:nowrap;overflow-x:auto}
+.lootlazy-navbar .navigation .nav-tab{padding-inline:7px;gap:5px;font-size:12px}
+@media(max-width:920px){.lootlazy-navbar{flex-wrap:wrap}.lootlazy-navbar .navigation{flex:1 1 100%;justify-content:center;flex-wrap:wrap;overflow:visible}}
+
+#account-game-setup .account-games-heading{margin-top:0}

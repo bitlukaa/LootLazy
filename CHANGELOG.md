@@ -1,5 +1,12 @@
 # Release history
 
+## 3.7.2 — Consistent navigation and dialogs
+
+- Platform status and notifications now share the main navigation header.
+- Stable and Beta confirmations use the same centered cards and visible close icons.
+- Add and sign in to an account from one dialog; passwords and Guard prompts no longer clutter the games page.
+- Choose quick picks from the signed-in account’s library. New badges disappear after first successful use.
+
 ## 3.7.1 — Beta update channel
 
 - Opt into Beta from Settings > Updates; new features arrive here first.
