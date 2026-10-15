@@ -318,3 +318,8 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .accounts-grid .panel-heading{flex-wrap:wrap;gap:10px}.accounts-list{max-height:420px;overflow:auto}#account-games{max-height:230px;overflow:auto}
 
 .account-games-heading{display:flex;align-items:center;justify-content:space-between;margin-top:18px}.account-games-heading .account-games-title{margin:0}
+
+.update-channel-row{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.update-channel-row label{font-weight:600}
+.update-channel-row p{margin-top:5px;line-height:1.6}
+#update-channel{width:auto;min-width:140px;max-width:100%;flex-shrink:0}
