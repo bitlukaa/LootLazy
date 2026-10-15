@@ -380,7 +380,7 @@ mod tests {
     }
     #[test]
     fn channel_is_persisted_without_touching_application_data() {
-        let root = std::env::temp_dir().join(format!("lootlazy-channel-{}", uuid::Uuid::new_v4()));
+        let root = std::env::temp_dir().join(format!("lootlazy-channel-{}", rand::random::<u64>()));
         assert_eq!(
             info_for(&root)["channel"],
             include_str!("../../public/update-channel.txt").trim()
