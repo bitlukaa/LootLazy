@@ -335,3 +335,8 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .dialog-close{width:30px;height:30px;flex-shrink:0}.dialog-close svg{width:15px;height:15px}
 .feature-new-badge{display:inline-flex;align-items:center;border-radius:5px;background:var(--selected);color:var(--accent);font-size:9px;font-weight:600;padding:2px 5px;white-space:nowrap}
 @media(max-width:1050px){.lootlazy-navbar .navigation .nav-tab{padding-inline:8px}.lootlazy-navbar{gap:8px}.navbar-tools .navbar-status-wrap{gap:7px;padding-inline:7px}}
+
+.lootlazy-navbar{flex-wrap:nowrap}
+.lootlazy-navbar .navigation{flex:1 1 0%;flex-wrap:nowrap;overflow-x:auto}
+.lootlazy-navbar .navigation .nav-tab{padding-inline:7px;gap:5px;font-size:12px}
+@media(max-width:920px){.lootlazy-navbar{flex-wrap:wrap}.lootlazy-navbar .navigation{flex:1 1 100%;justify-content:center;flex-wrap:wrap;overflow:visible}}

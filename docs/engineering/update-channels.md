@@ -9,3 +9,5 @@ Only an explicit Stable selection enables a lower-version installation. Its auth
 The choice is stored separately in data/update-channel.json. A stable package defaults to Stable and a beta package defaults to Beta; saved choices take precedence. Replacing the executable keeps settings, saved queues and encrypted account state. Stable ignores the beta-only Steam Accounts directory. The current beta introduces no incompatible changes to shared data. Future beta migrations must retain stable-compatible shared files or supply a tested reverse migration before release. No automatic deletion or restoration of account data occurs on a channel switch.
 
 Release policy: publish feature releases as GitHub prereleases first, then promote tested changes to stable. Never mark beta as latest. Existing versions without this selector need one channel-capable update (or one manual Beta installation) to bootstrap it.
+
+Shared updater UI and fixes must be carried into both distribution branches before publication. A beta release must not retain an older confirmation flow when Stable changes it.

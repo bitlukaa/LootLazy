@@ -1,11 +1,11 @@
 {
-  "version": "3.6.25",
+  "version": "3.6.26",
   "en": [
-    "Update checks and downloads retry temporary connection failures.",
-    "Failed checks no longer block an immediate retry, and background checks cannot interrupt installation."
+    "Platform status and notifications now share the main navigation header.",
+    "Stable and Beta confirmations use the same centered cards and visible close icons."
   ],
   "ar": [
-    "إعادة محاولة التحقق والتنزيل تلقائيًا عند انقطاع الاتصال المؤقت.",
-    "فشل التحقق لا يمنع إعادة المحاولة، وفحوصات الخلفية لا تتداخل مع تثبيت التحديث."
+    "حالة المنصات والإشعارات أصبحت في شريط التنقل الرئيسي.",
+    "تأكيدات المستقرة والتجريبية تستخدم نفس الكروت وأيقونات الإغلاق الواضحة."
   ]
 }

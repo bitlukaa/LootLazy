@@ -1,5 +1,10 @@
 # Release history
 
+## 3.6.26 — Consistent navigation and dialogs
+
+- Platform status and notifications now share the main navigation header.
+- Stable and Beta confirmations use the same centered cards and visible close icons.
+
 ## 3.6.25 — More reliable updates
 
 - Retry temporary GitHub connection errors, interrupted responses and server failures, with bounded attempts and longer download timeouts.
