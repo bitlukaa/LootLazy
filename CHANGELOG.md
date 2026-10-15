@@ -1,5 +1,9 @@
 # Release history
 
+## 3.6.27 — Build channel badges
+
+- Display Beta builds with a separate badge in the title bar and Updates. Stable builds keep a clean version label.
+
 ## 3.6.26 — Consistent navigation and dialogs
 
 - Platform status and notifications now share the main navigation header.
