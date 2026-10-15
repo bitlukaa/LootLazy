@@ -60,3 +60,9 @@ test('failed initial quest loading shows an error instead of implying an empty s
  const context={questsBusy:false,lastRealQuestFetch:0,lastQuestRefresh:0,state:{quests:[],session:null},$:control,busy:()=>{},Date,renderQuests:()=>{},request:async()=>{throw Error('network_unavailable');},t:key=>key};
  const fn=vm.runInNewContext(source.slice(start,end)+';loadQuests',context);await fn(false,true);assert.equal(control('quests-error').hidden,false);assert.equal(control('quests-error').textContent,'quests_load_error');assert.equal(context.questsBusy,false);
 });
+test('update installation explains active sessions for native string and Error rejections',async()=>{
+ for(const rejected of ['updates_stop_sessions',new Error('updates_stop_sessions')]){const messages=[],button={disabled:false,textContent:''};const context={state:{},$:()=>button,t:key=>key,request:async()=>{throw rejected},toast:(message,type)=>messages.push([message,type])};await run('installUpdate',context)();assert.deepEqual(messages,[['updates_stop_sessions','error']]);assert.equal(context.state.installingUpdate,false);assert.equal(button.disabled,false);assert.equal(button.textContent,'install_update');}
+});
+test('other native update failures preserve their reason and unknown failures stay generic',async()=>{
+ for(const code of ['updates_busy','updates_unavailable','updates_download_failed','updates_checksum_failed','updates_signature_failed','updates_save_failed','updates_install_failed','unknown_error']){const messages=[],button={};const fn=run('installUpdate',{state:{},$:()=>button,t:key=>key,request:async()=>{throw code},toast:message=>messages.push(message)});await fn();assert.deepEqual(messages,[code==='unknown_error'?'updates_install_failed':code]);assert.equal(button.disabled,false);}
+});

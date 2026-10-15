@@ -1,5 +1,10 @@
 # Release history
 
+## 3.6.20 — October 15, 2026
+
+- Recognize native string errors as well as Error objects during update installation.
+- Explain that all active sessions must be stopped before installing an update.
+
 ## 3.6.19 — October 15, 2026
 
 - Override the shared pressed-button transform for quest actions in the final stylesheet.

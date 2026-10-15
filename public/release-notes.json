@@ -1,15 +1,11 @@
 {
-  "version": "3.6.19",
+  "version": "3.6.20",
   "en": [
-    "Quest buttons no longer shift when pressed.",
-    "Closed quest labels remain unchanged between status checks.",
-    "Failed initial quest loading now shows a connection error instead of an apparently empty feed.",
-    "The Pause icon stays visible while a quest is running."
+    "Update errors now preserve the specific reason returned by the native application.",
+    "If sessions are running, the app asks you to stop them before installing the update."
   ],
   "ar": [
-    "منع حركة أزرار الكويستات أثناء الضغط.",
-    "تثبيت نص المهام المغلقة بين تحديثات الحالة.",
-    "إظهار خطأ عند فشل تحميل المهام أول مرة بدل قائمة فارغة مضللة.",
-    "الاحتفاظ بأيقونة الإيقاف المؤقت أثناء تشغيل المهمة."
+    "إظهار السبب الحقيقي لفشل بدء التحديث بدل رسالة عامة.",
+    "عند وجود جلسات نشطة، تظهر رسالة تطلب إيقافها قبل تثبيت التحديث."
   ]
 }
