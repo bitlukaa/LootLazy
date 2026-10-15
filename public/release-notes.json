@@ -1,13 +1,15 @@
 {
-  "version": "3.7.0",
+  "version": "3.7.1",
   "en": [
-    "Preview: manage several Steam accounts from the new Steam Accounts tab.",
+    "Beta: manage several Steam accounts from the new Steam Accounts tab.",
     "Sign in, confirm Steam Guard, choose games, and control each account independently.",
-    "Steam desktop is optional for account sessions. Existing Steam Library sessions still work as before."
+    "Steam desktop is optional for account sessions. Existing Steam Library sessions still work as before.",
+    "Choose Stable or Beta in Settings > Updates, and return to Stable without deleting your settings."
   ],
   "ar": [
     "نسخة تجريبية: إدارة عدة حسابات Steam من تبويب حسابات Steam الجديد.",
     "سجّل الدخول وأكّد Steam Guard واختر الألعاب وتحكّم في كل حساب بشكل مستقل.",
-    "جلسات الحسابات لا تحتاج تطبيق Steam المكتبي. جلسات مكتبة Steam الحالية تعمل كالمعتاد."
+    "جلسات الحسابات لا تحتاج تطبيق Steam المكتبي. جلسات مكتبة Steam الحالية تعمل كالمعتاد.",
+    "اختر قناة التحديثات المستقرة أو التجريبية من الإعدادات، مع إمكانية العودة للمستقرة دون حذف إعداداتك."
   ]
 }

@@ -1,5 +1,11 @@
 # Release history
 
+## 3.7.1 — Beta update channel
+
+- Opt into Beta from Settings > Updates; new features arrive here first.
+- Return to the signed stable release, including a lower version, while keeping settings and account data.
+- Steam Accounts remains a beta feature. Live account sign-in still requires real-world testing.
+
 ## 3.7.0 — Steam Accounts preview
 
 - Added Steam Accounts between Steam Library and Active sessions.
