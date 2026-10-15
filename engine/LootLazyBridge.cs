@@ -139,6 +139,9 @@ internal static class LootLazyBridge {
             if (selected != null) {
                 await selected.Stop(true).ConfigureAwait(false);
                 if (!await selected.DeleteAllRelatedFiles().ConfigureAwait(false)) Fail("accounts_remove_failed");
+                string pendingDatabase = Path.Combine("config", entry.Id + ".db.new");
+                LootLazyVault.CheckPath(pendingDatabase);
+                File.Delete(pendingDatabase);
                 await selected.Destroy(true).ConfigureAwait(false);
             }
             if (OfflineTest) File.Delete(ConfigPath(entry.Id));
@@ -197,7 +200,10 @@ internal static class LootLazyBridge {
                 var session = pair.Value;
                 if (session.Minutes == 0 || session.Games.Length == 0 || DateTimeOffset.UtcNow - session.Started < TimeSpan.FromMinutes(session.Minutes)) continue;
                 session.Games = [];
-                if (Bot.Bots?.TryGetValue(pair.Key, out var bot) == true) await ResetGames(bot).ConfigureAwait(false);
+                if (Bot.Bots?.TryGetValue(pair.Key, out var bot) == true) {
+                    try { await ResetGames(bot).ConfigureAwait(false); }
+                    finally { await bot.Stop(true).ConfigureAwait(false); }
+                }
             }
         }
     }

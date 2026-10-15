@@ -31,6 +31,7 @@
   const control=document.createElement('button');control.type='button';control.className=className;
   control.innerHTML=getIcon(icon)+(className==='icon-button'?'':'<span>'+escapeHtml(label)+'</span>');control.setAttribute('aria-label',label);control.onclick=action;return control;
  }
+ function text(id,value){const node=el(id);if(node.textContent!==value)node.textContent=value;}
  function render() {
   if(!el('accounts-list'))return;
   renderActive();
@@ -49,8 +50,8 @@
   const account=selected();el('account-setup').hidden=!account;el('account-no-selection').hidden=!!account;
   if(!account)return;
   el('account-auth-error').hidden=!account.error;el('account-auth-error').textContent=account.error?t('accounts_login_failed'):'';
-  el('account-title').textContent=account.label;el('account-login').textContent=account.login;
-  el('account-state').className='account-state '+account.state;el('account-state').textContent=t('accounts_state_'+account.state);
+  text('account-title',account.label);text('account-login',account.login);
+  if(el('account-state').className!=='account-state '+account.state)el('account-state').className='account-state '+account.state;text('account-state',t('accounts_state_'+account.state));
   const isRunning=account.state==='running',isWaiting=['connecting','input'].includes(account.state);
   const gamesEditable=!isRunning&&!isWaiting;
   el('account-signin-form').hidden=account.active;el('account-input-form').hidden=!account.input;
