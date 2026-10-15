@@ -12,9 +12,10 @@ let server,browser;
   window.lootlazyRequest=async(route,body)=>{const url=new URL(route,'http://localhost'),p=url.pathname;window.lootlazyObservedRoutes.push(p);
    if(p.startsWith('/api/steam-accounts/')){
      const accounts=window.accountFixture ||= [];const command=p.split('/').at(-1);
-     if(command==='search')return [{id:'570',steamId:'570',name:'Dota 2'},{id:'730',steamId:'730',name:'Counter-Strike 2'}];
+     
      if(command==='add')accounts.push({id:'ll_'+String(accounts.length+1).padStart(32,'0'),label:body.label,login:body.login,games:[],state:'offline',active:false,connected:false});
      const account=body?.id?accounts.find(item=>item.id===body.id):null;
+     if(command==='library')return {games:account.login==='main_login'?[{id:570,name:'Dota 2'},{id:730,name:'Counter-Strike 2'}]:[{id:440,name:'Team Fortress 2'}],total:2,loading:false,active:true};
      if(command==='games')account.games=body.games;
      if(command==='signin'){account.state='input';account.active=true;account.input={id:'challenge-'+account.id,type:'SteamGuard'};window.accountPasswordWasSubmitted=!!body.password;}
      if(command==='input'){if(body.value!=='12345')throw Error('accounts_input_expired');account.state='ready';account.connected=true;account.input=null;}
@@ -53,11 +54,12 @@ let server,browser;
  await page.click('[data-steam-sub-mode=accounts]');await page.waitForFunction(()=>!document.getElementById('accounts-add').disabled);assert.equal(await page.locator('#accounts-empty').isVisible(),true);
  async function add(label,login){await page.click('#accounts-add');await page.fill('#account-new-label',label);await page.fill('#account-new-login',login);await page.click('#account-add-form button[type=submit]');await page.waitForFunction(()=>!document.getElementById('accounts-add').disabled);}
  await add('Main','main_login');assert.equal(await page.locator('#account-title').innerText(),'Main');assert.equal(await page.locator('#account-duration').inputValue(),'0');
- await page.fill('#account-search','Dota');await page.locator('#account-search-results button').first().click();await page.waitForFunction(()=>document.querySelectorAll('#account-games .account-game-row').length===1);
- assert.match(await page.locator('#account-games').innerText(),/Dota 2/);
  await page.fill('#account-password','test-password-not-persisted');await page.click('#account-signin');await page.waitForFunction(()=>!document.getElementById('account-input-form').hidden);assert.equal(await page.locator('#account-password').inputValue(),'');assert.equal(await page.locator('#account-input-label').innerText(),'Code from Steam email');
  await page.fill('#account-code','wrong');await page.click('#account-submit-input');await page.waitForFunction(()=>!document.getElementById('accounts-error').hidden);assert.match(await page.locator('#accounts-error').innerText(),/expired/);assert.equal(await page.locator('#account-code').inputValue(),'');
- await page.fill('#account-code','12345');await page.click('#account-submit-input');await page.waitForFunction(()=>document.getElementById('account-state').textContent==='Ready');await page.click('#account-start');await page.waitForFunction(()=>document.getElementById('account-state').textContent==='Running');assert.equal(await page.locator('#account-start').isVisible(),false);assert.equal(await page.locator('#account-running-time').innerText(),'00:00:42');
+ await page.fill('#account-code','12345');await page.click('#account-submit-input');await page.waitForFunction(()=>document.getElementById('account-state').textContent==='Ready');
+ await page.fill('#account-search','Dota');await page.locator('#account-search-results button').first().click();await page.waitForFunction(()=>document.querySelectorAll('#account-games .account-game-row').length===1);
+ assert.match(await page.locator('#account-games').innerText(),/Dota 2/);
+ await page.click('#account-start');await page.waitForFunction(()=>document.getElementById('account-state').textContent==='Running');assert.equal(await page.locator('#account-start').isVisible(),false);assert.equal(await page.locator('#account-running-time').innerText(),'00:00:42');
  await add('Second','second_login');assert.equal(await page.locator('#accounts-list .account-row').count(),2);assert.equal(await page.locator('#account-title').innerText(),'Second');assert.equal(await page.locator('#account-games .account-game-row').count(),0,'Games are isolated between accounts');
  await page.locator('#accounts-list .account-row').first().click();assert.match(await page.locator('#account-games').innerText(),/Dota 2/);assert.equal(await page.locator('#account-password').inputValue(),'');
  await page.screenshot({path:path.join(root,'data/steam-accounts-ui.png')});

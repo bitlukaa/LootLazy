@@ -178,3 +178,8 @@ persistence and shutdown; actual initialization fixtures register/remove disable
 bots without login. Browser fixtures exercise the UI and simulated Guard failures.
 These do not establish real Steam sign-in success or server-credited game hours.
 Do not advertise the preview as live-tested until those have been checked locally.
+
+Account search now uses `ArchiHandler.GetOwnedGames` for the signed-in account,
+not the public store catalog. Library loading runs in a bounded background task,
+so a slow Steam response cannot block other account controls. Selection and Start
+both validate ownership against that account’s authenticated library.

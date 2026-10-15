@@ -156,10 +156,6 @@ async fn api(
     let result = tauri::async_runtime::spawn_blocking(move || {
         let url =
             url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
-        if url.path() == "/api/steam-accounts/search" {
-            let query = url.query_pairs().find(|(key, _)| key == "query").map(|(_, value)| value.into_owned()).unwrap_or_default();
-            return steam_store::search(&query).map(|games| serde_json::json!(games));
-        }
         if let Some(command) = url.path().strip_prefix("/api/steam-accounts/") {
             let root = state.lock().map_err(|_| "Backend unavailable")?.root.clone();
             return steam_accounts::request(&root, command, body);

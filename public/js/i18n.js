@@ -791,6 +791,10 @@ Object.assign(I18N.en,{connection_steam_title:"Steam",connection_steam_desc:"Ste
 Object.assign(I18N.ar,{connection_steam_title:"Steam",connection_steam_desc:"مكتبة Steam تستخدم الحساب المفتوح في تطبيق Steam المكتبي. تبويب حسابات Steam يدعم تسجيل عدة حسابات بشكل مستقل من غير الحاجة للتطبيق المكتبي."});
 Object.assign(I18N.en,{steam_pause_all:"Pause library sessions"});
 Object.assign(I18N.ar,{steam_pause_all:"إيقاف جلسات المكتبة مؤقتًا"});
+Object.assign(I18N.en,{accounts_restore_failed:"Saved login could not be restored. Remove this account and add it again."});
+Object.assign(I18N.ar,{accounts_restore_failed:"تعذّر استعادة جلسة الدخول المحفوظة. أزل الحساب وأضفه مرة أخرى."});
+Object.assign(I18N.en,{accounts_library_loading:"Loading this account’s games…",accounts_library_failed:"Could not load this account’s Steam library. Use refresh to retry.",accounts_owned_hint:"Sign in to browse and search this account’s games."});
+Object.assign(I18N.ar,{accounts_library_loading:"جارٍ تحميل ألعاب الحساب…",accounts_library_failed:"تعذّر تحميل مكتبة الحساب. اضغط تحديث للمحاولة مجددًا.",accounts_owned_hint:"سجّل الدخول لتصفح ألعاب هذا الحساب والبحث فيها."});
 let currentLang = localStorage.getItem('lootlazy_lang') === 'ar' ? 'ar' : 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 

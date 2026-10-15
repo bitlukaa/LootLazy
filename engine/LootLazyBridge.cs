@@ -52,6 +52,10 @@ internal static class LootLazyBridge {
     }
     private static readonly Dictionary<string, Account> Accounts = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, Challenge> Challenges = new(StringComparer.Ordinal);
+    private sealed record Library(ulong SteamId, Dictionary<uint, string> Games);
+    private static readonly ConcurrentDictionary<string, Library> Libraries = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, string> LibraryRequests = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, byte> LibraryErrors = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, Session> Sessions = new(StringComparer.Ordinal);
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private static readonly SemaphoreSlim PlayLock = new(1, 1);
@@ -107,7 +111,7 @@ internal static class LootLazyBridge {
             bool connected = bot?.IsConnectedAndLoggedOn == true;
             bool running = connected && bot!.IsPlayingPossible && session?.Games.Length > 0;
             string state = input != null ? "input" : running ? "running" : connected && !bot!.IsPlayingPossible ? "blocked" : connected ? "ready" : bot?.KeepRunning == true ? "connecting" : "offline";
-            return new { id = account.Id, label = account.Label, login = account.Login, games = account.Games, state, connected, active = bot?.KeepRunning == true, steamId = bot?.SSteamID ?? "0", input = input == null ? null : new { id = input.Id, type = input.Type.ToString() }, elapsedSeconds = running ? Math.Max(0, (long)(DateTimeOffset.UtcNow - session!.Started).TotalSeconds) : 0, minutes = session?.Minutes ?? 0, error = bot != null && !bot.KeepRunning && bot.LastLogOnResult is not (SteamKit2.EResult.Invalid or SteamKit2.EResult.OK) ? "accounts_login_failed" : null };
+            return new { id = account.Id, label = account.Label, login = account.Login, games = account.Games, state, connected, active = bot?.KeepRunning == true, steamId = bot?.SSteamID ?? "0", input = input == null ? null : new { id = input.Id, type = input.Type.ToString() }, elapsedSeconds = running ? Math.Max(0, (long)(DateTimeOffset.UtcNow - session!.Started).TotalSeconds) : 0, minutes = session?.Minutes ?? 0, error = bot == null && !OfflineTest ? "accounts_restore_failed" : bot != null && !bot.KeepRunning && bot.LastLogOnResult is not (SteamKit2.EResult.Invalid or SteamKit2.EResult.OK) ? "accounts_login_failed" : null };
         }).ToArray();
         return new { protocol = 1, accounts = result, active = result.Any(account => account.active) };
     }
@@ -116,8 +120,33 @@ internal static class LootLazyBridge {
         if (!ValidId(id) || !Accounts.TryGetValue(id, out var account)) { Fail("accounts_missing"); return null!; }
         return account;
     }
+    private static object LibraryResult(Bot bot, JsonElement body) {
+        string id = bot.BotName, query = Text(body, "query").Trim();
+        if (query.Length > 160) { Fail("accounts_invalid"); return null!; }
+        if (body.TryGetProperty("refresh", out var refresh) && refresh.ValueKind == JsonValueKind.True && !LibraryRequests.ContainsKey(id)) { Libraries.TryRemove(id, out _); LibraryErrors.TryRemove(id, out _); }
+        if (Libraries.TryGetValue(id, out var library) && library.SteamId == bot.SteamID) {
+            var games = library.Games.Where(game => query.Length == 0 || game.Value.Contains(query, StringComparison.OrdinalIgnoreCase) || game.Key.ToString(System.Globalization.CultureInfo.InvariantCulture).Contains(query, StringComparison.Ordinal)).OrderBy(game => game.Value, StringComparer.OrdinalIgnoreCase).Take(50).Select(game => new { id = game.Key, name = game.Value[..Math.Min(game.Value.Length, 160)] }).ToArray();
+            return new { games, total = library.Games.Count, loading = false, active = true, error = (string?)null };
+        }
+        if (!LibraryErrors.ContainsKey(id)) {
+            string nonce = Guid.NewGuid().ToString("N");
+            if (LibraryRequests.TryAdd(id, nonce)) {
+                ulong steamId = bot.SteamID;
+                _ = Task.Run(async () => {
+                    try {
+                        var games = await bot.ArchiHandler.GetOwnedGames(steamId).WaitAsync(TimeSpan.FromSeconds(15)).ConfigureAwait(false);
+                        if (!LibraryRequests.TryGetValue(id, out var current) || current != nonce) return;
+                        if (games == null || !bot.IsConnectedAndLoggedOn || bot.SteamID != steamId) { LibraryErrors[id] = 1; return; }
+                        Libraries[id] = new Library(steamId, games.Where(game => game.Key > 0 && !string.IsNullOrWhiteSpace(game.Value)).Take(100000).ToDictionary(game => game.Key, game => game.Value));
+                    } catch { if (LibraryRequests.TryGetValue(id, out var current) && current == nonce) LibraryErrors[id] = 1; }
+                    finally { if (LibraryRequests.TryGetValue(id, out var current) && current == nonce) LibraryRequests.TryRemove(id, out _); }
+                });
+            }
+        }
+        return new { games = Array.Empty<object>(), total = 0, loading = LibraryRequests.ContainsKey(id), active = true, error = LibraryErrors.ContainsKey(id) ? "accounts_library_failed" : null };
+    }
     private static async Task<object> Handle(string command, JsonElement body) {
-        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
+        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
         if (command == "status") return Snapshot();
         if (command == "add") {
             string label = Text(body, "label").Trim(), login = Text(body, "login").Trim();
@@ -136,15 +165,17 @@ internal static class LootLazyBridge {
         if (command == "remove") {
             if (Challenges.TryRemove(entry.Id, out var pending)) pending.Completion.TrySetResult(null);
             Sessions.TryRemove(entry.Id, out _);
+            Libraries.TryRemove(entry.Id, out _); LibraryRequests.TryRemove(entry.Id, out _); LibraryErrors.TryRemove(entry.Id, out _);
             if (selected != null) {
                 await selected.Stop(true).ConfigureAwait(false);
                 if (!await selected.DeleteAllRelatedFiles().ConfigureAwait(false)) Fail("accounts_remove_failed");
-                string pendingDatabase = Path.Combine("config", entry.Id + ".db.new");
-                LootLazyVault.CheckPath(pendingDatabase);
-                File.Delete(pendingDatabase);
-                await selected.Destroy(true).ConfigureAwait(false);
             }
-            if (OfflineTest) File.Delete(ConfigPath(entry.Id));
+            foreach (string suffix in new[] { ".json", ".db", ".db.new", ".json.new" }) {
+                string ownedFile = Path.Combine("config", entry.Id + suffix);
+                LootLazyVault.CheckPath(ownedFile);
+                File.Delete(ownedFile);
+            }
+            if (selected != null) await selected.Destroy(true).ConfigureAwait(false);
             Accounts.Remove(entry.Id);
             Save();
             return Snapshot();
@@ -154,14 +185,17 @@ internal static class LootLazyBridge {
             if (!body.TryGetProperty("games", out var values) || values.ValueKind != JsonValueKind.Array || values.GetArrayLength() > 32) Fail("accounts_invalid");
             uint[] games = values.EnumerateArray().Select(value => value.GetUInt32()).Distinct().ToArray();
             if (games.Any(id => id == 0)) Fail("accounts_invalid");
+            if (!OfflineTest && (selected?.IsConnectedAndLoggedOn != true || !Libraries.TryGetValue(entry.Id, out var owned) || owned.SteamId != selected.SteamID || games.Any(id => !owned.Games.ContainsKey(id)))) Fail("accounts_not_owned");
             Accounts[entry.Id] = entry with { Games = games };
             Save();
             return Snapshot();
         }
-        if (OfflineTest || selected == null) { Fail("accounts_not_ready"); return null!; }
+        if (OfflineTest || selected == null) { Fail(OfflineTest ? "accounts_not_ready" : "accounts_restore_failed"); return null!; }
+        if (command == "library") { if (!selected.IsConnectedAndLoggedOn) { Fail("accounts_not_ready"); return null!; } return LibraryResult(selected, body); }
         if (command == "signin") {
             if (selected.KeepRunning) Fail("accounts_stop_first");
             Sessions.TryRemove(entry.Id, out _);
+            Libraries.TryRemove(entry.Id, out _); LibraryRequests.TryRemove(entry.Id, out _); LibraryErrors.TryRemove(entry.Id, out _);
             string password = Text(body, "password");
             if (password.Length > 256) Fail("accounts_invalid");
             if (password.Length > 0) selected.SetUserInput(ASF.EUserInputType.Password, password);
@@ -177,7 +211,7 @@ internal static class LootLazyBridge {
             if (!selected.IsPlayingPossible) Fail("accounts_playing_elsewhere");
             if (entry.Games.Length == 0) Fail("accounts_choose_games");
             foreach (uint id in entry.Games) {
-                if (ASF.GlobalDatabase?.GetPackageIDs(id, selected.OwnedPackages.Keys)?.Count is not > 0) Fail("accounts_not_owned");
+                if (!Libraries.TryGetValue(entry.Id, out var owned) || owned.SteamId != selected.SteamID || !owned.Games.ContainsKey(id)) Fail("accounts_not_owned");
             }
             int minutes = body.TryGetProperty("minutes", out var duration) ? duration.GetInt32() : 0;
             if (minutes is < 0 or > 1440) Fail("accounts_invalid");
@@ -201,8 +235,8 @@ internal static class LootLazyBridge {
                 if (session.Minutes == 0 || session.Games.Length == 0 || DateTimeOffset.UtcNow - session.Started < TimeSpan.FromMinutes(session.Minutes)) continue;
                 session.Games = [];
                 if (Bot.Bots?.TryGetValue(pair.Key, out var bot) == true) {
-                    try { await ResetGames(bot).ConfigureAwait(false); }
-                    finally { await bot.Stop(true).ConfigureAwait(false); }
+                    try { await ResetGames(bot).ConfigureAwait(false); } catch { /* Disconnect still ends the session if the final packet fails. */ }
+                    try { await bot.Stop(true).ConfigureAwait(false); } catch { Environment.Exit(2); }
                 }
             }
         }
