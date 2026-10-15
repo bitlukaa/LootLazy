@@ -1,9 +1,11 @@
 {
-  "version": "3.6.24",
+  "version": "3.6.25",
   "en": [
-    "Beta and Stable confirmation now uses a centered card matching the app instead of a browser prompt."
+    "Update checks and downloads retry temporary connection failures.",
+    "Failed checks no longer block an immediate retry, and background checks cannot interrupt installation."
   ],
   "ar": [
-    "تأكيد الانضمام للتجريبية والعودة للمستقرة يظهر الآن بكارت في منتصف التطبيق بنفس تصميمه."
+    "إعادة محاولة التحقق والتنزيل تلقائيًا عند انقطاع الاتصال المؤقت.",
+    "فشل التحقق لا يمنع إعادة المحاولة، وفحوصات الخلفية لا تتداخل مع تثبيت التحديث."
   ]
 }

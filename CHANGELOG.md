@@ -1,5 +1,12 @@
 # Release history
 
+## 3.6.25 — More reliable updates
+
+- Retry temporary GitHub connection errors, interrupted responses and server failures, with bounded attempts and longer download timeouts.
+- Cache only successful update checks so an immediate retry can recover.
+- Prevent background or late checks from replacing installation state with a misleading error.
+- Record safe transfer failure categories while retaining all signature, checksum, size and trusted-host checks.
+
 ## 3.6.24 — Centered update confirmation
 
 - Replace the browser prompt for joining Beta or returning to Stable with a centered application dialog.
