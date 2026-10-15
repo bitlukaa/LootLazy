@@ -1,5 +1,11 @@
 # Release history
 
+## 3.6.23 — Optional Beta updates
+
+- Join Beta from Settings > Updates to try new features early.
+- Return to the latest signed Stable release without deleting settings.
+- Stable remains the default. Channel changes require confirmation; installation is a separate action.
+
 ## 3.6.22 — October 15, 2026
 
 - Clean portable data and generated helpers when application data deletion is selected during uninstall.
