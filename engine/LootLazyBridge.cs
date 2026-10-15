@@ -115,8 +115,11 @@ internal static class LootLazyBridge {
         QrLogins.TryRemove(bot.BotName, out _); QrCodes.TryRemove(bot.BotName, out _); return true;
     }
     private static bool IsBusy() => Drafts.Count > 0 || Challenges.Count > 0 || Sessions.Values.Any(session => session.Games.Length > 0) || (Bot.Bots?.Values.Any(bot => bot.KeepRunning && !bot.IsConnectedAndLoggedOn) ?? false);
-    private static async Task EndSession(string id, Func<Task> send) {
-        if (Sessions.TryRemove(id, out var session)) session.Games = [];
+    private static async Task EndSession(string id, Func<Task> send, Session? expected = null) {
+        if (expected != null) {
+            if (!((ICollection<KeyValuePair<string, Session>>)Sessions).Remove(new(id, expected))) return;
+            expected.Games = [];
+        } else if (Sessions.TryRemove(id, out var session)) session.Games = [];
         await send().ConfigureAwait(false);
     }
     private static readonly Dictionary<string, Account> Accounts = new(StringComparer.Ordinal);
@@ -350,7 +353,7 @@ internal static class LootLazyBridge {
                 if (session.Minutes == 0 || session.Games.Length == 0 || DateTimeOffset.UtcNow - session.Started < TimeSpan.FromMinutes(session.Minutes)) continue;
                 session.Games = [];
                 if (Bot.Bots?.TryGetValue(pair.Key, out var bot) == true) {
-                    try { await EndSession(pair.Key, () => ResetGames(bot)).ConfigureAwait(false); }
+                    try { await EndSession(pair.Key, () => ResetGames(bot), session).ConfigureAwait(false); }
                     catch { try { await bot.Stop(true).ConfigureAwait(false); } catch { Environment.Exit(2); } }
                 }
             }
@@ -375,7 +378,11 @@ internal static class LootLazyBridge {
             }
             await WaitConnections("flow-fixture").ConfigureAwait(false); ConnectionFlows.TryRemove("flow-fixture", out _);
             int resetCount = 0;
-            Sessions["fixture"] = new Session { Games = [730] };
+            var superseded = new Session { Games = [730] };
+            var currentSession = new Session { Games = [570] };
+            Sessions["fixture"] = currentSession;
+            await EndSession("fixture", () => { resetCount++; return Task.CompletedTask; }, superseded).ConfigureAwait(false);
+            if (!Sessions.TryGetValue("fixture", out var remaining) || remaining != currentSession || resetCount != 0) return 11;
             await EndSession("fixture", () => { resetCount++; return Task.CompletedTask; }).ConfigureAwait(false);
             if (Sessions.ContainsKey("fixture") || resetCount != 1) return 9;
             const string secret = "{\"BackingRefreshToken\":\"fixture-refresh-token\",\"BackingSteamGuardData\":\"fixture-guard-secret\"}";
