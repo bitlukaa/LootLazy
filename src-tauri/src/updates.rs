@@ -6,12 +6,21 @@ use std::{
 };
 const RELEASES: &str = "https://github.com/bitlukaa/LootLazy/releases";
 const ENDPOINT: &str = "https://api.github.com/repos/bitlukaa/LootLazy/releases/latest";
-static CACHE: OnceLock<Mutex<Option<(Instant, Value)>>> = OnceLock::new();
+static CACHE: OnceLock<Mutex<Option<(Instant, String, Value)>>> = OnceLock::new();
 pub fn info() -> Value {
-    json!({"currentVersion":env!("CARGO_PKG_VERSION"),"currentNotes":serde_json::from_str::<Value>(include_str!("../../public/release-notes.json")).unwrap_or(json!({})),"status":"idle","releasesUrl":RELEASES})
+    json!({"currentVersion":env!("CARGO_PKG_VERSION"),"currentNotes":serde_json::from_str::<Value>(include_str!("../../public/release-notes.json")).unwrap_or(json!({})),"status":"idle","buildChannel":include_str!("../../public/update-channel.txt").trim(),"releasesUrl":RELEASES})
 }
+#[cfg(test)]
 fn parse_release(release: &Value, current: &str) -> Result<Value, String> {
-    if release["draft"] == true || release["prerelease"] == true {
+    parse_target(release, current, false, false)
+}
+fn parse_target(
+    release: &Value,
+    current: &str,
+    beta: bool,
+    rollback: bool,
+) -> Result<Value, String> {
+    if release["draft"] == true || (!beta && release["prerelease"] == true) {
         return Err("Unstable release".into());
     }
     let tag = release["tag_name"]
@@ -19,7 +28,7 @@ fn parse_release(release: &Value, current: &str) -> Result<Value, String> {
         .ok_or("Missing release version")?;
     let version = semver::Version::parse(tag.strip_prefix('v').unwrap_or(tag))
         .map_err(|_| "Invalid release version")?;
-    if !version.pre.is_empty() {
+    if !beta && !version.pre.is_empty() {
         return Err("Unstable release".into());
     }
     let current_name = format!("LootLazy-{version}.zip");
@@ -53,10 +62,10 @@ fn parse_release(release: &Value, current: &str) -> Result<Value, String> {
     let binary = executable_metadata(release).ok();
     let current = semver::Version::parse(current).map_err(|_| "Invalid current version")?;
     Ok(
-        json!({"status":if version>current {"available"}else{"up_to_date"},"latestVersion":version.to_string(),"notes":release["body"].as_str().unwrap_or("").chars().take(8000).collect::<String>(),"downloadUrl":url.as_str(),"canInstall":binary.is_some(),"binaryUrl":binary.as_ref().map(|value|value["binaryUrl"].clone()),"sha256":binary.as_ref().map(|value|value["sha256"].clone()),"binarySize":binary.as_ref().map(|value|value["binarySize"].clone()),"signatureUrl":binary.as_ref().map(|value|value["signatureUrl"].clone())}),
+        json!({"status":if version>current || (rollback && version!=current) {"available"}else{"up_to_date"},"latestVersion":version.to_string(),"notes":release["body"].as_str().unwrap_or("").chars().take(8000).collect::<String>(),"downloadUrl":url.as_str(),"canInstall":binary.is_some(),"binaryUrl":binary.as_ref().map(|value|value["binaryUrl"].clone()),"sha256":binary.as_ref().map(|value|value["sha256"].clone()),"binarySize":binary.as_ref().map(|value|value["binarySize"].clone()),"signatureUrl":binary.as_ref().map(|value|value["signatureUrl"].clone())}),
     )
 }
-fn fetch() -> Result<Value, String> {
+fn fetch(channel: &str, rollback: bool) -> Result<Value, String> {
     let client = reqwest::blocking::Client::builder()
         .timeout(Duration::from_secs(10))
         .redirect(reqwest::redirect::Policy::none())
@@ -64,7 +73,11 @@ fn fetch() -> Result<Value, String> {
         .build()
         .map_err(|e| e.to_string())?;
     let mut response = client
-        .get(ENDPOINT)
+        .get(if channel == "beta" {
+            "https://api.github.com/repos/bitlukaa/LootLazy/releases?per_page=50"
+        } else {
+            ENDPOINT
+        })
         .header("Accept", "application/vnd.github+json")
         .send()
         .map_err(|e| e.to_string())?;
@@ -82,28 +95,77 @@ fn fetch() -> Result<Value, String> {
     if bytes.len() > 512 * 1024 {
         return Err("Update response too large".into());
     }
-    parse_release(
-        &serde_json::from_slice(&bytes).map_err(|e| e.to_string())?,
-        env!("CARGO_PKG_VERSION"),
-    )
+    let document: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
+    select_release(&document, env!("CARGO_PKG_VERSION"), channel, rollback)
 }
-pub fn check() -> Value {
+fn select_release(
+    document: &Value,
+    current: &str,
+    channel: &str,
+    rollback: bool,
+) -> Result<Value, String> {
+    if channel != "beta" {
+        return parse_target(document, current, false, rollback);
+    }
+    document
+        .as_array()
+        .ok_or("Invalid releases")?
+        .iter()
+        .filter_map(|release| parse_target(release, current, true, false).ok())
+        .max_by_key(|release| {
+            semver::Version::parse(release["latestVersion"].as_str().unwrap_or("")).ok()
+        })
+        .ok_or_else(|| "No beta releases available".into())
+}
+fn preferences(root: &std::path::Path) -> Value {
+    std::fs::read(root.join("data/update-channel.json"))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
+        .filter(|value| matches!(value["channel"].as_str(), Some("stable" | "beta")))
+        .unwrap_or_else(
+            || json!({"channel":include_str!("../../public/update-channel.txt").trim()}),
+        )
+}
+pub fn info_for(root: &std::path::Path) -> Value {
+    let mut value = info();
+    value["channel"] = preferences(root)["channel"].clone();
+    value
+}
+pub fn set_channel(root: &std::path::Path, channel: &str) -> Result<Value, String> {
+    if !matches!(channel, "stable" | "beta") {
+        return Err("Invalid update channel".into());
+    }
+    let directory = root.join("data");
+    std::fs::create_dir_all(&directory).map_err(|_| "updates_save_failed")?;
+    let value = json!({"channel":channel,"returnFrom":if channel == "stable" {Some(env!("CARGO_PKG_VERSION"))} else {None}});
+    crate::storage::save(&directory.join("update-channel.json"), &value)
+        .map_err(|_| "updates_save_failed")?;
+    if let Ok(mut cache) = CACHE.get_or_init(|| Mutex::new(None)).lock() {
+        *cache = None;
+    }
+    Ok(info_for(root))
+}
+pub fn check_for(root: &std::path::Path) -> Value {
+    let prefs = preferences(root);
+    let channel = prefs["channel"].as_str().unwrap_or("stable");
+    let rollback = channel == "stable" && prefs["returnFrom"] == env!("CARGO_PKG_VERSION");
+    let key = format!("{channel}:{rollback}");
     let mut cached = match CACHE.get_or_init(|| Mutex::new(None)).lock() {
         Ok(lock) => lock,
         Err(_) => return json!({"status":"offline"}),
     };
-    if let Some((when, value)) = &*cached {
-        if when.elapsed() < Duration::from_secs(60) {
+    if let Some((when, cached_key, value)) = &*cached {
+        if *cached_key == key && when.elapsed() < Duration::from_secs(60) {
             return value.clone();
         }
     }
-    let mut value = info();
-    let result = fetch().unwrap_or(json!({"status":"offline"}));
+    let mut value = info_for(root);
+    let result = fetch(channel, rollback).unwrap_or(json!({"status":"offline"}));
     for (key, item) in result.as_object().unwrap() {
         value[key] = item.clone();
     }
     value["checkedAt"] = json!(chrono::Utc::now().to_rfc3339());
-    *cached = Some((Instant::now(), value.clone()));
+    *cached = Some((Instant::now(), key, value.clone()));
     value
 }
 fn trusted_asset_url(value: &str, name: &str) -> Result<url::Url, String> {
@@ -171,7 +233,7 @@ fn executable_metadata(release: &Value) -> Result<Value, String> {
 pub fn stage(root: &std::path::Path) -> Result<Value, String> {
     use sha2::{Digest, Sha256};
     use std::io::Write;
-    let release = check();
+    let release = check_for(root);
     if release["status"] != "available" || release["canInstall"] != true {
         return Err("updates_unavailable".into());
     }
@@ -289,6 +351,46 @@ mod tests {
     use super::*;
     fn release(version: &str) -> Value {
         json!({"tag_name":format!("v{version}"),"draft":false,"prerelease":false,"body":"New features","assets":[{"name":format!("LootLazy-{version}.zip"),"browser_download_url":format!("{RELEASES}/download/v{version}/LootLazy-{version}.zip")}]})
+    }
+    #[test]
+    fn beta_selects_highest_valid_version_and_stable_rejects_prereleases() {
+        let mut beta = release("3.7.1");
+        beta["prerelease"] = json!(true);
+        let mut draft = release("99.0.0");
+        draft["draft"] = json!(true);
+        let list = json!([release("3.6.23"), beta.clone(), draft]);
+        assert_eq!(
+            select_release(&list, "3.6.22", "beta", false).unwrap()["latestVersion"],
+            "3.7.1"
+        );
+        assert!(select_release(&beta, "3.6.22", "stable", false).is_err());
+        assert_eq!(
+            select_release(&release("3.6.23"), "3.7.1", "stable", false).unwrap()["status"],
+            "up_to_date"
+        );
+        assert_eq!(
+            select_release(&release("3.6.23"), "3.7.1", "stable", true).unwrap()["status"],
+            "available"
+        );
+        assert!(select_release(&beta, "3.7.2", "stable", true).is_err());
+        assert_eq!(
+            select_release(&release("3.6.23"), "3.6.23", "stable", true).unwrap()["status"],
+            "up_to_date"
+        );
+    }
+    #[test]
+    fn channel_is_persisted_without_touching_application_data() {
+        let root = std::env::temp_dir().join(format!("lootlazy-channel-{}", uuid::Uuid::new_v4()));
+        assert_eq!(
+            info_for(&root)["channel"],
+            include_str!("../../public/update-channel.txt").trim()
+        );
+        assert!(set_channel(&root, "invalid").is_err());
+        set_channel(&root, "beta").unwrap();
+        assert_eq!(info_for(&root)["channel"], "beta");
+        set_channel(&root, "stable").unwrap();
+        assert_eq!(preferences(&root)["returnFrom"], env!("CARGO_PKG_VERSION"));
+        std::fs::remove_dir_all(root).unwrap();
     }
     #[test]
     fn release_assets_use_application_names() {
