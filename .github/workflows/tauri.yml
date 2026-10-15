@@ -39,6 +39,8 @@ jobs:
         run: ./tools/build-tauri.ps1
       - name: Build Setup installer
         run: ./tools/build-setup.ps1
+      - name: Uninstall cleanup regressions
+        run: ./tools/test-uninstall.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: LootLazy-Windows

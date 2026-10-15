@@ -17,7 +17,8 @@
           "English"
         ],
         "startMenuFolder": "LootLazy",
-        "installerIcon": "../LootLazy.ico"
+        "installerIcon": "../LootLazy.ico",
+        "installerHooks": "./installer-hooks.nsh"
       },
       "webviewInstallMode": {
         "type": "downloadBootstrapper",

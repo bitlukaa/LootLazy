@@ -1,9 +1,13 @@
 {
-  "version": "3.6.21",
+  "version": "3.6.22",
   "en": [
-    "Game Time opens with Continuous selected by default instead of 15 minutes."
+    "The Setup uninstaller now removes application data and generated helpers when data deletion is selected.",
+    "Data deletion is selected by default; you can uncheck it to retain data. Updates preserve saved data.",
+    "Run the new Setup over your existing installation once to replace the uninstaller. An in-app executable update alone does not replace it."
   ],
   "ar": [
-    "اختيار التشغيل المستمر افتراضيًا في Game Time عند فتح التطبيق بدل 15 دقيقة."
+    "أداة الإزالة في Setup تحذف بيانات التطبيق والملفات المساعدة عند اختيار حذف البيانات.",
+    "حذف البيانات محدد افتراضيًا ويمكن إلغاؤه للاحتفاظ بها. التحديث يحافظ على البيانات.",
+    "شغّل Setup الجديد فوق التثبيت الحالي مرة واحدة لتحديث أداة الإزالة؛ تحديث ملف التطبيق وحده لا يستبدلها."
   ]
 }
