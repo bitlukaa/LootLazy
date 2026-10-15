@@ -1,101 +1,157 @@
 (() => {
- const el = id => document.getElementById(id);
- const model = {accounts:[],selected:null,loaded:false,busy:false,polling:false,searchSequence:0,searchTimer:null,names:{},signature:'',libraryFor:null,libraryLoading:false};
- try { model.names=JSON.parse(localStorage.getItem('lootlazy_account_games')||'{}'); } catch { model.names={}; }
- const message = error => { const key=String(error?.message||error).split(':')[0].trim(); return t(key.startsWith('accounts_')&&I18N.en[key]?key:'accounts_failed'); };
- function showError(error) { el('accounts-error').textContent=message(error);el('accounts-error').hidden=false;if(el('account-verify-dialog').open){el('account-verify-error').textContent=message(error);el('account-verify-error').hidden=false;} }
- function selected(){return model.accounts.find(account=>account.id===model.selected);}
- async function call(command,body={}) {
-  if(model.busy)return false;
-  model.busy=true;el('accounts-error').hidden=true;el('account-verify-error').hidden=true;render();
-  try { const response=await request('/api/steam-accounts/'+command,body);apply(response);return true; }
-  catch(error){showError(error);return false;}
-  finally{model.busy=false;render();}
- }
- function apply(response) {
-  model.accounts=Array.isArray(response?.accounts)?response.accounts:[];model.loaded=true;
-  if(model.accounts.some(account=>account.connected))window.lootlazyFeatures?.markUsed('steam-accounts-v1');
-  if(!model.accounts.some(account=>account.id===model.selected))model.selected=model.accounts[0]?.id||null;
+ const el=id=>document.getElementById(id);
+ const model={accounts:[],selected:null,loaded:false,busy:false,pending:0,epoch:0,polling:false,commands:Promise.resolve(),searchSequence:0,searchTimer:null,names:{},signature:'',libraryFor:null,libraryLoading:false};
+ let auth=null,removalTarget=null;
+ try{model.names=JSON.parse(localStorage.getItem('lootlazy_account_games')||'{}');model.selected=localStorage.getItem('lootlazy_selected_account');}catch{model.names={};}
+ const message=error=>{const key=String(error?.message||error).split(':')[0].trim();return t(key.startsWith('accounts_')&&I18N.en[key]?key:'accounts_failed');};
+ function showError(error){const target=el(auth?'account-auth-error':'accounts-error');target.textContent=message(error);target.hidden=false;}
+ function selected(){return model.accounts.find(account=>account.id===model.selected&&!account.draft);}
+ function rememberSelection(id){model.selected=id;try{localStorage.setItem('lootlazy_selected_account',id||'');}catch{}}
+ function apply(response){
+  if(!Array.isArray(response?.accounts))return;
+  model.accounts=response.accounts;model.loaded=true;
+  if(model.accounts.some(account=>account.connected&&!account.draft))window.lootlazyFeatures?.markUsed('steam-accounts-v1');
+  if(!selected())rememberSelection(model.accounts.find(account=>!account.draft)?.id||null);
   render();
  }
- let qrAccount=null,qrSequence=0,qrBusy=false;
- async function closeQr(stop=true){
-  const id=qrAccount;qrAccount=null;++qrSequence;el('account-qr-code').replaceChildren();delete el('account-qr-code').dataset.signature;if(el('account-qr-dialog').open)el('account-qr-dialog').close();
-  if(stop&&id&&model.accounts.some(a=>a.id===id&&a.active))return await call('stop',{id});return true;
+ function call(command,body={}){
+  ++model.pending;++model.epoch;model.busy=true;render();
+  const operation=model.commands.then(async()=>{
+   try{apply(await request('/api/steam-accounts/'+command,body));return true;}catch(error){showError(error);return false;}
+   finally{model.busy=--model.pending>0;render();}
+  });
+  model.commands=operation.catch(()=>{});return operation;
  }
- async function readQr(){
-  if(!qrAccount||qrBusy||model.busy)return;const id=qrAccount,sequence=qrSequence;qrBusy=true;
-  try{const result=await request('/api/steam-accounts/qr',{id});if(sequence!==qrSequence||id!==qrAccount)return;
+ function clearQr(){el('account-qr-code').replaceChildren();if(auth)auth.qrRevision=null;}
+ function closeAuth(cancel=true){
+  const context=auth;if(!context)return Promise.resolve(true);auth=null;context.closed=true;++context.sequence;
+  el('account-auth-password').value='';el('account-guard-code').value='';el('account-auth-login').value='';el('account-auth-label').value='';el('account-qr-code').replaceChildren();
+  if(el('account-auth-dialog').open)el('account-auth-dialog').close();
+  if(cancel&&context.id)return call(context.draft?'remove':'disconnect',{id:context.id});return Promise.resolve(true);
+ }
+ async function ensureDraft(context){
+  if(context.id)return auth===context;
+  const before=new Set(model.accounts.map(account=>account.id));
+  if(!await call('add',{label:t('accounts_pending_label'),login:'',method:'qr',draft:true}))return false;
+  context.id=model.accounts.find(account=>!before.has(account.id)&&account.draft)?.id;
+  if(auth!==context){if(context.id)await call('remove',{id:context.id});return false;}
+  return !!context.id;
+ }
+ async function disconnectAttempt(context){
+  const account=model.accounts.find(account=>account.id===context.id);
+  if(account?.active&&!await call('disconnect',{id:context.id}))return false;
+  return auth===context;
+ }
+ async function startQr(context){
+  if(auth!==context)return;context.method='qr';++context.sequence;clearQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_qr_loading');
+  if(!await ensureDraft(context)||!await disconnectAttempt(context))return;
+  const sequence=context.sequence;
+  if(await call('signin',{id:context.id,method:'qr'})){
+   if(auth===context&&sequence===context.sequence)readQr(context);
+  }
+ }
+ async function readQr(context){
+  if(auth!==context||context.method!=='qr'||context.reading||model.busy)return;
+  const sequence=context.sequence;context.reading=true;
+  try{
+   const result=await request('/api/steam-accounts/qr',{id:context.id});
+   if(auth!==context||sequence!==context.sequence||context.method!=='qr')return;
    const rows=result.rows;
    if(Array.isArray(rows)&&rows.length>=21&&rows.length<=97&&rows.every(row=>typeof row==='string'&&row.length===rows.length&&/^[01]+$/.test(row))){
-    const signature=rows.join('');if(el('account-qr-code').dataset.signature!==signature){
-     const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),background=document.createElementNS(ns,'rect'),path=document.createElementNS(ns,'path');const size=rows.length+8;
-     svg.setAttribute('viewBox','0 0 '+size+' '+size);svg.setAttribute('role','img');svg.setAttribute('aria-label',t('accounts_qr_signin'));svg.setAttribute('shape-rendering','crispEdges');background.setAttribute('width',String(size));background.setAttribute('height',String(size));background.setAttribute('fill','#fff');let d='';rows.forEach((row,y)=>[...row].forEach((bit,x)=>{if(bit==='1')d+='M'+(x+4)+' '+(y+4)+'h1v1h-1z';}));path.setAttribute('d',d);path.setAttribute('fill','#000');svg.append(background,path);el('account-qr-code').replaceChildren(svg);el('account-qr-code').dataset.signature=signature;
-    }el('account-qr-status').textContent=t('accounts_qr_wait');
-   }else{el('account-qr-code').replaceChildren();delete el('account-qr-code').dataset.signature;el('account-qr-status').textContent=t('accounts_qr_loading');}
-  }catch(error){if(sequence===qrSequence){el('account-qr-code').replaceChildren();delete el('account-qr-code').dataset.signature;el('account-qr-status').textContent=message(error);}}finally{qrBusy=false;}
+    const revision=rows.join('');
+    if(context.qrRevision!==revision){
+     const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),background=document.createElementNS(ns,'rect'),path=document.createElementNS(ns,'path'),size=rows.length+8;
+     const ratio=window.devicePixelRatio||1,edge=size*Math.max(2,Math.floor(216*ratio/size))/ratio;
+     svg.setAttribute('viewBox','0 0 '+size+' '+size);svg.setAttribute('role','img');svg.setAttribute('aria-label',t('accounts_qr_signin'));svg.setAttribute('shape-rendering','crispEdges');svg.style.width=edge+'px';svg.style.height=edge+'px';
+     background.setAttribute('width',String(size));background.setAttribute('height',String(size));background.setAttribute('fill','#fff');
+     let d='';rows.forEach((row,y)=>[...row].forEach((bit,x)=>{if(bit==='1')d+='M'+(x+4)+' '+(y+4)+'h1v1h-1z';}));path.setAttribute('d',d);path.setAttribute('fill','#000');svg.append(background,path);el('account-qr-code').replaceChildren(svg);context.qrRevision=revision;
+    }
+    el('account-qr-status').textContent=t('accounts_qr_wait');
+   }else{clearQr();el('account-qr-status').textContent=t(result.pending?'accounts_qr_loading':'accounts_qr_expired');}
+  }catch(error){if(auth===context&&sequence===context.sequence){clearQr();el('account-qr-status').textContent=message(error);}}
+  finally{context.reading=false;}
  }
- async function startQr(id){qrAccount=id;++qrSequence;delete el('account-qr-code').dataset.signature;el('account-qr-code').replaceChildren();el('account-qr-status').textContent=t('accounts_qr_loading');el('account-qr-dialog').showModal();if(await call('signin',{id,method:'qr'})){if(qrAccount===id)readQr();else await call('stop',{id});}else if(qrAccount===id)closeQr(false);}
- function openPassword(){const account=selected();if(!account)return;el('account-signin-form').reset();el('account-login-name-field').hidden=!!account.login;el('account-login-name').required=!account.login;el('account-login-dialog').showModal();el(account.login?'account-password':'account-login-name').focus();}
- async function poll() {
+ function openAuth(account=null){
+  if(auth||model.busy)return;
+  const context=auth={id:account?.id||null,draft:!account,method:account?.active?'existing':'qr',sequence:0,reading:false,finishing:false};
+  el('account-auth-form').reset();el('account-guard-form').reset();el('account-auth-error').hidden=true;el('account-qr-code').replaceChildren();
+  el('account-auth-title').textContent=t(account?'accounts_signin':'accounts_add');
+  el('account-auth-label').value=account?.label||'';el('account-auth-label').readOnly=!!account;el('account-auth-label').closest('label').hidden=!!account;
+  el('account-auth-login').value=account?.login||'';el('account-auth-login').readOnly=!!account?.login;
+  el('account-auth-password').required=!account;el('account-auth-password').placeholder=account?t('accounts_password_hint'):'';
+  el('account-qr-status').textContent=t(account?.active?'accounts_auth_pending':'accounts_qr_loading');
+  el('account-auth-dialog').showModal();el(account?'account-auth-password':'account-auth-label').focus();renderAuth();if(!account?.active)startQr(context);
+ }
+ async function finishAuth(context){
+  if(auth!==context||context.finishing)return;context.finishing=true;renderAuth();
+  const label=el('account-auth-label').value.trim();
+  if(context.draft&&!await call('commit',{id:context.id,label})){context.finishing=false;return;}
+  if(auth!==context)return;
+  rememberSelection(context.id);model.libraryFor=null;await closeAuth(false);render();
+ }
+ function renderAuth(){
+  const context=auth;if(!context)return;
+  const account=model.accounts.find(item=>item.id===context.id);
+  const input=account?.input;
+  el('account-auth-form').hidden=!!input;el('account-guard-form').hidden=!input;
+  for(const id of ['account-auth-submit','account-guard-submit','account-qr-refresh'])el(id).disabled=model.busy||context.finishing;
+  if(input){
+   text('account-guard-label',t('accounts_input_'+input.type));el('account-guard-code').type=['Password','SteamParentalCode'].includes(input.type)?'password':'text';
+   if(context.challenge!==input.id){context.challenge=input.id;el('account-guard-code').value='';el('account-guard-code').focus();}
+   clearQr();el('account-qr-status').textContent=t('accounts_auth_pending');
+  }
+  if(account?.error){showError(account.error);if(context.method==='qr'){clearQr();el('account-qr-status').textContent=message(account.error);}}
+  if(account?.connected&&!context.finishing)queueMicrotask(()=>finishAuth(context));
+ }
+ async function poll(){
   if(!model.loaded||model.busy||model.polling||document.hidden)return;
-  model.polling=true;
-  try{apply(await request('/api/steam-accounts/status'));if(model.libraryLoading&&selected()?.connected)search();if(qrAccount){const account=model.accounts.find(a=>a.id===qrAccount);if(account?.connected)closeQr(false);else if(!account?.active){el('account-qr-code').replaceChildren();delete el('account-qr-code').dataset.signature;el('account-qr-status').textContent=t('accounts_qr_expired');}else readQr();}}catch(error){showError(error);}finally{model.polling=false;}
+  model.polling=true;const epoch=model.epoch;
+  try{const response=await request('/api/steam-accounts/status');if(epoch!==model.epoch)return;apply(response);if(model.libraryLoading&&selected()?.connected)search();if(auth?.method==='qr'&&!model.accounts.find(a=>a.id===auth.id)?.connected)readQr(auth);}
+  catch(error){showError(error);}finally{model.polling=false;}
  }
- async function open() {
-  if(model.loaded){render();return;}
-  el('accounts-loading').hidden=false;
-  await call('status');el('accounts-loading').hidden=true;
- }
- function button(label,icon,action,className='button button-secondary') {
-  const control=document.createElement('button');control.type='button';control.className=className;
-  control.innerHTML=getIcon(icon)+(className==='icon-button'?'':'<span>'+escapeHtml(label)+'</span>');control.setAttribute('aria-label',label);control.onclick=action;return control;
+ async function open(){if(model.loaded){render();return;}el('accounts-loading').hidden=false;await call('status');el('accounts-loading').hidden=true;}
+ function button(label,icon,action,className='button button-secondary'){
+  const control=document.createElement('button');control.type='button';control.className=className;control.innerHTML=(icon?getIcon(icon):'')+(className==='icon-button'?'':'<span>'+escapeHtml(label)+'</span>');control.setAttribute('aria-label',label);control.onclick=action;return control;
  }
  function text(id,value){const node=el(id);if(node.textContent!==value)node.textContent=value;}
- function render() {
+ function selectAccount(account){rememberSelection(account.id);model.libraryFor=null;el('account-search').value='';el('account-search-results').replaceChildren();render();if(!account.connected)openAuth(account);}
+ function confirmRemoval(account){removalTarget=account.id;el('account-remove-warning').textContent=t('accounts_remove_named',{label:account.label});el('account-remove-dialog').showModal();}
+ function render(){
   if(!el('accounts-list'))return;
-  renderActive();
-  const signature=JSON.stringify([model.accounts.map(({elapsedSeconds,...account})=>account),model.selected,currentLang,model.busy]);
+  renderActive();renderAuth();
+  const accounts=model.accounts.filter(account=>!account.draft),signature=JSON.stringify([accounts.map(({elapsedSeconds,...account})=>account),model.selected,currentLang,model.busy]);
   if(signature!==model.signature){
    model.signature=signature;const list=document.createDocumentFragment();
-   for(const account of model.accounts){
-    const row=document.createElement('button');row.type='button';row.className='account-row'+(account.id===model.selected?' selected':'');row.setAttribute('aria-pressed',String(account.id===model.selected));
-    const text=document.createElement('span'),name=document.createElement('strong'),login=document.createElement('small');name.textContent=account.label;login.textContent=account.login;text.append(name,login);
-    const badge=document.createElement('span');badge.className='account-state '+account.state;badge.textContent=t('accounts_state_'+account.state);row.append(text,badge);
-    row.onclick=()=>{model.selected=account.id;model.libraryFor=null;el('account-code').value='';el('account-password').value='';el('account-search').value='';el('account-search-results').replaceChildren();render();};list.append(row);
+   for(const account of accounts){
+    const row=document.createElement('div');row.className='account-row'+(account.id===model.selected?' selected':'');row.dataset.account=account.id;
+    const select=document.createElement('button');select.type='button';select.className='account-select';select.setAttribute('aria-pressed',String(account.id===model.selected));select.textContent=account.label;select.disabled=model.busy;select.onclick=()=>selectAccount(account);
+    const actions=document.createElement('div');actions.className='account-row-actions';
+    if(account.connected){const badge=document.createElement('span');badge.className='account-state '+account.state;badge.textContent=t('accounts_state_'+account.state);actions.append(badge);const logout=button(t('accounts_signout'),null,()=>call('disconnect',{id:account.id}),'account-signout');logout.disabled=model.busy;actions.append(logout);}
+    else{const signin=button(t(account.active?'accounts_continue':'accounts_signin'),null,()=>selectAccount(account),'account-state offline account-signin-action');signin.disabled=model.busy;actions.append(signin);}
+    const remove=button(t('accounts_remove')+': '+account.label,'x',()=>confirmRemoval(account),'icon-button');remove.classList.add('account-remove-control');remove.dataset.removeAccount=account.id;remove.disabled=model.busy;actions.append(remove);row.append(select,actions);list.append(row);
    }
-   el('accounts-list').replaceChildren(list);el('accounts-empty').hidden=model.accounts.length>0;
+   el('accounts-list').replaceChildren(list);el('accounts-empty').hidden=accounts.length>0;
   }
   el('accounts-add').disabled=model.busy;el('accounts-retry').disabled=model.busy;
-  const account=selected();el('account-setup').hidden=!account;el('account-no-selection').hidden=!!account;
-  if(!account)return;
-  el('account-auth-error').hidden=!account.error;el('account-auth-error').textContent=account.error?t(account.error==='accounts_restore_failed'?'accounts_restore_failed':'accounts_login_failed'):'';
+  const account=selected(),ready=!!account?.connected;
+  el('account-session-panel').hidden=!ready;el('account-setup').hidden=!ready;el('accounts-workspace').classList.toggle('has-session',ready);
+  if(!ready){model.libraryFor=null;model.libraryLoading=false;return;}
   text('account-title',account.label);text('account-login',account.login);
-  if(el('account-state').className!=='account-state '+account.state)el('account-state').className='account-state '+account.state;text('account-state',t('accounts_state_'+account.state));
-  if(!account.connected){model.libraryFor=null;model.libraryLoading=false;}
-  const isRunning=account.state==='running',isWaiting=['connecting','input'].includes(account.state);
-  const gamesEditable=account.connected&&!isRunning&&!isWaiting;
-  el('account-refresh-library').disabled=model.busy||!gamesEditable;
-  el('account-auth-actions').hidden=account.active&&!account.input;el('account-signin-open').hidden=account.active;el('account-qr-open').hidden=account.active;el('account-confirm-open').hidden=!account.input;el('account-game-setup').hidden=!account.connected;
-  if(!account.input&&el('account-verify-dialog').open)el('account-verify-dialog').close();
-  el('account-start').hidden=!account.connected||isRunning;el('account-stop').hidden=!account.active;
-  el('account-running-time').hidden=!isRunning;el('account-running-time').textContent=clock(account.elapsedSeconds||0);
-  el('account-duration').disabled=model.busy||isRunning;
-  el('account-search').disabled=model.busy||!gamesEditable;el('account-search').closest('.search-field').hidden=isRunning;el('account-library-hint').textContent=t('accounts_library_ready_hint');el('account-library-hint').hidden=isRunning;el('account-quick-games').hidden=!gamesEditable||!el('account-quick-picks').querySelector('button');
-  for(const id of ['account-qr-open','account-signin','account-signin-open','account-confirm-open','account-submit-input','account-start','account-stop','account-remove'])el(id).disabled=model.busy;
-  el('account-start').disabled=model.busy||!account.games?.length||account.state==='blocked';
-  el('account-games-hint').hidden=gamesEditable||!account.connected;
-  if(account.input){const type=account.input.type;el('account-input-label').textContent=t('accounts_input_'+type);el('account-code').type=['Password','SteamParentalCode'].includes(type)?'password':'text';el('account-code').autocomplete=type==='Password'?'current-password':'one-time-code';el('account-input-form').dataset.challenge=account.input.id;if(model.shownChallenge!==account.input.id&&!el('steam-accounts-mode-view').hidden){model.shownChallenge=account.input.id;el('account-verify-error').hidden=true;el('account-verify-dialog').showModal();el('account-code').focus();}}
-  const gameSignature=JSON.stringify([account.id,account.games,model.names,gamesEditable,model.busy,currentLang]);
+  el('account-state').className='account-state '+account.state;text('account-state',t('accounts_state_'+account.state));
+  const running=account.state==='running',editable=!running;
+  el('account-start').hidden=running;el('account-stop').hidden=!running;el('account-game-setup').hidden=false;
+  el('account-start').disabled=model.busy||!account.games?.length||account.state==='blocked';el('account-stop').disabled=model.busy;
+  el('account-refresh-library').disabled=model.busy||!editable;el('account-duration').disabled=model.busy||running;
+  el('account-running-time').hidden=!running;text('account-running-time',clock(account.elapsedSeconds||0));
+  el('account-search').disabled=model.busy||!editable;el('account-search').closest('.search-field').hidden=running;el('account-library-hint').textContent=t('accounts_library_ready_hint');el('account-library-hint').hidden=running;el('account-quick-games').hidden=!editable||!el('account-quick-picks').querySelector('button');el('account-games-hint').hidden=editable;
+  const gameSignature=JSON.stringify([account.id,account.games,model.names,editable,model.busy,currentLang]);
   if(el('account-games').dataset.signature!==gameSignature){
    el('account-games').dataset.signature=gameSignature;const games=document.createDocumentFragment();
-   for(const id of account.games||[]){
-    const row=document.createElement('div');row.className='account-game-row';const name=document.createElement('span');name.textContent=model.names[id]||'Steam App '+id;
-    const remove=button(t('accounts_remove_game'),'x',()=>call('games',{id:account.id,games:account.games.filter(value=>value!==id)}),'icon-button');remove.setAttribute('aria-label',t('accounts_remove_game')+': '+name.textContent);remove.disabled=model.busy||!gamesEditable;row.append(name,remove);games.append(row);
-   }el('account-games').replaceChildren(games);el('account-no-games').hidden=!!account.games?.length;
+   for(const id of account.games||[]){const row=document.createElement('div');row.className='account-game-row';const name=document.createElement('span');name.textContent=model.names[id]||'Steam App '+id;const remove=button(t('accounts_remove_game'),'x',()=>call('games',{id:account.id,games:account.games.filter(value=>value!==id)}),'icon-button');remove.setAttribute('aria-label',t('accounts_remove_game')+': '+name.textContent);remove.disabled=model.busy||!editable;row.append(name,remove);games.append(row);}
+   el('account-games').replaceChildren(games);el('account-no-games').hidden=!!account.games?.length;
   }
-  for(const control of el('account-game-setup').querySelectorAll('#account-search-results button,#account-quick-picks button'))control.disabled=model.busy||!gamesEditable;
-  if(gamesEditable&&model.libraryFor!==account.id&&!model.busy){model.libraryFor=account.id;queueMicrotask(()=>search());}
+  for(const control of el('account-game-setup').querySelectorAll('#account-search-results button,#account-quick-picks button'))control.disabled=model.busy||!editable;
+  if(editable&&model.libraryFor!==account.id&&!model.busy){model.libraryFor=account.id;queueMicrotask(()=>search());}
  }
  async function search(refresh=false){
   const account=selected(),query=el('account-search').value.trim(),sequence=++model.searchSequence;
@@ -123,35 +179,30 @@
   if(list.dataset.signature!==signature){list.dataset.signature=signature;const fragment=document.createDocumentFragment();for(const account of running){const row=document.createElement('div');row.className='account-game-row';row.dataset.account=account.id;const label=document.createElement('strong');label.textContent=account.label;const time=document.createElement('span');time.className='clock-digits';const stop=button(t('quest_stop'),'square',()=>call('stop',{id:account.id}),'button button-danger');stop.disabled=model.busy;row.append(label,time,stop);fragment.append(row);}list.replaceChildren(fragment);}
   for(const account of running){const row=[...list.children].find(item=>item.dataset.account===account.id);if(row)row.querySelector('.clock-digits').textContent=clock(account.elapsedSeconds||0);}
  }
- function translateAccounts(){model.signature='';render();}
+
  document.addEventListener('DOMContentLoaded',()=>{
-  el('accounts-add').onclick=()=>{el('account-add-form').reset();setAddMethod();el('account-add-dialog').showModal();el('account-new-label').focus();};
-  for(const [dialog,form]of [['account-add-dialog','account-add-form'],['account-login-dialog','account-signin-form'],['account-verify-dialog','account-input-form']]){
-   el(dialog).addEventListener('close',()=>el(form).reset());
-   const prefix=dialog.replace('-dialog','');for(const suffix of ['close','cancel']){const control=el(prefix+'-'+suffix);control.onclick=()=>el(dialog).close();if(suffix==='close')control.innerHTML=getIcon('x');}
-  }
-  function setAddMethod(){const qr=el('account-new-method').value==='qr';el('account-new-password-hint').hidden=qr;for(const kind of ['login','password']){el('account-new-'+kind+'-field').hidden=qr;el('account-new-'+kind).required=!qr;el('account-new-'+kind).value='';}}
-  el('account-new-method').onchange=setAddMethod;
-  el('account-add-form').onsubmit=async event=>{event.preventDefault();const method=el('account-new-method').value,label=el('account-new-label').value.trim(),login=method==='qr'?'':el('account-new-login').value.trim(),password=el('account-new-password').value;el('account-new-password').value='';el('account-add-dialog').close();const existing=new Set(model.accounts.map(account=>account.id));if(await call('add',{label,login,method})){const account=model.accounts.find(value=>!existing.has(value.id));if(account){model.selected=account.id;render();if(method==='qr')await startQr(account.id);else await call('signin',{id:account.id,password});}}};
-  el('account-signin-open').onclick=openPassword;
-  el('account-qr-open').onclick=()=>{if(selected())startQr(selected().id);};
-  for(const id of ['account-qr-close','account-qr-cancel'])el(id).onclick=()=>closeQr();el('account-qr-close').innerHTML=getIcon('x');
-  el('account-qr-dialog').addEventListener('cancel',event=>{event.preventDefault();closeQr();});
-  el('account-qr-password').onclick=async()=>{if(await closeQr())openPassword();};
-  el('account-confirm-open').onclick=()=>{el('account-verify-error').hidden=true;el('account-verify-dialog').showModal();el('account-code').focus();};
-  el('accounts-retry').onclick=()=>{model.loaded=false;open();};
-  el('account-signin-form').onsubmit=async event=>{event.preventDefault();const account=selected();if(!account)return;const password=el('account-password').value,login=el('account-login-name').value.trim();el('account-password').value='';el('account-login-dialog').close();await call('signin',{id:account.id,password,login});};
-  el('account-input-form').onsubmit=async event=>{event.preventDefault();const account=selected();if(!account)return;const value=el('account-code').value,challengeId=el('account-input-form').dataset.challenge;el('account-code').value='';await call('input',{id:account.id,challengeId,value});};
-  el('account-start').onclick=()=>{const account=selected();if(account)call('start',{id:account.id,minutes:Number(el('account-duration').value)});};
-  el('account-stop').onclick=()=>{const account=selected();if(account)call('stop',{id:account.id});};
-  el('account-remove').onclick=()=>{if(selected())el('account-remove-dialog').showModal();};
-  el('account-remove-cancel').onclick=()=>el('account-remove-dialog').close();
-  el('account-remove-confirm').onclick=async()=>{const account=selected();el('account-remove-dialog').close();if(account)await call('remove',{id:account.id});};
+  el('accounts-add').onclick=()=>openAuth();el('accounts-retry').onclick=()=>{model.loaded=false;open();};
+  for(const id of ['account-auth-close','account-auth-cancel'])el(id).onclick=()=>closeAuth();el('account-auth-close').innerHTML=getIcon('x');
+  el('account-auth-dialog').addEventListener('cancel',event=>{event.preventDefault();closeAuth();});
+  el('account-qr-refresh').onclick=()=>{if(auth)startQr(auth);};el('account-qr-refresh').querySelector('.refresh-icon').innerHTML=getIcon('refresh');
+  el('account-auth-form').onsubmit=async event=>{
+   event.preventDefault();const context=auth;if(!context||model.busy)return;
+   const login=el('account-auth-login').value.trim(),password=el('account-auth-password').value;el('account-auth-password').value='';
+   context.method='password';++context.sequence;clearQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_auth_pending');
+   if(!await ensureDraft(context)||!await disconnectAttempt(context))return;
+   const account=model.accounts.find(item=>item.id===context.id);
+   if(context.draft&&account.login&&account.login!==login){if(!await call('remove',{id:context.id}))return;context.id=null;if(!await ensureDraft(context))return;}
+   if(auth===context)await call('signin',{id:context.id,method:'password',login,password});
+  };
+  el('account-guard-form').onsubmit=async event=>{event.preventDefault();const context=auth;if(!context||model.busy)return;const value=el('account-guard-code').value;el('account-guard-code').value='';el('account-auth-error').hidden=true;await call('input',{id:context.id,challengeId:context.challenge,value});};
+  el('account-start').onclick=()=>{if(selected())call('start',{id:selected().id,minutes:Number(el('account-duration').value)});};
+  el('account-stop').onclick=()=>{if(selected())call('stop',{id:selected().id});};
+  el('account-remove-cancel').onclick=()=>{removalTarget=null;el('account-remove-dialog').close();};
+  el('account-remove-confirm').onclick=async()=>{const id=removalTarget;removalTarget=null;el('account-remove-dialog').close();if(id)await call('remove',{id});};
   el('account-search').oninput=()=>{clearTimeout(model.searchTimer);++model.searchSequence;model.searchTimer=setTimeout(()=>search(),300);};
-  for(const [id,icon]of [['accounts-add','plus'],['accounts-retry','refresh'],['account-start','play'],['account-stop','stop'],['account-remove','x'],['account-signin','play'],['account-signin-open','play']]){const span=document.createElement('span');span.innerHTML=getIcon(icon);el(id).prepend(span);}
-  el('account-refresh-library').onclick=()=>search(true);el('account-refresh-library').innerHTML=getIcon('refresh');
-  el('account-search-icon').innerHTML=getIcon('search');el('steam-mode-accounts-icon').innerHTML=getIcon('users');
-  setInterval(poll,3000);
+  for(const [id,icon]of [['accounts-add','plus'],['accounts-retry','refresh'],['account-start','play'],['account-stop','square']]){const span=document.createElement('span');span.innerHTML=getIcon(icon);el(id).prepend(span);}
+  el('account-refresh-library').onclick=()=>search(true);el('account-refresh-library').innerHTML=getIcon('refresh');el('account-search-icon').innerHTML=getIcon('search');el('steam-mode-accounts-icon').innerHTML=getIcon('users');
+  setInterval(poll,1500);
  });
- window.lootlazySteamAccounts={open,translate:translateAccounts,async stopAll(){for(const account of [...model.accounts])if(account.active&&!await call('stop',{id:account.id}))return false;return true;},activeCount:()=>model.accounts.filter(account=>account.state==='running').length};
+ window.lootlazySteamAccounts={open,translate(){model.signature='';render();},async stopAll(){for(const account of [...model.accounts])if(account.state==='running'&&!await call('stop',{id:account.id}))return false;return true;},activeCount:()=>model.accounts.filter(account=>!account.draft&&account.state==='running').length};
 })();

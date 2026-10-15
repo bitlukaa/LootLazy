@@ -314,11 +314,6 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 
 /* Quest actions must stay still, including the shared pressed-button state. */
 .quest-card .button,.quest-card .button:hover,.quest-card .button:active:not(:disabled),.quest-card .button:disabled{transform:none!important;animation:none!important;transition:none!important}
-.accounts-grid{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(340px,1.2fr);gap:24px}.accounts-list{display:grid;gap:8px;margin-top:15px}.account-heading-actions{display:flex;gap:6px;align-items:center}.account-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--text);text-align:start}.account-row.selected{border-color:var(--accent);background:var(--selected)}.account-row strong,.account-row small{display:block;overflow-wrap:anywhere}.account-row small{color:var(--muted);margin-top:4px}.account-state{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}.account-state::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}.account-state.running,.account-state.ready{color:var(--green)}.account-state.running::before,.account-state.ready::before{background:var(--green)}.account-state.blocked::before,.account-state.input::before{background:var(--accent)}.account-signin{display:flex;gap:8px;align-items:end;margin-top:18px}.account-signin label{flex:1;min-width:0}.account-signin label span,#account-add-form label span{display:block;margin-bottom:7px}.account-security{margin-top:12px;font-size:12px;line-height:1.6}.account-games-title{margin-top:22px;margin-bottom:6px}.account-search{margin-top:12px}.account-search-results{display:grid;gap:4px;max-height:190px;overflow:auto;margin:8px 0}.account-search-result{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:7px;padding:9px;background:var(--surface-2);color:var(--text);text-align:start}.account-game-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:5px 0}.account-duration{display:flex;align-items:center;gap:12px;margin:20px 0 15px}.account-duration select{width:auto;flex:1}.account-duration label{white-space:nowrap}#account-add-form{display:grid;gap:15px}#account-remove-dialog p{margin-top:12px;line-height:1.6}@media(max-width:760px){.accounts-grid{grid-template-columns:1fr}.account-signin{flex-wrap:wrap}}
-.accounts-grid .panel-heading{flex-wrap:wrap;gap:10px}.accounts-list{max-height:420px;overflow:auto}#account-games{max-height:230px;overflow:auto}
-
-.account-games-heading{display:flex;align-items:center;justify-content:space-between;margin-top:18px}.account-games-heading .account-games-title{margin:0}
-
 .update-channel-row{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
 .update-channel-row label{font-weight:600}
 .update-channel-row p{margin-top:5px;line-height:1.6}
@@ -340,14 +335,10 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .feature-new-badge{display:inline-flex;align-items:center;border-radius:5px;background:var(--selected);color:var(--accent);font-size:9px;font-weight:600;padding:2px 5px;white-space:nowrap}
 @media(max-width:1050px){.lootlazy-navbar .navigation .nav-tab{padding-inline:8px}.lootlazy-navbar{gap:8px}.navbar-tools .navbar-status-wrap{gap:7px;padding-inline:7px}}
 
-#account-add-dialog,#account-login-dialog,#account-verify-dialog{width:380px;margin:auto}
-#account-add-dialog label,#account-login-dialog label,#account-verify-dialog label{display:grid;gap:7px;margin-top:16px}
-#account-add-dialog p,#account-login-dialog p{margin-top:12px;line-height:1.6;font-size:11px}
-.account-auth-actions{display:flex;gap:8px;margin-top:16px}.account-security{line-height:1.6}
 #account-game-setup{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 #account-quick-games{margin-top:14px}#account-quick-games h3{font-size:11px;color:var(--muted);margin-bottom:8px}
 #account-quick-picks{display:flex;flex-wrap:wrap;gap:7px}.account-quick-pick{min-height:32px;padding:6px 9px;font-size:11px}
-#account-remove{margin-top:18px}
+
 
 .lootlazy-navbar{flex-wrap:nowrap}
 .lootlazy-navbar .navigation{flex:1 1 0%;flex-wrap:nowrap;overflow-x:auto}
@@ -356,7 +347,43 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 
 #account-game-setup .account-games-heading{margin-top:0}
 
-#account-qr-dialog{width:380px;margin:auto}#account-qr-dialog p{line-height:1.6;margin:14px 0}.account-qr-code{width:220px;min-height:220px;margin:18px auto;display:grid;place-items:center}.account-qr-code svg{display:block;width:220px;height:220px;border:1px solid var(--line);border-radius:8px}#account-new-method{width:100%}
+
+/* Steam Accounts: saved profiles, authenticated sessions and one sign-in card. */
+.accounts-grid{display:grid;grid-template-columns:minmax(0,440px);gap:24px;align-items:start}
+.accounts-grid.has-session{grid-template-columns:minmax(350px,.8fr) minmax(360px,1.2fr)}
+.accounts-grid>.panel{padding:22px;min-width:0}.accounts-grid .panel-heading{gap:10px;flex-wrap:wrap}
+.account-heading-actions{display:flex;gap:6px;align-items:center}.account-heading-actions .button{min-height:34px;padding:7px 11px;font-size:12px}
+.accounts-list{display:grid;gap:8px;margin-top:16px;max-height:440px;overflow:auto}
+.account-row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2)}
+.account-row.selected{border-color:var(--accent);background:var(--selected)}
+.account-select{flex:1;min-width:0;border:0;background:transparent;color:var(--text);padding:4px 0;font:inherit;font-size:12px;font-weight:600;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-row-actions{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.account-state{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--muted);font-size:10px;font-weight:500;line-height:1.3;white-space:nowrap}
+.account-state::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+.account-state.running,.account-state.ready{color:var(--green);background:color-mix(in srgb,var(--green) 7%,var(--surface));border-color:color-mix(in srgb,var(--green) 18%,var(--line))}
+.account-state.blocked,.account-state.input,.account-state.connecting{color:var(--accent);background:var(--selected)}
+.account-signin-action{color:var(--accent);background:var(--surface)}.account-signin-action::before{display:none}
+.account-signout{border:0;background:transparent;color:var(--muted);padding:4px 0;font-size:10px;white-space:nowrap}.account-signout:hover{color:var(--red)}
+.account-remove-control{width:25px;height:25px;min-height:25px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--muted);padding:5px}.account-remove-control svg{width:13px;height:13px}.account-remove-control:hover{color:var(--red);border-color:var(--red)}
+#account-game-setup{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.account-games-heading{display:flex;align-items:center;justify-content:space-between}.account-games-title{font-size:13px}.account-search{margin-top:12px}
+.account-search-results{display:grid;gap:4px;max-height:190px;overflow:auto;margin:8px 0}.account-search-result{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:7px;padding:9px;background:var(--surface-2);color:var(--text);text-align:start}
+.account-game-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:5px 0}#account-games{max-height:230px;overflow:auto}
+.account-duration{display:flex;align-items:center;gap:12px;margin:20px 0 15px}.account-duration select{width:auto;flex:1}.account-duration label{white-space:nowrap}
+#account-auth-dialog{width:680px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 40px);margin:auto;overflow:auto}
+.account-auth-columns .account-label-field{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;margin:0 0 16px;font-size:12px}.account-label-field input{height:36px}
+.account-auth-columns{display:grid;grid-template-columns:minmax(0,1fr) 216px;gap:24px;margin-top:18px}
+.account-credentials{padding-inline-end:24px;border-inline-end:1px solid var(--line);min-width:0}
+.account-auth-columns h3{font-size:12px;font-weight:600;margin-bottom:16px}.account-auth-columns label{display:grid;gap:7px;margin-top:16px;font-size:12px}
+.account-credentials .muted{font-size:10px;line-height:1.7;margin-top:12px}.account-credentials form>.button{width:100%;margin-top:20px}
+#account-auth-error{margin:14px 0 0;font-size:11px;padding:10px;line-height:1.6}
+.account-qr-column{text-align:center}.account-qr-code{display:grid;place-items:center;width:216px;height:216px;background:#fff;border:1px solid var(--line);border-radius:10px;margin:0 auto;direction:ltr}
+.account-qr-code:empty::before{content:'…';font-size:28px;color:#77809a}.account-qr-code svg{display:block;flex-shrink:0;max-width:none;transform:none;direction:ltr;stroke:none;image-rendering:pixelated}.account-qr-code svg path{fill:#000;stroke:none}.account-qr-code svg rect{fill:#fff;stroke:none}
+.account-auth-columns input:focus{outline:none;box-shadow:0 0 0 2px var(--selected);border-color:var(--accent)}
+.account-qr-column p{font-size:10px;line-height:1.7;margin:10px 0 0}.account-qr-column .button{font-size:11px;min-height:28px;margin-top:9px;padding:4px 7px}.account-qr-column .button svg{width:12px;height:12px}
+#account-auth-dialog>.dialog-actions{margin-top:16px}#account-remove-dialog p{line-height:1.7;margin-top:14px;font-size:12px}
+@media(max-width:900px){.accounts-grid.has-session{grid-template-columns:1fr}}
+@media(max-width:650px){.account-auth-columns{grid-template-columns:1fr}.account-credentials{border-inline-end:0;padding-inline-end:0;border-bottom:1px solid var(--line);padding-bottom:22px}.account-label-field{grid-template-columns:1fr}.account-label-field input{width:100%}.account-row-actions{gap:5px}}
 
 .app-version-line{display:flex;align-items:center;gap:7px;margin-top:4px}.updates-settings .app-version-line #app-version{margin-top:0}
 .build-channel-badge{display:inline-flex;align-items:center;background:var(--selected);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 15%,var(--line));border-radius:5px;font-size:9px;font-weight:600;line-height:1.4;padding:2px 6px;white-space:nowrap}.brand .build-channel-badge{font-size:8px;padding:1px 5px}

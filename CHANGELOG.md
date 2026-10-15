@@ -1,5 +1,13 @@
 # Release history
 
+## 3.7.3 — Simpler Steam sign-in
+
+- Use your Steam name and password or scan a QR code from the same centered card.
+- Save a new account only after sign-in succeeds. Saved labels keep their order, with Sign in, Sign out and a confirmed remove action in the account list.
+- Stop ends the game session while keeping the Steam account signed in.
+- Refresh QR codes without overlapping old sign-in attempts, with clearer expiry and retry messages.
+- Show Running and Beta in compact badges.
+
 ## 3.7.2 — Consistent navigation and dialogs
 
 - Platform status and notifications now share the main navigation header.

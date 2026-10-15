@@ -12,11 +12,14 @@ async function launch(parentId=process.pid){
  return {child,async call(command,body={}){const id=++counter;child.stdin.write(JSON.stringify({id,protocol:1,command,body})+'\n');const result=await next();assert.equal(result.id,id);return result;},async raw(frame){child.stdin.write(frame+'\n');return next();},async close(){const done=new Promise(resolve=>child.once('exit',resolve));child.stdin.end();await done;}};
 }
 (async()=>{
+ const fixtureQr=JSON.parse(require('child_process').execFileSync(engine,['--qr-fixture'],{windowsHide:true,env:{...process.env,DOTNET_BUNDLE_EXTRACT_BASE_DIR:path.join(root,'data/engine-test-runtime')}}));assert.deepEqual(fixtureQr,JSON.parse(fs.readFileSync(path.join(root,'tests/fixtures/steam-auth-qr.json'),'utf8')));
  let run=await launch();assert.equal((await run.raw('not-json')).error,'accounts_failed');assert.equal((await run.raw(JSON.stringify({id:99,protocol:2,command:'add',body:{label:'Rejected',login:'reject_login'}}))).error,'accounts_protocol');assert.deepEqual((await run.call('status')).result.accounts,[]);
  for(const body of [{label:'Test',login:'../../outside'},{label:'',login:'safe_login'},{label:'x'.repeat(49),login:'safe_login'}])assert.equal((await run.call('add',body)).error,'accounts_invalid');
  assert.equal((await run.call('add',{label:'No login',login:''})).error,'accounts_invalid');
  const qrAdded=await run.call('add',{label:'QR pending',login:'',method:'qr'});assert.equal(qrAdded.ok,true);const qrId=qrAdded.result.accounts[0].id;
  assert.equal((await run.call('qr',{id:qrId})).error,'accounts_not_ready');assert.equal((await run.call('remove',{id:qrId})).ok,true);
+ const pending=await run.call('add',{label:'Pending must not persist',login:'',method:'qr',draft:true});const pendingId=pending.result.accounts[0].id;assert.equal(pending.result.accounts[0].draft,true);assert.ok(!fs.readFileSync(path.join(fixture,'accounts.json'),'utf8').includes(pendingId));assert.equal((await run.call('commit',{id:pendingId,label:'Not authenticated'})).error,'accounts_not_ready');
+ await run.close();run=await launch();assert.deepEqual((await run.call('status')).result.accounts,[]);assert.equal(fs.existsSync(path.join(fixture,'config',pendingId+'.json')),false,'Abandoned draft config is removed on restart');
  let result=await run.call('add',{label:'Account one',login:'test_login'});assert.equal(result.ok,true);const id=result.result.accounts[0].id;assert.match(id,/^ll_[a-f0-9]{32}$/);
  assert.equal((await run.call('add',{label:'Duplicate',login:'TEST_LOGIN'})).error,'accounts_duplicate');
  result=await run.call('games',{id,games:[570,730,570]});assert.deepEqual(result.result.accounts[0].games,[570,730]);

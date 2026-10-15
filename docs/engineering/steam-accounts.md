@@ -184,22 +184,37 @@ not the public store catalog. Library loading runs in a bounded background task,
 so a slow Steam response cannot block other account controls. Selection and Start
 both validate ownership against that account’s authenticated library.
 
-## QR authentication
+## Authentication and account lifecycle
 
-QR is the default in Add account and needs only a local label. The approved Steam
-account identity is recorded after connection. Existing accounts must approve the
-same Steam login; duplicate identities are rejected. Password and Guard remain an
-explicit alternative, including a username field when a QR-only account is still
-unbound. Passwords are never written to account metadata.
+One centered card presents credentials and the Steam mobile QR together. A new
+account starts as an in-memory draft. Drafts are excluded from accounts.json and
+from the visible saved list; commit requires an authenticated connection. Cancel
+removes the draft and its generated config/database. Startup removes orphaned
+generated configs left by a crash before commit. Previously saved profiles remain
+by label and in insertion order when signed out; the games panel requires a
+connected account. Row removal uses an explicit confirmation for the target ID.
 
-The bridge opts into ASF's QR flow despite headless mode only after a UI request.
-Its private qr command returns a bounded module matrix for one account, never the
-challenge URL. The existing QR encoder runs locally; no image service receives
-the challenge. The UI renders a black-on-white SVG with a four-module quiet zone,
-updates rotating challenges, removes the matrix on completion/cancel, and ignores
-late responses. Cancel, Escape and password fallback stop that login attempt.
-Attempts expire after three minutes; parent exit also ends the owned worker.
+Stop and timed completion clear played games and retain the authenticated
+connection/library. Sign out is a separate disconnect command. Ready accounts
+alone do not block an update; games, drafts and pending authentication do. Exit
+still terminates the owned engine and every connection.
 
-QR encoder/trusted-origin checks, offline registration and protocol validation,
-and renderer cancellation/success/fallback are automated. Real Steam approval
-and credited playtime still require local user testing; fixtures do not prove them.
+The bridge copies the exact Steam QR challenge payload without URI reserialization.
+A per-attempt identity guards rotating challenge updates and late callbacks.
+Connection scopes cancel credential polling, and a new attempt waits for previous
+connection callbacks to finish before starting. Failed or cancelled QR logins do
+not silently restart. New code explicitly ends the prior attempt and starts fresh.
+QR data stays on the private pipe; the locally generated SVG uses black/white, a
+four-module quiet zone, integer device-pixel sizing and an explicit LTR direction.
+No image service receives the challenge and no QR URL is persisted in metadata.
+
+Offline validation includes protected database persistence, drafts/abandoned
+config cleanup, account protocol/startup, connection cancellation and the generated
+QR fixture. The renderer decodes actual screenshots against that exact fixture in
+English/light and Arabic/dark at 125% scaling, and checks cancellation, labels,
+Guard retry, Stop versus Sign out, and removal of a non-selected account.
+
+The user confirmed password sign-in and a game session on 3.7.2. Anonymous live
+Steam challenge generation/refresh can be tested in an isolated profile without
+approving or signing into an account. Mobile QR approval and credited playtime
+are not established by those tests and still need user verification.

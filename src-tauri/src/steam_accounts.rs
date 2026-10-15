@@ -251,7 +251,18 @@ impl Engine {
 }
 pub fn request(root: &Path, command: &str, body: Value) -> Result<Value, String> {
     if ![
-        "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr",
+        "status",
+        "add",
+        "remove",
+        "games",
+        "signin",
+        "input",
+        "start",
+        "stop",
+        "library",
+        "qr",
+        "commit",
+        "disconnect",
     ]
     .contains(&command)
     {
