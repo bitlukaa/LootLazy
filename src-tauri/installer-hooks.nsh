@@ -8,6 +8,17 @@ Function un.LootLazyRemoveTree
   Push $2
   Push $3
   Push $4
+  ; WebView caches can exceed the legacy Windows path length limit.
+  StrCpy $4 $0 4
+  ${If} $4 != "\\?\"
+    StrCpy $4 $0 2
+    ${If} $4 == "\\"
+      StrCpy $0 $0 "" 2
+      StrCpy $0 "\\?\UNC\$0"
+    ${Else}
+      StrCpy $0 "\\?\$0"
+    ${EndIf}
+  ${EndIf}
   System::Call 'kernel32::GetFileAttributesW(w r0)i.r1'
   StrCmp $1 -1 ll_tree_done
   IntOp $4 $1 & 0x10
@@ -101,7 +112,7 @@ FunctionEnd
   IfFileExists "$INSTDIR\CHANGELOG.md" 0 +2
     StrCpy $R9 1
   ${If} $R9 = 1
-  ${AndIf} $R7 < 6
+  ${AndIf} $R7 < 20
     IntOp $R7 $R7 + 1
     Sleep 250
     Goto ll_cleanup_retry
@@ -110,7 +121,7 @@ FunctionEnd
   RMDir "$INSTDIR"
   ${If} $R9 = 1
     SetErrorLevel 2
-    MessageBox MB_OK|MB_ICONEXCLAMATION "Some LootLazy files are still in use. Close programs using files in $INSTDIR, then remove the remaining LootLazy files." /SD IDOK
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Some LootLazy files could not be removed. Close programs using $INSTDIR and check folder access, then remove the remaining LootLazy files." /SD IDOK
   ${EndIf}
   Goto ll_cleanup_done
   ll_cleanup_invalid:

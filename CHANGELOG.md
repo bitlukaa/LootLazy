@@ -4,7 +4,7 @@
 
 - Clean portable data and generated helpers when application data deletion is selected during uninstall.
 - Select data deletion by default while honoring explicit retention and update mode.
-- Preserve unrelated files and junction targets, and report files that remain locked.
+- Preserve unrelated files and junction targets, handle long WebView cache paths, and report files that remain locked.
 - Test cleanup, retention, updates, junctions, readonly and locked files, repeated runs, spaces and large directory trees.
 - Run the new Setup over an existing installation once to refresh its uninstaller.
 

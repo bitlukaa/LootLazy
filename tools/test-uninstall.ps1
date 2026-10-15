@@ -29,7 +29,7 @@ function Invoke-Fixture([string]$folder,[int]$delete,[int]$update){
  return $process.ExitCode
 }
 $results=@()
-foreach($scenario in @('delete','default','keep','update','foreign','junction','readonly','locked','repeat','spaces','bulk')){
+foreach($scenario in @('delete','default','keep','update','foreign','junction','readonly','locked','repeat','spaces','bulk','longpath')){
  $folder=Join-Path $testRoot $(if($scenario -eq 'spaces'){'install with spaces'}else{$scenario})
  $dataFile=Join-Path $folder 'data/webview/cache/example.bin'
  $gameFile=Join-Path $folder 'games/fixture/game.exe'
@@ -37,6 +37,11 @@ foreach($scenario in @('delete','default','keep','update','foreign','junction','
  [IO.File]::WriteAllText($dataFile,'Synthetic cache, no account data')
  [IO.File]::WriteAllText($gameFile,'Synthetic generated helper')
  foreach($name in @('LootLazy.exe','README.md','LootLazy.ico','LootLazy.exe.sig','LootLazy.exe.pending','CHANGELOG.md')){[IO.File]::WriteAllText((Join-Path $folder $name),'fixture')}
+ if($scenario -eq 'longpath'){
+  $deep=Join-Path $folder ('data/'+('a'*100)+'/'+('b'*100))
+  [IO.Directory]::CreateDirectory($deep)|Out-Null
+  [IO.File]::WriteAllText((Join-Path $deep 'long-cache-entry.bin'),'long path cache')
+ }
  if($scenario -eq 'bulk'){
   for($index=0;$index -lt 100;$index++){
    $child=Join-Path $folder ('data/cache-'+$index+'/nested')
