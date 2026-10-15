@@ -1,5 +1,10 @@
 # Release history
 
+## 3.6.24 — Centered update confirmation
+
+- Replace the browser prompt for joining Beta or returning to Stable with a centered application dialog.
+- Match the duration editor styling, with explicit action labels, Cancel, Escape and close controls.
+
 ## 3.6.23 — Optional Beta updates
 
 - Join Beta from Settings > Updates to try new features early.

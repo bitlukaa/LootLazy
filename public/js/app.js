@@ -246,7 +246,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  if($('quest-search-clear'))$('quest-search-clear').onclick=()=>{if($('quest-search-input'))$('quest-search-input').value='';state.questSearchQuery='';$('quest-search-clear').hidden=true;renderQuests();};
  document.querySelectorAll('[data-quest-filter]').forEach(b=>b.onclick=()=>{state.questFilter=b.dataset.questFilter;document.querySelectorAll('[data-quest-filter]').forEach(el=>el.classList.toggle('active',el===b));renderQuests();});
  document.querySelectorAll('[data-theme-choice]').forEach(button=>button.onclick=event=>changeTheme(button.dataset.themeChoice,event));setSlot('settings-light-icon','sun');setSlot('settings-dark-icon','moon');setSlot('updates-refresh-icon','refresh');applyTheme(state.theme);document.documentElement.dataset.motion=state.motion?'full':'reduced';
- $('update-channel').onchange=async event=>{const select=event.target;if(updatesBusy||state.installingUpdate){select.value=state.update?.channel||'stable';return;}const channel=select.value;if(!window.confirm(t(channel==='beta'?'channel_join_confirm':'channel_leave_confirm'))){select.value=state.update?.channel||'stable';return;}select.disabled=true;try{state.update=await request('/api/updates/channel',{channel});renderUpdates();await loadUpdates(true);}catch{select.value=state.update?.channel||'stable';toast(t('updates_save_failed'),'error');}finally{select.disabled=false;}};
+ $('channel-dialog-close').onclick=()=>$('channel-dialog').close('cancel');
+ $('update-channel').onchange=async event=>{const select=event.target,channel=select.value;select.value=state.update?.channel||'stable';if(updatesBusy||state.installingUpdate)return;select.disabled=true;try{if(!await confirmChannelChange(channel))return;state.update=await request('/api/updates/channel',{channel});renderUpdates();await loadUpdates(true);}catch{select.value=state.update?.channel||'stable';toast(t('updates_save_failed'),'error');}finally{select.disabled=false;select.focus();}};
  $('btn-check-updates').onclick=()=>loadUpdates(true);$('btn-install-update').onclick=installUpdate;
  let debounce;$('game-search-input').oninput=event=>{state.query=event.target.value.trim();clearTimeout(debounce);debounce=setTimeout(()=>fetchGames(),180);};$('game-search-input').onkeydown=event=>{if(event.key==='ArrowDown'){$('simulator-game-list').querySelector('button')?.focus();event.preventDefault();}};
  document.querySelectorAll('#view-simulator .duration-preset').forEach(button=>button.onclick=()=>{if(button.dataset.duration==='custom'){const h=Math.floor(state.durationMinutes/60),m=state.durationMinutes%60;$('duration-hours').value=h;$('duration-minutes').value=m;setDuration(state.durationMinutes,true);}else setDuration(Number(button.dataset.duration));});for(const id of ['duration-hours','duration-minutes'])$(id).oninput=()=>{try{setDuration(readDuration($('duration-hours'),$('duration-minutes')),true);}catch{state.durationValid=false;$('duration-error').hidden=false;$('duration-summary').textContent='—';renderSession();}};
@@ -267,6 +268,14 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeExecuta
 
 document.addEventListener('load',event=>{if(event.target.matches?.('img[data-fallbacks]'))artworkLoaded(event.target);},true);
 document.addEventListener('error',event=>{if(event.target.matches?.('img[data-fallbacks]'))nextArtwork(event.target);},true);
+function confirmChannelChange(channel){
+ const dialog=$('channel-dialog'),join=channel==='beta';
+ $('channel-dialog-title').textContent=t(join?'channel_join_title':'channel_leave_title');
+ $('channel-dialog-message').textContent=t(join?'channel_join_confirm':'channel_leave_confirm');
+ $('channel-dialog-confirm').textContent=t(join?'channel_join_action':'channel_leave_action');
+ dialog.returnValue='cancel';
+ return new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='confirm'),{once:true});dialog.showModal();});
+}
 let updatesBusy=false;
 async function loadUpdates(check=false,silent=false){if(updatesBusy)return;updatesBusy=true;const button=$('btn-check-updates');if(check)busy(button,true);try{const previous=state.update?.latestVersion;state.update=await request(check?'/api/updates/check':'/api/updates',check?{}:undefined);renderUpdates();if(check&&!silent&&state.update.status==='up_to_date')toast(t('updates_current'),'success');if(state.update.status==='available'&&state.update.latestVersion!==previous){const message=t('update_available_version',{version:state.update.latestVersion});if(!check||silent)window.lootlazyNotifications?.add(message,'info',{kind:'update',target:'settings'});toast(message,'info');}}catch{state.update={...(state.update||{}),status:'offline'};renderUpdates();}finally{updatesBusy=false;if(check)busy(button,false);}if(!check&&!window.lootlazyDiagnostic)loadUpdates(true,true);}
 function renderUpdates(){

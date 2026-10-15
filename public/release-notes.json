@@ -1,11 +1,9 @@
 {
-  "version": "3.6.23",
+  "version": "3.6.24",
   "en": [
-    "Choose Stable or Beta in Settings > Updates.",
-    "Beta receives new features first. Return to Stable whenever you want, keeping your settings."
+    "Beta and Stable confirmation now uses a centered card matching the app instead of a browser prompt."
   ],
   "ar": [
-    "اختر قناة التحديثات المستقرة أو التجريبية من الإعدادات.",
-    "التجريبية تستقبل المميزات أولًا. يمكنك العودة للمستقرة مع الاحتفاظ بإعداداتك."
+    "تأكيد الانضمام للتجريبية والعودة للمستقرة يظهر الآن بكارت في منتصف التطبيق بنفس تصميمه."
   ]
 }

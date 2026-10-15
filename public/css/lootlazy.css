@@ -319,3 +319,6 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .update-channel-row label{font-weight:600}
 .update-channel-row p{margin-top:5px;line-height:1.6}
 #update-channel{width:auto;min-width:140px;max-width:100%;flex-shrink:0}
+
+#channel-dialog{width:380px;margin:auto}
+#channel-dialog-message{margin-top:14px;line-height:1.7}
