@@ -161,8 +161,14 @@ async fn api(
                 platform_download::open(body["platform"].as_str().unwrap_or(""))?;
                 return Ok(serde_json::json!({"success":true}));
             }
-            "/api/updates" => return Ok(updates::info()),
-            "/api/updates/check" => return Ok(updates::check()),
+            "/api/updates" | "/api/updates/check" | "/api/updates/channel" => {
+                let root = state.lock().map_err(|_| "Backend unavailable")?.root.clone();
+                return match url.path() {
+                    "/api/updates/check" => Ok(updates::check_for(&root)),
+                    "/api/updates/channel" => updates::set_channel(&root, body["channel"].as_str().unwrap_or("")),
+                    _ => Ok(updates::info_for(&root)),
+                };
+            }
             "/api/updates/install" => {
                 let (root, busy) = {
                     let backend = state.lock().map_err(|_| "Backend unavailable")?;
