@@ -1,15 +1,15 @@
 {
-  "ar": [
-    "إضافة النقطتين بعد Discord وSteam في حالة التشغيل.",
-    "تثبيت أزرار الكويستات عند مرور الماوس وتحديث الحالة.",
-    "تحديث صور GitHub بكويستات فعلية وترتيب مطابق للتطبيق.",
-    "ثبّت هذا الإصدار يدويًا مرة واحدة بسبب تغيير مفتاح توقيع التحديثات."
-  ],
-  "version": "3.6.18",
+  "version": "3.6.19",
   "en": [
-    "Discord: and Steam: status labels are included in this release.",
-    "Quest controls stay still on hover and during status updates.",
-    "Updated GitHub screenshots with real desktop quests and matching navigation order.",
-    "Install this release manually once because the update signing key has changed."
+    "Quest buttons no longer shift when pressed.",
+    "Closed quest labels remain unchanged between status checks.",
+    "Failed initial quest loading now shows a connection error instead of an apparently empty feed.",
+    "The Pause icon stays visible while a quest is running."
+  ],
+  "ar": [
+    "منع حركة أزرار الكويستات أثناء الضغط.",
+    "تثبيت نص المهام المغلقة بين تحديثات الحالة.",
+    "إظهار خطأ عند فشل تحميل المهام أول مرة بدل قائمة فارغة مضللة.",
+    "الاحتفاظ بأيقونة الإيقاف المؤقت أثناء تشغيل المهمة."
   ]
 }

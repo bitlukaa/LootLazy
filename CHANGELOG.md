@@ -1,5 +1,13 @@
 # Release history
 
+## 3.6.19 — October 15, 2026
+
+- Override the shared pressed-button transform for quest actions in the final stylesheet.
+- Preserve closed quest text nodes during unchanged status polls.
+- Report initial quest loading failures instead of presenting a successful empty feed.
+- Preserve the active quest Pause icon during status updates.
+- Exercise pressed and polled quest controls in both languages and themes.
+
 ## 3.6.18 — October 14, 2026
 
 - Include Discord: and Steam: status labels in the downloadable application.

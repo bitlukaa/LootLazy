@@ -86,7 +86,7 @@ async function loadQuests(refresh=false,silent=false){
   if(refresh){lastQuestRefresh=Date.now();lastRealQuestFetch=Date.now();try{localStorage.setItem('lootlazy_last_quest_fetch',String(lastRealQuestFetch));}catch{}}else{lastQuestRefresh=Date.parse(data.last_synced)||0;}
   renderQuests();$('quests-error').hidden=true;if(refresh&&!silent){if(previousIds.size>0&&newCount===0)toast(t('quests_current'),'success');else if(newCount>0)toast(t('quests_new_found',{count:number(newCount)}),'success');else toast(t('quests_refreshed',{count:number(state.quests.length)}),'success');}
  }
- catch{if(refresh){state.quests=state.quests.filter(q=>questMatches(q,state.session?.questId)||Date.parse(q.expiresAt)>Date.now());renderQuests();$('quests-error').textContent=t('quests_refresh_error');$('quests-error').hidden=false;}}
+ catch{if(refresh)state.quests=state.quests.filter(q=>questMatches(q,state.session?.questId)||Date.parse(q.expiresAt)>Date.now());renderQuests();$('quests-error').textContent=t(refresh?'quests_refresh_error':'quests_load_error');$('quests-error').hidden=false;}
  finally{questsBusy=false;busy(button,false);}
 }
 async function playQuest(quest){
@@ -218,9 +218,9 @@ function updateQuestSessions(){
   }else if(paused){
    btnText=t('quest_resume');
   }
-  if(!active&&!waiting&&!quest.localFinished)actionLabel(button,'play',btnText);else button.textContent=btnText;button.classList.remove('button-danger');button.classList.toggle('quest-timer',active||(waiting&&item?.state==='waiting'));button.classList.toggle('button-primary',!quest.localFinished);button.classList.toggle('button-secondary',!!quest.localFinished);button.setAttribute('aria-label',active&&!state.session.timerWaiting&&!state.session.timerWarmup?t('remaining')+' '+btnText:btnText);
+  if(!active&&!waiting&&!quest.localFinished)actionLabel(button,'play',btnText);else if(button.textContent!==btnText||button.firstElementChild)button.textContent=btnText;button.classList.remove('button-danger');button.classList.toggle('quest-timer',active||(waiting&&item?.state==='waiting'));button.classList.toggle('button-primary',!quest.localFinished);button.classList.toggle('button-secondary',!!quest.localFinished);button.setAttribute('aria-label',active&&!state.session.timerWaiting&&!state.session.timerWarmup?t('remaining')+' '+btnText:btnText);
   const cancel=card.querySelector('.quest-cancel');cancel.hidden=false;cancel.disabled=questActionBusy;actionLabel(cancel,quest.localFinished?'rotate-back':active?'square':'x',t(quest.localFinished?'quest_reopen':active?'quest_stop':'quest_cancel'));cancel.classList.toggle('quest-reopen',!!quest.localFinished);cancel.classList.toggle('button-danger',active);
-  const pause=card.querySelector('.quest-pause');pause.textContent=t('quest_pause');pause.hidden=!active;pause.disabled=questActionBusy;
+  const pause=card.querySelector('.quest-pause');actionLabel(pause,'pause',t('quest_pause'));pause.hidden=!active;pause.disabled=questActionBusy;
   const problem=active?activityProblem(state.session):item?.state==='error'?errorText(queue.error,'start_error'):'';
   if(errText){errText.textContent=problem||'';errText.hidden=!problem;}card.classList.toggle('quest-closed',!!quest.localFinished);
   progress.hidden=!active;progress.firstElementChild.style.width=(active?state.session.progressPercent:0)+'%';card.classList.toggle('quest-running',active);
