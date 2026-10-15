@@ -282,7 +282,7 @@ async function loadUpdates(check=false,silent=false){if(updatesBusy||state.insta
 function renderUpdates(){
  const update=state.update;if(!update)return;$('update-channel').value=update.channel||'stable';const available=update.status==='available';
  $('updates-last-checked').textContent=update.checkedAt?dateText(update.checkedAt,true):'—';
- $('app-version').textContent='LootLazy '+(update.currentVersion||'')+(update.buildChannel==='beta'?' Beta':'');$('update-available-badge').hidden=!available;
+ $('app-version').textContent='LootLazy '+(update.currentVersion||'');for(const id of ['app-build-badge','titlebar-build-badge'])$(id).hidden=update.buildChannel!=='beta';$('update-available-badge').hidden=!available;
  $('update-status').hidden=['up_to_date','idle','restricted'].includes(update.status);$('update-status').textContent=t(available&&update.canInstall!==true?'updates_unsigned':available?'update_available_version':update.status==='up_to_date'?'updates_current':['restricted','offline','rate_limited'].includes(update.status)?'updates_unavailable':'updates_ready',{version:update.latestVersion||''});
  $('btn-install-update').hidden=!available||update.canInstall!==true;
 

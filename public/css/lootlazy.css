@@ -357,3 +357,6 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 #account-game-setup .account-games-heading{margin-top:0}
 
 #account-qr-dialog{width:380px;margin:auto}#account-qr-dialog p{line-height:1.6;margin:14px 0}.account-qr-code{width:220px;min-height:220px;margin:18px auto;display:grid;place-items:center}.account-qr-code svg{display:block;width:220px;height:220px;border:1px solid var(--line);border-radius:8px}#account-new-method{width:100%}
+
+.app-version-line{display:flex;align-items:center;gap:7px;margin-top:4px}.updates-settings .app-version-line #app-version{margin-top:0}
+.build-channel-badge{display:inline-flex;align-items:center;background:var(--selected);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 15%,var(--line));border-radius:5px;font-size:9px;font-weight:600;line-height:1.4;padding:2px 6px;white-space:nowrap}.brand .build-channel-badge{font-size:8px;padding:1px 5px}
