@@ -12,7 +12,7 @@ let server,browser;
   window.lootlazyRequest=async(route,body)=>{const url=new URL(route,'http://localhost'),p=url.pathname;window.lootlazyObservedRoutes.push(p);
    if(p.startsWith('/api/steam-accounts/')){
      const accounts=window.accountFixture ||= [];const command=p.split('/').at(-1);
-     
+
      if(command==='add')accounts.push({id:'ll_'+String(accounts.length+1).padStart(32,'0'),label:body.label,login:body.login,games:[],state:'offline',active:false,connected:false});
      const account=body?.id?accounts.find(item=>item.id===body.id):null;
      if(command==='library')return {games:account.login==='main_login'?[{id:570,name:'Dota 2'},{id:730,name:'Counter-Strike 2'}]:[{id:440,name:'Team Fortress 2'}],total:2,loading:false,active:true};
