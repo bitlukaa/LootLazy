@@ -23,7 +23,7 @@ async function launch(parentId=process.pid){
  let result=await run.call('add',{label:'Account one',login:'test_login'});assert.equal(result.ok,true);const id=result.result.accounts[0].id;assert.match(id,/^ll_[a-f0-9]{32}$/);assert.equal(result.result.accounts[0].rememberLogin,false,'An unverified profile is not remembered for login');
  for(const presence of ['online','away','invisible','offline']){const changed=await run.call('presence',{id,presence});assert.equal(changed.ok,true);assert.equal(changed.result.accounts[0].presence,presence);assert.deepEqual(changed.result.accounts[0].games,[]);}
  assert.equal((await run.call('presence',{id,presence:'busy'})).error,'accounts_invalid');
- assert.equal((await run.call('add',{label:'Duplicate',login:'TEST_LOGIN'})).error,'accounts_duplicate');
+ assert.equal((await run.call('add',{label:'Duplicate',login:'TEST_LOGIN'})).error,'accounts_duplicate');const renamed=await run.call('rename',{id,label:'Renamed account'});assert.equal(renamed.result.accounts[0].label,'Renamed account');assert.equal(renamed.result.accounts[0].login,'test_login');assert.equal((await run.call('rename',{id,label:'   '})).error,'accounts_invalid');assert.equal((await run.call('rename',{id,label:'Account one'})).ok,true);
  result=await run.call('games',{id,games:[570,730,570]});assert.deepEqual(result.result.accounts[0].games,[570,730]);
  for(const games of [[0],[-1],[1.5],['730'],[null],Array.from({length:33},(_,i)=>i+1)])assert.equal((await run.call('games',{id,games})).error,'accounts_invalid');assert.deepEqual((await run.call('status')).result.accounts[0].games,[570,730],'Rejected input leaves the saved games unchanged');
  assert.equal((await run.call('games',{id:'../../outside',games:[570]})).error,'accounts_missing');

@@ -7,10 +7,12 @@ license = "MIT"
 build = "build.rs"
 
 [features]
+platform-login = []
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
 
 [build-dependencies]
+serde_json = "1"
 tauri-build = { version = "2.7", features = [] }
 
 [dependencies]

@@ -20,3 +20,10 @@ releases/
 
 # Local agent instructions
 AGENTS.md
+
+# Hosted platform service secrets and database files
+.env*
+!.env.example
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

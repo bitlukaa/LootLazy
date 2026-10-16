@@ -1,0 +1,13 @@
+{
+  "name": "lootlazy-platform-auth",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=24.4"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test.mjs"
+  }
+}

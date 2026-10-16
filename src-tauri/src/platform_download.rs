@@ -7,7 +7,15 @@ fn download_url(platform: &str) -> Result<&'static str, String> {
     }
 }
 pub fn open(platform: &str) -> Result<(), String> {
-    let url = download_url(platform)?;
+    open_allowed(download_url(platform)?)
+}
+pub fn open_store(id: u32) -> Result<(), String> {
+    if id == 0 {
+        return Err("accounts_invalid".into());
+    }
+    open_allowed(&format!("https://store.steampowered.com/app/{id}/"))
+}
+pub fn open_allowed(url: &str) -> Result<(), String> {
     let wide = |value: &str| value.encode_utf16().chain(Some(0)).collect::<Vec<_>>();
     let verb = wide("open");
     let target = wide(url);

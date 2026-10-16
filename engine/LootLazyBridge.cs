@@ -238,8 +238,17 @@ internal static class LootLazyBridge {
         string id = bot.BotName, query = Text(body, "query").Trim();
         if (query.Length > 160) { Fail("accounts_invalid"); return null!; }
         if (body.TryGetProperty("refresh", out var refresh) && refresh.ValueKind == JsonValueKind.True && !LibraryRequests.ContainsKey(id)) { Libraries.TryRemove(id, out _); LibraryErrors.TryRemove(id, out _); }
+        HashSet<uint>? requested = null;
+        if (body.TryGetProperty("appIds", out var ids)) {
+            if (ids.ValueKind != JsonValueKind.Array || ids.GetArrayLength() > 30) Fail("accounts_invalid");
+            requested = new HashSet<uint>();
+            foreach (var value in ids.EnumerateArray()) {
+                if (value.ValueKind != JsonValueKind.Number || !value.TryGetUInt32(out uint game) || game == 0) Fail("accounts_invalid");
+                requested.Add(value.GetUInt32());
+            }
+        }
         if (Libraries.TryGetValue(id, out var library) && library.SteamId == bot.SteamID) {
-            var games = library.Games.Where(game => query.Length == 0 || game.Value.Contains(query, StringComparison.OrdinalIgnoreCase) || game.Key.ToString(System.Globalization.CultureInfo.InvariantCulture).Contains(query, StringComparison.Ordinal)).OrderBy(game => game.Value, StringComparer.OrdinalIgnoreCase).Take(50).Select(game => new { id = game.Key, name = game.Value[..Math.Min(game.Value.Length, 160)] }).ToArray();
+            var games = library.Games.Where(game => requested != null ? requested.Contains(game.Key) : query.Length == 0 || game.Value.Contains(query, StringComparison.OrdinalIgnoreCase) || game.Key.ToString(System.Globalization.CultureInfo.InvariantCulture).Contains(query, StringComparison.Ordinal)).OrderBy(game => game.Value, StringComparer.OrdinalIgnoreCase).Take(50).Select(game => new { id = game.Key, name = game.Value[..Math.Min(game.Value.Length, 160)] }).ToArray();
             return new { games, total = library.Games.Count, loading = false, active = IsBusy(), error = (string?)null };
         }
         if (!LibraryErrors.ContainsKey(id)) {
@@ -260,7 +269,7 @@ internal static class LootLazyBridge {
         return new { games = Array.Empty<object>(), total = 0, loading = LibraryRequests.ContainsKey(id), active = IsBusy(), error = LibraryErrors.ContainsKey(id) ? "accounts_library_failed" : null };
     }
     private static async Task<object> Handle(string command, JsonElement body) {
-        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr", "commit", "disconnect", "presence", "resume" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
+        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr", "commit", "disconnect", "presence", "resume", "rename" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
         await BindQrIdentities().ConfigureAwait(false);
         if (command == "status") return Snapshot();
         if (command == "add") {
@@ -298,6 +307,13 @@ internal static class LootLazyBridge {
             if (selected != null) await selected.Destroy(true).ConfigureAwait(false);
             Accounts.Remove(entry.Id); Drafts.Remove(entry.Id); ConnectionFlows.TryRemove(entry.Id, out _);
             Save();
+            return Snapshot();
+        }
+        if (command == "rename") {
+            string label = Text(body, "label").Trim();
+            if (Drafts.Contains(entry.Id) || label.Length is < 1 or > 48 || label.Any(char.IsControl)) Fail("accounts_invalid");
+            Accounts[entry.Id] = entry with { Label = label };
+            try { Save(); } catch { Accounts[entry.Id] = entry; throw; }
             return Snapshot();
         }
         if (command == "games") {

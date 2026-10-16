@@ -4,6 +4,7 @@ mod backend;
 mod diagnostics;
 mod executables;
 mod feed;
+mod identity;
 mod metadata;
 mod platform_download;
 mod platform_environment;
@@ -156,6 +157,40 @@ async fn api(
     let result = tauri::async_runtime::spawn_blocking(move || {
         let url =
             url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
+        if url.path().starts_with("/api/identity/") {
+            let root = state.lock().map_err(|_| "Backend unavailable")?.root.clone();
+            return match url.path() {
+                "/api/identity/status" => Ok(identity::status(&root)),
+                "/api/identity/config" => identity::config(),
+                "/api/identity/begin" => {identity::begin(&root, body["provider"].as_str().unwrap_or(""))?;Ok(identity::status(&root))},
+                "/api/identity/cancel" => {identity::cancel();Ok(identity::status(&root))},
+                "/api/identity/signout" => {state.lock().map_err(|_| "Backend unavailable")?.shutdown();steam_accounts::shutdown();identity::signout(&root)?;Ok(identity::status(&root))},
+                _ => Err("platform_auth_error".into())
+            };
+        }
+        if !url.path().starts_with("/api/updates") {
+            let root = state.lock().map_err(|_| "Backend unavailable")?.root.clone();
+            identity::require(&root)?;
+        }
+        if url.path() == "/api/steam-accounts/search" {
+            let root = state.lock().map_err(|_| "Backend unavailable")?.root.clone();
+            let query = body["query"].as_str().unwrap_or("").trim();
+            if query.is_empty() { return steam_accounts::request(&root, "library", body); }
+            let candidates = steam_store::search(query)?;
+            let mut owned = body.clone(); owned["query"] = serde_json::json!("");
+            owned["appIds"] = serde_json::json!(candidates.iter().filter_map(|game|game["steamId"].as_str()?.parse::<u32>().ok()).collect::<Vec<_>>());
+            let library = steam_accounts::request(&root, "library", owned)?;
+            let games = candidates.into_iter().map(|mut game| {
+                let id = game["steamId"].as_str().unwrap_or("").parse::<u64>().unwrap_or(0);
+                game["owned"] = serde_json::json!(library["games"].as_array().is_some_and(|items| items.iter().any(|item| item["id"].as_u64() == Some(id))));
+                game
+            }).collect::<Vec<_>>();
+            return Ok(serde_json::json!({"games":games,"loading":library["loading"],"error":library["error"]}));
+        }
+        if url.path() == "/api/steam-accounts/store" {
+            platform_download::open_store(body["id"].as_u64().filter(|id| *id > 0 && *id <= u32::MAX as u64).ok_or("accounts_invalid")? as u32)?;
+            return Ok(serde_json::json!({"ok":true}));
+        }
         if let Some(command) = url.path().strip_prefix("/api/steam-accounts/") {
             let root = state.lock().map_err(|_| "Backend unavailable")?.root.clone();
             return steam_accounts::request(&root, command, body);
