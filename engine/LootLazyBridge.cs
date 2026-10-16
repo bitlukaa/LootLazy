@@ -43,6 +43,20 @@ internal static class LootLazyVault {
 
 internal static class LootLazyBridge {
     internal static bool Enabled => true;
+    // Self-test only: inspect anonymous serialized status packets in memory, without connecting or logging in.
+    private sealed class PresencePacketFixture : SteamKit2.IDebugNetworkListener {
+        internal readonly List<uint> States = [];
+        internal bool Invalid;
+        public void OnIncomingNetworkMessage(SteamKit2.EMsg type, byte[] data) { }
+        public void OnOutgoingNetworkMessage(SteamKit2.EMsg type, byte[] data) {
+            try {
+                if (type != SteamKit2.EMsg.ClientChangeStatus) { Invalid = true; return; }
+                var packet = new SteamKit2.PacketClientMsgProtobuf(type, data);
+                var message = new SteamKit2.ClientMsgProtobuf<SteamKit2.Internal.CMsgClientChangeStatus>(packet);
+                States.Add(message.Body.persona_state);
+            } catch { Invalid = true; }
+        }
+    }
     private sealed record Account(string Id, string Label, string Login, uint[] Games, string Presence = "online", bool RememberLogin = true);
     private static SteamKit2.EPersonaState Persona(string presence) => presence switch {
         "online" => SteamKit2.EPersonaState.Online, "away" => SteamKit2.EPersonaState.Away,
@@ -414,6 +428,13 @@ internal static class LootLazyBridge {
             await output.WriteLineAsync(JsonSerializer.Serialize(new { payload, rows = EncodeQr(payload) })).ConfigureAwait(false); return 0;
         }
         if (args.Length == 1 && args[0] == "--self-test") {
+            var statusPackets = new PresencePacketFixture();
+            var isolatedClient = new SteamKit2.SteamClient { DebugNetworkListener = statusPackets };
+            var friends = isolatedClient.GetHandler<SteamKit2.SteamFriends>();
+            if (friends == null) return 14;
+            foreach (string presence in new[] { "online", "away", "invisible", "offline" }) friends.SetPersonaState(Persona(presence));
+            if (statusPackets.Invalid || !statusPackets.States.SequenceEqual(new uint[] { 1, 3, 7, 0 })) return 15;
+            if (isolatedClient.IsConnected || friends.GetPersonaState() != SteamKit2.EPersonaState.Offline) return 16;
             var rows = EncodeQr("https://s.team/q/1/fixture");
             if (rows.Length < 21 || rows.Length > 97 || rows.Any(row => row.Length != rows.Length || row.Any(bit => bit is not ('0' or '1')))) return 7;
             foreach (var invalid in new[] { "http://s.team/q/fixture", "https://example.com/q/fixture", "https://s.team/not-a-challenge", "https://x@s.team/q/fixture" }) {

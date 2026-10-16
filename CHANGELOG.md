@@ -1,5 +1,11 @@
 # Release history
 
+## 3.7.6 — Steam status clarity
+
+- Rename Appear as to Status while keeping all four choices visible.
+- Verify actual SteamKit status packets for Online, Away, Invisible and Offline in an isolated regression, without account authentication or a running game.
+- Status applies to the Steam Accounts session. Other active Steam sessions can affect the presence friends see.
+
 ## 3.7.5 — Remember Steam sign-ins
 
 - Restore remembered Steam logins after reopening or updating LootLazy, without starting games automatically. Sign out keeps the account saved and prevents automatic login.
