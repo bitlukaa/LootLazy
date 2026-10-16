@@ -126,7 +126,7 @@
  }
  function textNode(node,value){if(node.textContent!==value)node.textContent=value;}
  function text(id,value){const node=el(id);if(node.textContent!==value)node.textContent=value;}
- function selectAccount(account){rememberSelection(account.id);model.libraryFor=null;el('account-search').value='';el('account-search-results').replaceChildren();render();if(!account.connected){if(account.active&&!account.input&&!account.error)return;if(account.canResume&&!account.error){call('resume',{id:account.id});return;}openAuth(account);}}
+ function selectAccount(account){rememberSelection(account.id);model.libraryFor=null;el('account-search').value='';el('account-search-results').replaceChildren();render();if(!account.connected){if(account.active&&!account.input&&!account.error)return;if(account.canResume&&(!account.error||account.error==='accounts_session_conflict')){call('resume',{id:account.id});return;}openAuth(account);}}
  function confirmRemoval(account){removalTarget=account.id;el('account-remove-warning').textContent=t('accounts_remove_named',{label:account.label});el('account-remove-dialog').showModal();}
  async function bulkRun(command,presence=null){
   if(model.busy||bulkBusy)return false;bulkBusy=true;const targets=model.accounts.filter(account=>!account.draft&&(command==='presence'?true:command==='start'?account.connected&&account.state==='ready'&&account.games?.length:account.state==='running'));const failed=[];
@@ -181,9 +181,9 @@
   if(page===0){el('account-search-results').replaceChildren();el('account-quick-picks').replaceChildren();el('account-quick-games').hidden=true;libraryPage=0;libraryTotal=0;}libraryBusy=true;
   try{
    const result=await request(query?'/api/steam-accounts/search':'/api/steam-accounts/library',{id:account.id,query,refresh,offset:page*50});
-   const games=result.games;model.libraryLoading=!!result.loading;
+   const games=result.games;
    if(result.error)throw Error(result.error);
-   if(sequence!==model.searchSequence||selected()?.id!==account.id||!selected()?.connected)return;
+   if(sequence!==model.searchSequence||selected()?.id!==account.id||!selected()?.connected)return;model.libraryLoading=!!result.loading;
    const fragment=document.createDocumentFragment();
    const available=(games||[]).filter(game=>{const id=Number(game.steamId||game.id);return Number.isInteger(id)&&id>0&&!selected()?.games?.includes(id);});
    const choices=available;
