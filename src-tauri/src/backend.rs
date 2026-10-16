@@ -558,6 +558,27 @@ impl Backend {
     pub fn active_steam_library(&self) -> PathBuf {
         self.root.join("games")
     }
+    fn auto_open_platforms(&self) -> bool {
+        self.overrides["settings"]["auto_open_platforms"]
+            .as_bool()
+            .unwrap_or(false)
+    }
+    fn ensure_steam_client(&self) -> Result<(), String> {
+        crate::platform_download::ensure_client(
+            crate::steam_client::running(),
+            self.auto_open_platforms(),
+            "steam_open_required",
+            crate::steam_client::ensure_open,
+        )
+    }
+    fn ensure_discord_client(&self) -> Result<(), String> {
+        crate::platform_download::ensure_client(
+            self.discord_desktop_running(),
+            self.auto_open_platforms(),
+            "discord_open_required",
+            crate::presence::open_desktop_if_missing,
+        )
+    }
     fn start_process(&mut self, item: &Value) -> Result<(), String> {
         if item["syncSteam"] != true {
             return self.start_game_process(item);
@@ -587,7 +608,7 @@ impl Backend {
         }
         self.refresh_steam_runtime();
         let dll = self.steam_runtime.clone().ok_or("steam_runtime_missing")?;
-        crate::steam_client::ensure_open()?;
+        self.ensure_steam_client()?;
         self.start_game_process(item)?;
         let mut steam_game = game;
         steam_game["steamId"] = json!(steam_id);
@@ -629,7 +650,7 @@ impl Backend {
             .as_bool()
             .unwrap_or(true);
         if self.allow_rpc && auto_rpc {
-            crate::presence::open_desktop_if_missing()?;
+            self.ensure_discord_client()?;
         }
         let exe_str = item["executableName"].as_str().unwrap_or("");
         let fallback = format!(
@@ -1572,6 +1593,59 @@ impl Backend {
         }
         let _ = self.save("steam_search.json", &json!(self.steam_search));
     }
+    pub fn achievement_runtime(&mut self) -> Result<PathBuf, String> {
+        self.refresh_steam_runtime();
+        let extra: Vec<PathBuf> = self.overrides["settings"]["steam_paths"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|v| v.as_str().map(PathBuf::from))
+            .collect();
+        let roots = crate::rotation::libraries(&extra);
+        let mut candidates: Vec<_> = crate::rotation::runtime_candidates(&roots)
+            .into_iter()
+            .filter_map(|path| {
+                let size = std::fs::metadata(&path).ok()?.len();
+                if size > 8 * 1024 * 1024 {
+                    return None;
+                }
+                let bytes = std::fs::read(&path).ok()?;
+                let current = bytes
+                    .windows(b"SteamAPI_SteamUserStats_v013\0".len())
+                    .any(|w| w == b"SteamAPI_SteamUserStats_v013\0");
+                let legacy = bytes
+                    .windows(b"SteamAPI_SteamUserStats_v012\0".len())
+                    .any(|w| w == b"SteamAPI_SteamUserStats_v012\0");
+                (current || legacy).then_some((if current { 0 } else { 1 }, path))
+            })
+            .collect();
+        candidates.sort_by_key(|item| item.0);
+        if let Some((_, path)) = candidates.into_iter().next() {
+            self.steam_runtime = Some(path);
+        }
+        self.ensure_steam_client()?;
+        self.steam_runtime
+            .clone()
+            .ok_or_else(|| "steam_runtime_missing".into())
+    }
+    pub fn achievement_library_context(
+        &mut self,
+    ) -> Result<(PathBuf, Vec<PathBuf>, Vec<u32>), String> {
+        let dll = self.achievement_runtime()?;
+        let extra: Vec<PathBuf> = self.overrides["settings"]["steam_paths"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|v| v.as_str().map(PathBuf::from))
+            .collect();
+        let roots = crate::rotation::libraries(&extra);
+        let mut seeds: Vec<u32> = crate::rotation::installed_games(&roots)
+            .iter()
+            .filter_map(|g| g["steamId"].as_str()?.parse().ok())
+            .collect();
+        seeds.sort_by_key(|id| if *id == 730 { 0 } else { *id });
+        Ok((dll, roots, seeds))
+    }
     fn refresh_steam_runtime(&mut self) {
         if self.steam_runtime.as_ref().is_some_and(|p| p.is_file()) {
             return;
@@ -1901,7 +1975,7 @@ impl Backend {
             "/api/steam/start" => {
                 self.refresh_steam_runtime();
                 let dll = self.steam_runtime.clone().ok_or("steam_runtime_missing")?;
-                crate::steam_client::ensure_open()?;
+                self.ensure_steam_client()?;
                 let sessions: Vec<(String, u64)> =
                     if let Some(sessions) = body["sessions"].as_array() {
                         if sessions.len() > 32 {
@@ -2031,6 +2105,8 @@ impl Backend {
                     s["start_minimized"] = json!(s["start_minimized"].as_bool().unwrap_or(false));
                     s["minimize_to_tray"] = json!(s["minimize_to_tray"].as_bool().unwrap_or(false));
                     s["auto_discord_rpc"] = json!(s["auto_discord_rpc"].as_bool().unwrap_or(true));
+                    s["auto_open_platforms"] =
+                        json!(s["auto_open_platforms"].as_bool().unwrap_or(false));
                     s["desktop_notifications"] =
                         json!(s["desktop_notifications"].as_bool().unwrap_or(true));
                     s["quest_duration_seconds"] = json!(self.quest_target_duration_seconds());
@@ -2052,6 +2128,9 @@ impl Backend {
                 }
                 if let Some(b) = body["minimize_to_tray"].as_bool() {
                     proposed["settings"]["minimize_to_tray"] = json!(b);
+                }
+                if let Some(b) = body["auto_open_platforms"].as_bool() {
+                    proposed["settings"]["auto_open_platforms"] = json!(b);
                 }
                 if let Some(b) = body["auto_discord_rpc"].as_bool() {
                     proposed["settings"]["auto_discord_rpc"] = json!(b);
@@ -2109,6 +2188,7 @@ impl Backend {
                     "start_minimized": self.overrides["settings"]["start_minimized"].as_bool().unwrap_or(false),
                     "minimize_to_tray": self.overrides["settings"]["minimize_to_tray"].as_bool().unwrap_or(false),
                     "auto_discord_rpc": self.overrides["settings"]["auto_discord_rpc"].as_bool().unwrap_or(true),
+                    "auto_open_platforms": self.auto_open_platforms(),
                     "desktop_notifications": self.overrides["settings"]["desktop_notifications"].as_bool().unwrap_or(true),
                     "quest_duration_seconds": self.quest_target_duration_seconds(),
                     "total_playtime_seconds": self.total_playtime_seconds(),
@@ -3380,6 +3460,7 @@ mod tests {
         let mut f = Fixture::new();
         let get = f.0.route("/api/settings", Value::Null).unwrap();
         assert_eq!(get["auto_discord_rpc"], true);
+        assert_eq!(get["auto_open_platforms"], false);
         assert_eq!(get["desktop_notifications"], true);
         assert_eq!(get["start_minimized"], false);
         assert_eq!(get["minimize_to_tray"], false);
@@ -3389,6 +3470,7 @@ mod tests {
             "/api/settings",
             json!({
                 "auto_discord_rpc": false,
+                "auto_open_platforms": true,
                 "desktop_notifications": false,
                 "start_minimized": true,
                 "minimize_to_tray": true
@@ -3398,6 +3480,7 @@ mod tests {
 
         let updated = f.0.route("/api/settings", Value::Null).unwrap();
         assert_eq!(updated["auto_discord_rpc"], false);
+        assert_eq!(updated["auto_open_platforms"], true);
         assert_eq!(updated["desktop_notifications"], false);
         assert_eq!(updated["start_minimized"], true);
         assert_eq!(updated["minimize_to_tray"], true);

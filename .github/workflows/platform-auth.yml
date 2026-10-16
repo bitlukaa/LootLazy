@@ -1,0 +1,17 @@
+name: Platform account service
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, feature/steam-accounts-source]
+permissions:
+  contents: read
+jobs:
+  service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test services/platform-auth/test.mjs

@@ -1,11 +1,19 @@
 {
-  "version": "3.6.26",
+  "version": "3.9.4",
   "en": [
-    "Platform status and notifications now share the main navigation header.",
-    "Stable and Beta confirmations use the same centered cards and visible close icons."
+    "Achievement library cards open games individually. Removed game checkboxes, Select all games, Clear selection and cross-game achievement operations.",
+    "Fixed the duplicate Executable control by keeping its existing dedicated dropdown. Removed Custom from the game executable choices and aligned the label beside the control.",
+    "Restored matching SVG dropdown chevrons and added clear hover/focus feedback to account Status options.",
+    "Game Time and Steam Idle default new sessions to Continuous. Run duration and optional sync controls are inside collapsed Advanced settings.",
+    "Shuffle games sits beside 10 / 50 / 100 / 200. Game Variety Start and Multi-Account Idle Start span their action area. Game Variety stops after the final game as requested.",
+    "Fresh account logons wait briefly before starting play activity, then re-check the connection and playing-elsewhere state. This addresses a startup race; it does not prove the cause of an external Steam desktop sign-out."
   ],
   "ar": [
-    "حالة المنصات والإشعارات أصبحت في شريط التنقل الرئيسي.",
-    "تأكيدات المستقرة والتجريبية تستخدم نفس الكروت وأيقونات الإغلاق الواضحة."
+    "كل لعبة إنجازات مستقلة؛ إزالة تحديد الألعاب من المكتبة وأزرار تحديد الكل وإلغاء التحديد والتعديل عبر ألعاب متعددة.",
+    "إصلاح تكرار Executable والإبقاء على قائمة واحدة، وإزالة Custom من اختيارات ملف اللعبة ومحاذاة العنوان بجانب القائمة.",
+    "استعادة أسهم SVG المتناسقة مع التطبيق وإظهار تفاعل واضح عند المرور والتركيز على حالات الحساب.",
+    "بدء Game Time وSteam Idle افتراضيًا بوضع Continuous، ووضع المدة والمزامنة الاختيارية داخل إعدادات متقدمة مقفولة.",
+    "نقل خلط الألعاب بجانب أعداد الألعاب، وتوسيع زر بدء Game Variety وMulti-Account Idle. Game Variety يقف بعد آخر لعبة حسب اختيارك.",
+    "إعادة فحص حالة اتصال الحساب واللعب في مكان آخر بعد مهلة قصيرة عند تسجيل الدخول الحديث، لمعالجة سباق بدء الجلسة. هذا لا يثبت مصدر تسجيل خروج Steam الخارجي."
   ]
 }

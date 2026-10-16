@@ -635,6 +635,10 @@ pub fn libraries(extra: &[PathBuf]) -> Vec<PathBuf> {
     roots
 }
 pub fn discover_runtime(roots: &[PathBuf]) -> Option<PathBuf> {
+    runtime_candidates(roots).into_iter().next()
+}
+pub fn runtime_candidates(roots: &[PathBuf]) -> Vec<PathBuf> {
+    let mut found = Vec::new();
     for root in roots {
         let mut stack = vec![(root.join("steamapps/common"), 0)];
         let mut count = 0;
@@ -662,7 +666,12 @@ pub fn discover_runtime(roots: &[PathBuf]) -> Option<PathBuf> {
                             .to_string_lossy()
                             .eq_ignore_ascii_case("steam_api64.dll")
                     {
-                        return fs::canonicalize(path).ok();
+                        if let Ok(path) = fs::canonicalize(&path) {
+                            found.push(path);
+                            if found.len() >= 32 {
+                                return found;
+                            }
+                        }
                     }
                     if kind.is_dir() && depth < 6 {
                         stack.push((path, depth + 1));
@@ -671,7 +680,7 @@ pub fn discover_runtime(roots: &[PathBuf]) -> Option<PathBuf> {
             }
         }
     }
-    None
+    found
 }
 
 pub fn worker(args: &[String]) -> i32 {

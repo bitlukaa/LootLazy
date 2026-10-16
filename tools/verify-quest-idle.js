@@ -75,7 +75,7 @@ let server, browser;
       };
 
       window.lootlazyScreenshotState=store;
-      window.lootlazyRequest = async (route, body) => {
+      window.lootlazyRequest=async(route,body)=>{if(route==='/api/identity/status')return {enforced:false,configured:false,authenticated:false};
         const url = new URL(route, 'http://localhost');
         const p = url.pathname;
         if (p === '/api/games') return { total: games.length, games, hasMore: false };

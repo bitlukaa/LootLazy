@@ -48,6 +48,12 @@ pub fn validated(value: &str) -> Result<url::Url, String> {
     }
     let parts: Vec<_> = url.path().split('/').collect();
     let allowed = match url.host_str() {
+        Some("avatars.steamstatic.com") => {
+            let name = url.path().strip_prefix('/').unwrap_or("");
+            name.strip_suffix("_medium.jpg").is_some_and(|hash| {
+                hash.len() == 40 && hash.bytes().all(|byte| byte.is_ascii_hexdigit())
+            })
+        }
         Some("cdn.discordapp.com") => {
             parts.len() >= 4
                 && ["app-icons", "app-assets", "quests"].contains(&parts[1])
@@ -83,6 +89,65 @@ fn image_type(bytes: &[u8]) -> Result<&'static str, String> {
     }
 }
 pub fn get(root: &Path, value: &str) -> Result<(Vec<u8>, &'static str), String> {
+    let url = validated(value)?;
+    let parts: Vec<_> = url.path().split('/').collect();
+    let id = if parts.len() >= 6 && parts[1..4] == ["store_item_assets", "steam", "apps"] {
+        parts[4].parse::<u32>().ok().filter(|id| *id > 0)
+    } else {
+        None
+    };
+    if let Some(id) = id {
+        for steam in crate::executables::detected_roots() {
+            let cache = steam.join(format!("appcache/librarycache/{id}"));
+            let mut files = vec![cache.join("header.jpg")];
+            if let Ok(entries) = fs::read_dir(&cache) {
+                for entry in entries.flatten().take(64) {
+                    let name = entry.file_name().to_string_lossy().into_owned();
+                    if entry
+                        .file_type()
+                        .is_ok_and(|kind| kind.is_dir() && !kind.is_symlink())
+                        && name.len() == 40
+                        && name.bytes().all(|b| b.is_ascii_hexdigit())
+                    {
+                        files.push(entry.path().join("header.jpg"));
+                    }
+                }
+            }
+            files.extend([cache.join("library_600x900.jpg"), cache.join("logo.png")]);
+            for file in files {
+                if let Ok(meta) = fs::metadata(&file) {
+                    if meta.len() <= 4 * 1024 * 1024 {
+                        if let Ok(bytes) = fs::read(&file) {
+                            if let Ok(kind) = image_type(&bytes) {
+                                return Ok((bytes, kind));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    match get_direct(root, value) {
+        Ok(image) => Ok(image),
+        Err(original) => {
+            if let Some(id) = id {
+                if let Ok(games) = crate::steam_store::search(&id.to_string()) {
+                    if let Some(image) = games
+                        .first()
+                        .and_then(|game| game["image"].as_str())
+                        .filter(|image| *image != value)
+                    {
+                        if let Ok(image) = get_direct(root, image) {
+                            return Ok(image);
+                        }
+                    }
+                }
+            }
+            Err(original)
+        }
+    }
+}
+fn get_direct(root: &Path, value: &str) -> Result<(Vec<u8>, &'static str), String> {
     let url = validated(value)?;
     let key = format!("{:x}", Sha256::digest(url.as_str().as_bytes()));
     {
@@ -301,6 +366,12 @@ mod tests {
     #[test]
     fn only_trusted_sources() {
         assert!(validated("https://cdn.discordapp.com/app-icons/123456/game.png").is_ok());
+        assert!(validated(
+            "https://avatars.steamstatic.com/0123456789abcdef0123456789abcdef01234567_medium.jpg"
+        )
+        .is_ok());
+        for value in ["https://avatars.steamstatic.com/not-a-hash_medium.jpg", "https://avatars.steamstatic.com/0123456789abcdef0123456789abcdef01234567_medium.jpg?token=1", "https://avatars.steamstatic.com.evil.test/0123456789abcdef0123456789abcdef01234567_medium.jpg"] { assert!(validated(value).is_err()); }
+
         for url in [
             "http://cdn.discordapp.com/app-icons/123456/a.png",
             "https://evil.com/a.png",

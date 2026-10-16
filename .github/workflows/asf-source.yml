@@ -1,0 +1,33 @@
+name: ASF source verification
+on:
+  push:
+    branches: [feature/steam-accounts-source]
+    paths:
+      - engine/**
+      - third_party/**
+      - tools/*steam-engine*
+      - tools/verify-asf-source.cjs
+      - .github/workflows/asf-source.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-source:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact upstream snapshot
+        run: node tools/verify-asf-source.cjs
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build the saved engine source without UI submodules
+        run: dotnet build third_party/ArchiSteamFarm/ArchiSteamFarm/ArchiSteamFarm.csproj --configuration Release -p:ContinuousIntegrationBuild=true -p:UseAppHost=false --nologo
+
+      - name: Build integrated engine and verify encrypted persistence
+        run: ./tools/build-steam-engine.ps1
+      - name: Account protocol and startup regressions
+        run: node tools/test-steam-engine.cjs; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node tools/test-steam-engine-startup.cjs

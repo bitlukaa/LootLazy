@@ -1,0 +1,50 @@
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Environment="DOTNET_CLI_TELEMETRY_OPTOUT=true"
+Environment="DOTNET_EnableDiagnostics=0"
+Environment="DOTNET_NOLOGO=true"
+EnvironmentFile=-/etc/asf/%i
+ExecStart=/home/%i/ArchiSteamFarm/ArchiSteamFarm --no-restart --service --system-required
+Restart=on-success
+RestartSec=1s
+RuntimeDirectory=asf-%i
+SyslogIdentifier=asf-%i
+User=%i
+
+# ASF security hardening, all of the below entries are optional, but their existence improves security of your system
+CapabilityBoundingSet=
+DevicePolicy=closed
+LockPersonality=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateIPC=yes
+PrivateMounts=yes
+PrivateUsers=yes
+ProcSubset=pid
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=read-only
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+ProtectSystem=strict
+ReadWritePaths=/home/%i/ArchiSteamFarm /tmp
+RemoveIPC=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_NETLINK AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SecureBits=noroot-locked
+SystemCallArchitectures=native
+SystemCallFilter=@system-service mincore
+SystemCallFilter=~@privileged
+UMask=0077
+
+[Unit]
+After=network.target
+Description=ArchiSteamFarm Service (on %I)
+Documentation=https://github.com/JustArchiNET/ArchiSteamFarm/wiki

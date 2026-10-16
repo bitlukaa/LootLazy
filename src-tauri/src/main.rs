@@ -1,4 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod achievements;
 mod artwork;
 mod backend;
 mod diagnostics;
@@ -9,7 +10,9 @@ mod platform_download;
 mod platform_environment;
 mod presence;
 mod rotation;
+mod steam_accounts;
 mod steam_client;
+mod steam_library;
 mod steam_runtime;
 mod steam_store;
 mod storage;
@@ -155,6 +158,27 @@ async fn api(
     let result = tauri::async_runtime::spawn_blocking(move || {
         let url =
             url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
+        if url.path()=="/api/achievements/games" {let (root,dll,roots,seeds)={let mut backend=state.lock().map_err(|_|"Backend unavailable")?;let (dll,roots,seeds)=backend.achievement_library_context()?;(backend.root.clone(),dll,roots,seeds)};return achievements::library(&root,&dll,&roots,&seeds);}
+        if let Some(command) = url.path().strip_prefix("/api/achievements/") {
+            let (root, dll) = { let mut backend = state.lock().map_err(|_| "Backend unavailable")?; (backend.root.clone(), backend.achievement_runtime()?) };
+            return achievements::request(&root, &dll, command, body);
+        }
+        if url.path() == "/api/steam-accounts/search" {
+            let root = state.lock().map_err(|_| "Backend unavailable")?.root.clone();
+            let query = body["query"].as_str().unwrap_or("").trim();
+            if query.is_empty() { return steam_accounts::request(&root, "library", body); }
+            let candidates = steam_store::search(query)?;
+            return Ok(serde_json::json!({"games":candidates,"loading":false,"error":null}));
+        }
+
+        if url.path() == "/api/steam-accounts/store" {
+            platform_download::open_store(body["id"].as_u64().filter(|id| *id > 0 && *id <= u32::MAX as u64).ok_or("accounts_invalid")? as u32)?;
+            return Ok(serde_json::json!({"ok":true}));
+        }
+        if let Some(command) = url.path().strip_prefix("/api/steam-accounts/") {
+            let root = state.lock().map_err(|_| "Backend unavailable")?.root.clone();
+            return steam_accounts::request(&root, command, body);
+        }
         match url.path() {
             "/api/platforms/status" => return Ok(serde_json::json!({"discordInstalled":presence::installed(),"steamInstalled":steam_client::running() || steam_client::installed()})),
             "/api/platforms/download" => {
@@ -181,13 +205,14 @@ async fn api(
                             || backend.steam_idle.active(),
                     )
                 };
-                if busy {
+                if busy || steam_accounts::active() || achievements::active() {
                     return Err("updates_stop_sessions".into());
                 }
                 if UPDATING.swap(true, Ordering::SeqCst) {
                     return Err("updates_busy".into());
                 }
                 let result = (|| {
+                    steam_accounts::shutdown();
                     updates::stage(&root)?;
                     updates::launch_installer(&root)?;
                     state.lock().map_err(|_| "Backend unavailable")?.shutdown();
@@ -372,6 +397,12 @@ fn single_instance() -> bool {
 }
 fn main() {
     let arguments: Vec<String> = std::env::args().collect();
+    if arguments
+        .get(1)
+        .is_some_and(|a| a == "--achievement-worker")
+    {
+        std::process::exit(achievements::worker(&arguments));
+    }
     if arguments
         .get(1)
         .is_some_and(|a| a == "--steam-session-worker")
@@ -606,6 +637,7 @@ fn main() {
             event,
             tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit
         ) {
+            steam_accounts::shutdown();
             running.store(false, Ordering::SeqCst);
             quit_state.lock().unwrap().shutdown();
         }

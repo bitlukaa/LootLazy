@@ -1,31 +1,143 @@
 # Release history
 
-## 3.6.27 — Build channel badges
+## 3.9.4 Beta
 
-- Display Beta builds with a separate badge in the title bar and Updates. Stable builds keep a clean version label.
+- Achievement library cards open games individually. Removed game checkboxes, Select all games, Clear selection and cross-game achievement operations.
+- Fixed the duplicate Executable control by keeping its existing dedicated dropdown. Removed Custom from the game executable choices and aligned the label beside the control.
+- Restored matching SVG dropdown chevrons and added clear hover/focus feedback to account Status options.
+- Game Time and Steam Idle default new sessions to Continuous. Run duration and optional sync controls are inside collapsed Advanced settings.
+- Shuffle games sits beside 10 / 50 / 100 / 200. Game Variety Start and Multi-Account Idle Start span their action area. Game Variety stops after the final game as requested.
+- Fresh account logons wait briefly before starting play activity, then re-check the connection and playing-elsewhere state. This addresses a startup race; it does not prove the cause of an external Steam desktop sign-out.
 
-## 3.6.26 — Consistent navigation and dialogs
+## 3.9.3 Beta
+
+- Achievements opens with a full-width game gallery using LootLazy cards, Steam artwork, search, refresh and game counts.
+- Open a game on its own page inside LootLazy. Back to games restores the library search and scroll position; unsaved changes prompt before discarding.
+- Achievement details include icons, descriptions, unlock times, filters, Unlock all / Lock all and reviewed Commit changes. Library bulk game selection remains available.
+- Removed Risky badges, exclusion controls and native risk classification.
+- Confirmed write batches, encrypted saved logins and the optional Beta channel remain unchanged.
+
+## 3.9.2 Beta
+
+- The All accounts Status control is a compact themed dropdown beside Start all and Stop all. Individual accounts show Set Status above their four options.
+- Library pages append automatically while scrolling. All achievements are available in a scrolling list without Load more or Previous.
+- Achievements adds game counts, Select all games, Exclude Risky, and reviewed bulk unlock/lock actions. Changes use bounded batches and retain unfinished work after failures. Unmarked games are not guaranteed safe.
+- Achievement icons load through Steam with bounded thumbnails. Games without available icons keep a fallback. Older runtimes use the local-user stats request; unavailable stats and denied access have clearer messages.
+- All select popups use the application theme, with keyboard navigation and English/Arabic layouts.
+- Steam-reported session conflicts now pause automatic account reconnection while keeping the saved login. This prevents reconnection contention; it does not establish the source of an external Steam sign-out.
+
+## 3.9.1 Beta
+
+- Fixed achievement loading with modern Steam runtimes and the native callback layout. Confirmed read-only loading with CS2 and Wallpaper Engine on a live Steam client.
+- Achievements now reads owned games from the current desktop account and Steam library metadata instead of showing only installed games. Each game has a small thumbnail. Open Steam Library and refresh if its metadata is not synced yet.
+- Risky badges identify available multiplayer or anti-cheat metadata. Use at your own risk; unmarked games are not guaranteed safe.
+- Restored Steam Accounts labels and navigation icons. Set Status now uses the four themed buttons for all accounts.
+- Multi-account library lists show three rows with vertical scrolling, without horizontal wrapping or duplicate add icons.
+- Steam artwork uses cached headers and Steam metadata fallbacks. Discord service tabs now match Steam tab selection and inactive icon colors.
+- Fixed native diagnostic wrappers hiding the actual achievement and sign-in errors.
+
+## 3.9.0 Beta
+
+- Steam Tools now contains Steam Idle, Multi-Account Idle and Achievements. Library and Active sessions remain inside their own service.
+- Compact All accounts controls add Start all, Stop all and a shared Status selector. Account sessions always run continuously.
+- Browse your account library or add games directly from Steam catalog search. Steam determines whether activity can be registered for each AppID.
+- Account activity appears beside the label; edit labels using the pencil beside the name. Improved scrollbar spacing and clearer incorrect-password/Steam Guard/connection errors.
+- Achievements Beta adds game selection, filters, staged unlock/relock changes and a review before saving. Requires Steam Desktop; game/runtime support varies.
+- Removed Back to Settings from Donate and added a heart to the thank-you message.
+
+- Native achievement bindings are verified with an isolated fixture DLL; no live achievement writes were performed during verification.
+
+## 3.8.1 Beta
+
+- Remove platform sign-in and Plans; place Free beside the app name and Donate beside the edge-aligned utility controls.
+- Initialize each account library before Start/Start all validates ownership, independently of the selected account.
+- Show cached Steam profile avatars, a separate game-activity indicator and a Sign out icon.
+- Display Steam play-session locks inside accounts and on the reported game when known; preserve all saved selections and respect account-wide restrictions.
+- Document the future Achievements service plan; no achievement changes are implemented in this release.
+
+## 3.8.0 Beta
+
+- Group Discord and Steam services in the header; move donations into Settings and add Plans.
+- Edit Steam account labels, keep Connected badges stable, and start or stop all eligible Steam Accounts together.
+- Search the Steam catalog while keeping play restricted to games owned by the selected account.
+- Remove Connections & Privacy and add optional on-demand desktop app launching, OFF by default.
+- Platform sign-in and paid plans are still being prepared; mandatory platform login is not enabled in this Beta.
+
+## 3.7.9 Beta
+
+- Required sign-in fields now show an asterisk. Account labels are required for both password and QR sign-in.
+- Removed the redundant Cancel footer from the sign-in card; use the close icon or Escape.
+
+- Simplified QR renewal to one Refresh QR code action on the blurred QR area. Removed the duplicate New code button and kept retry available after connection errors.
+
+
+## 3.7.8 Beta
+
+- Add or remove Steam Account games while running, without restarting the other games or the session deadline. New games get their own elapsed timer.
+- Removing the last game ends only the game session and keeps the account signed in.
+- Hardened game selection validation, failed-edit recovery and session-expiry handling.
+
+
+## 3.7.7 Beta
+
+- Added small game thumbnails to Steam Accounts and its active sessions, keeping game names, Running badges and timers on one line.
+
+
+## 3.7.6 — Steam status clarity
+
+- Rename Appear as to Status while keeping all four choices visible.
+- Verify actual SteamKit status packets for Online, Away, Invisible and Offline in an isolated regression, without account authentication or a running game.
+- Status applies to the Steam Accounts session. Other active Steam sessions can affect the presence friends see.
+
+## 3.7.5 — Remember Steam sign-ins
+
+- Restore remembered Steam logins after reopening or updating LootLazy, without starting games automatically. Sign out keeps the account saved and prevents automatic login.
+- Finish saving the protected login session before confirming account sign-in. Passwords are not stored.
+- Refresh an expired QR code from a soft overlay instead of an alarming error. Wrong-account and connection problems remain visible.
+- Show all four presence options directly, and group selected games in one compact card with inline game status and timers. Remove redundant Selected labels and the saved-login password placeholder.
+- Match Stable and Beta confirmation messages to their buttons and the following update step.
+
+## 3.7.4 — Clearer Steam sessions
+
+- Choose Online, Away, Invisible or Offline for each Steam account. Your choice is remembered.
+- Keep Sign out in the account details, with Signed in and Running badges in the account list.
+- See each selected game in its own card with running status and elapsed or remaining time.
+- Use familiar duration buttons and a custom timer, starting with Continuous.
+- Manage Steam Library and Steam Accounts sessions in separate cards with independent controls.
+
+## 3.7.3 — Simpler Steam sign-in
+
+- Use your Steam name and password or scan a QR code from the same centered card.
+- Save a new account only after sign-in succeeds. Saved labels keep their order, with Sign in, Sign out and a confirmed remove action in the account list.
+- Stop ends the game session while keeping the Steam account signed in.
+- Refresh QR codes without overlapping old sign-in attempts, with clearer expiry and retry messages.
+- Show Running and Beta in compact badges.
+
+## 3.7.2 — Consistent navigation and dialogs
 
 - Platform status and notifications now share the main navigation header.
 - Stable and Beta confirmations use the same centered cards and visible close icons.
+- Sign in with a Steam mobile QR code, with password and Guard available as an alternative.
+- Add and sign in to an account from one dialog; passwords and Guard prompts no longer clutter the games page.
+- Choose quick picks from the signed-in account’s library. New badges disappear after first successful use.
 
-## 3.6.25 — More reliable updates
+## 3.7.1 — Beta update channel
 
-- Retry temporary GitHub connection errors, interrupted responses and server failures, with bounded attempts and longer download timeouts.
-- Cache only successful update checks so an immediate retry can recover.
-- Prevent background or late checks from replacing installation state with a misleading error.
-- Record safe transfer failure categories while retaining all signature, checksum, size and trusted-host checks.
+- Opt into Beta from Settings > Updates; new features arrive here first.
+- Return to the signed stable release, including a lower version, while keeping settings and account data.
+- Steam Accounts remains a beta feature. Live account sign-in still requires real-world testing.
 
-## 3.6.24 — Centered update confirmation
+## 3.7.0 — Steam Accounts preview
 
-- Replace the browser prompt for joining Beta or returning to Stable with a centered application dialog.
-- Match the duration editor styling, with explicit action labels, Cancel, Escape and close controls.
+- Added Steam Accounts between Steam Library and Active sessions.
+- Manage separate Steam sign-ins, Steam Guard prompts, selected games, and timed or continuous sessions.
+- Account sessions use a source-built internal engine; the desktop Steam client is optional.
+- Protect saved account authentication data with Windows DPAPI; passwords are not saved.
+- Stop idling when an account disconnects or plays elsewhere. No automatic session start after reopening.
+- Keep card farming, remote commands, plugin loading, and engine self-updates disabled.
+- Embed the engine in the signed application payload so Setup, portable downloads, and app updates carry the same version.
+- Preview validation uses synthetic accounts and authentication fixtures; live Steam sign-in and credited playtime still require local user testing before a stable promotion.
 
-## 3.6.23 — Optional Beta updates
-
-- Join Beta from Settings > Updates to try new features early.
-- Return to the latest signed Stable release without deleting settings.
-- Stable remains the default. Channel changes require confirmation; installation is a separate action.
 
 ## 3.6.22 — October 15, 2026
 

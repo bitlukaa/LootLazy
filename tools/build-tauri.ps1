@@ -1,3 +1,4 @@
+param([switch]$ReuseSteamEngine)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $cmd = Get-Command cargo.exe -ErrorAction SilentlyContinue
@@ -6,6 +7,7 @@ if (!$cargoExe -or !(Test-Path -LiteralPath $cargoExe)) {
   $cargoExe = Join-Path $env:USERPROFILE '.cargo/bin/cargo.exe'
 }
 if (!(Test-Path -LiteralPath $cargoExe)) { throw 'Install Rust with the MSVC toolchain first.' }
+if(!$ReuseSteamEngine -or !(Test-Path -LiteralPath (Join-Path $projectRoot 'data/steam-engine/LootLazy.Steam.exe'))){ & (Join-Path $PSScriptRoot 'build-steam-engine.ps1') }
 & (Join-Path $PSScriptRoot 'build-helper.ps1')
 & (Join-Path $PSScriptRoot 'build-notices.ps1')
 $env:CARGO_TARGET_DIR = Join-Path $projectRoot 'data/.tauri-build'
@@ -33,10 +35,6 @@ $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
 if (Test-Path -LiteralPath $compiler) {
   & $compiler /nologo /target:winexe /r:System.Windows.Forms.dll "/win32icon:$(Join-Path $projectRoot 'LootLazy.ico')" "/out:$(Join-Path $projectRoot 'LootLazy.exe')" (Join-Path $projectRoot 'src/Launcher.cs')
   if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed.' }
-  $parentDir = Split-Path -Parent $projectRoot
-  if (Test-Path -LiteralPath $parentDir) {
-    try { Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $parentDir 'LootLazy.exe') -Force } catch { Copy-Item -LiteralPath $builtBinary -Destination (Join-Path $parentDir 'LootLazy.exe.pending') -Force; Write-Output 'Installed app is open; update staged.' }
-  }
   if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed.' }
 }
 # Portable user data is never replaced by a rebuild.
