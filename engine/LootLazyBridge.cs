@@ -57,7 +57,7 @@ internal static class LootLazyBridge {
             } catch { Invalid = true; }
         }
     }
-    private sealed record Account(string Id, string Label, string Login, uint[] Games, string Presence = "online", bool RememberLogin = true);
+    private sealed record Account(string Id, string Label, string Login, uint[] Games, string Presence = "online", bool RememberLogin = true, string? AvatarHash = null);
     private static SteamKit2.EPersonaState Persona(string presence) => presence switch {
         "online" => SteamKit2.EPersonaState.Online, "away" => SteamKit2.EPersonaState.Away,
         "invisible" => SteamKit2.EPersonaState.Invisible, "offline" => SteamKit2.EPersonaState.Offline,
@@ -216,6 +216,37 @@ internal static class LootLazyBridge {
             await bot.ArchiHandler.PlayGames(games).ConfigureAwait(false);
         } finally { PlayLock.Release(); }
     }
+    private static bool ValidAvatar(string? hash) => hash?.Length == 40 && hash.All(Uri.IsHexDigit);
+    private static void RefreshAvatars() {
+        var changed = new Dictionary<string, Account>();
+        foreach (var account in Accounts.Values.ToArray()) {
+            if (Bot.Bots?.TryGetValue(account.Id, out var bot) != true || !bot.IsConnectedAndLoggedOn || !ValidAvatar(bot.AvatarHash) || account.AvatarHash == bot.AvatarHash) continue;
+            changed[account.Id] = account;
+            Accounts[account.Id] = account with { AvatarHash = bot.AvatarHash };
+        }
+        if (changed.Count == 0) return;
+        try { Save(); } catch { foreach (var entry in changed) Accounts[entry.Key] = entry.Value; }
+    }
+    private static async Task WaitForLibrary(Func<bool> ready, Action begin, Func<bool> failed, Func<bool> connected, TimeSpan timeout) {
+        if (ready()) return;
+        begin();
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        while (watch.Elapsed < timeout) {
+            if (!connected()) Fail("accounts_not_ready");
+            if (ready()) return;
+            if (failed()) Fail("accounts_library_failed");
+            await Task.Delay(50).ConfigureAwait(false);
+        }
+        Fail("accounts_library_failed");
+    }
+    private static Task EnsureLibrary(Bot bot) {
+        string id = bot.BotName;
+        return WaitForLibrary(
+            () => Libraries.TryGetValue(id, out var library) && library.SteamId == bot.SteamID,
+            () => { LibraryErrors.TryRemove(id, out _); LibraryResult(bot, JsonSerializer.SerializeToElement(new { })); },
+            () => LibraryErrors.ContainsKey(id) || !LibraryRequests.ContainsKey(id),
+            () => bot.IsConnectedAndLoggedOn, TimeSpan.FromSeconds(17));
+    }
     private static object Snapshot() {
         var result = Accounts.Values.Select(account => {
             Bot? bot = null;
@@ -225,7 +256,10 @@ internal static class LootLazyBridge {
             bool connected = bot?.IsConnectedAndLoggedOn == true;
             bool running = connected && bot!.IsPlayingPossible && session?.Games.Length > 0;
             string state = input != null ? "input" : running ? "running" : connected && !bot!.IsPlayingPossible ? "blocked" : connected ? "ready" : bot?.KeepRunning == true ? "connecting" : "offline";
-            return new { id = account.Id, label = account.Label, login = account.Login, draft = Drafts.Contains(account.Id), games = account.Games, presence = account.Presence, rememberLogin = account.RememberLogin, canResume = CanResume(account, bot), state, connected, active = bot?.KeepRunning == true, steamId = bot?.SSteamID ?? "0", input = input == null ? null : new { id = input.Id, type = input.Type.ToString() }, elapsedSeconds = running ? Math.Max(0, (long)(DateTimeOffset.UtcNow - session!.Started).TotalSeconds) : 0, minutes = session?.Minutes ?? 0, gameElapsedSeconds = running ? session!.Games.ToDictionary(game => game, game => Math.Max(0, (long)(DateTimeOffset.UtcNow - (session.GameStarts.TryGetValue(game, out var started) ? started : session.Started)).TotalSeconds)) : new Dictionary<uint, long>(), error = AuthErrors.TryGetValue(account.Id, out var authError) ? authError : bot == null && !OfflineTest ? "accounts_restore_failed" : bot != null && !bot.KeepRunning && bot.LastLogOnResult is not (SteamKit2.EResult.Invalid or SteamKit2.EResult.OK) ? "accounts_login_failed" : null };
+            string? avatarHash = ValidAvatar(bot?.AvatarHash) ? bot!.AvatarHash : ValidAvatar(account.AvatarHash) ? account.AvatarHash : null;
+            uint playingAppId = connected && !bot!.IsPlayingPossible ? bot.SteamFriends.GetFriendGamePlayed(bot.SteamID).AppID : 0;
+            string? playingGameName = playingAppId > 0 ? bot!.SteamFriends.GetFriendGamePlayedName(bot.SteamID) : null;
+            return new { avatarUrl = avatarHash == null ? null : "https://avatars.steamstatic.com/" + avatarHash.ToLowerInvariant() + "_medium.jpg", playingAppId, playingGameName, runningGameCount = running ? session!.Games.Length : 0, id = account.Id, label = account.Label, login = account.Login, draft = Drafts.Contains(account.Id), games = account.Games, presence = account.Presence, rememberLogin = account.RememberLogin, canResume = CanResume(account, bot), state, connected, active = bot?.KeepRunning == true, steamId = bot?.SSteamID ?? "0", input = input == null ? null : new { id = input.Id, type = input.Type.ToString() }, elapsedSeconds = running ? Math.Max(0, (long)(DateTimeOffset.UtcNow - session!.Started).TotalSeconds) : 0, minutes = session?.Minutes ?? 0, gameElapsedSeconds = running ? session!.Games.ToDictionary(game => game, game => Math.Max(0, (long)(DateTimeOffset.UtcNow - (session.GameStarts.TryGetValue(game, out var started) ? started : session.Started)).TotalSeconds)) : new Dictionary<uint, long>(), error = AuthErrors.TryGetValue(account.Id, out var authError) ? authError : bot == null && !OfflineTest ? "accounts_restore_failed" : bot != null && !bot.KeepRunning && bot.LastLogOnResult is not (SteamKit2.EResult.Invalid or SteamKit2.EResult.OK) ? "accounts_login_failed" : null };
         }).ToArray();
         return new { protocol = 1, accounts = result, active = IsBusy() };
     }
@@ -271,6 +305,7 @@ internal static class LootLazyBridge {
     private static async Task<object> Handle(string command, JsonElement body) {
         if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr", "commit", "disconnect", "presence", "resume", "rename" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
         await BindQrIdentities().ConfigureAwait(false);
+        RefreshAvatars();
         if (command == "status") return Snapshot();
         if (command == "add") {
             string label = Text(body, "label").Trim(), login = Text(body, "login").Trim();
@@ -406,6 +441,8 @@ internal static class LootLazyBridge {
             if (!selected.IsConnectedAndLoggedOn) Fail("accounts_not_ready");
             if (!selected.IsPlayingPossible) Fail("accounts_playing_elsewhere");
             if (entry.Games.Length == 0) Fail("accounts_choose_games");
+            await EnsureLibrary(selected).ConfigureAwait(false);
+            if (!selected.IsPlayingPossible) Fail("accounts_playing_elsewhere");
             foreach (uint id in entry.Games) {
                 if (!Libraries.TryGetValue(entry.Id, out var owned) || owned.SteamId != selected.SteamID || !owned.Games.ContainsKey(id)) Fail("accounts_not_owned");
             }
@@ -466,6 +503,17 @@ internal static class LootLazyBridge {
             await output.WriteLineAsync(JsonSerializer.Serialize(new { payload, rows = EncodeQr(payload) })).ConfigureAwait(false); return 0;
         }
         if (args.Length == 1 && args[0] == "--self-test") {
+            int libraryStarts = 0; bool libraryReady = false;
+            Task? loadingFixture = null;
+            await WaitForLibrary(() => libraryReady, () => { libraryStarts++; loadingFixture = Task.Run(async () => { await Task.Delay(80).ConfigureAwait(false); libraryReady = true; }); }, () => false, () => true, TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+            if (!libraryReady || libraryStarts != 1) return 17;
+            await loadingFixture!.ConfigureAwait(false);
+            await WaitForLibrary(() => true, () => { libraryStarts++; }, () => false, () => true, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+            if (libraryStarts != 1) return 18;
+            foreach (bool disconnected in new[] { false, true }) {
+                try { await WaitForLibrary(() => false, () => {}, () => true, () => !disconnected, TimeSpan.FromSeconds(1)).ConfigureAwait(false); return 19; }
+                catch (InvalidOperationException error) { if (error.Message != (disconnected ? "accounts_not_ready" : "accounts_library_failed")) return 20; }
+            }
             var statusPackets = new PresencePacketFixture();
             var isolatedClient = new SteamKit2.SteamClient { DebugNetworkListener = statusPackets };
             var friends = isolatedClient.GetHandler<SteamKit2.SteamFriends>();

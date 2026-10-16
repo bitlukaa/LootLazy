@@ -48,6 +48,12 @@ pub fn validated(value: &str) -> Result<url::Url, String> {
     }
     let parts: Vec<_> = url.path().split('/').collect();
     let allowed = match url.host_str() {
+        Some("avatars.steamstatic.com") => {
+            let name = url.path().strip_prefix('/').unwrap_or("");
+            name.strip_suffix("_medium.jpg").is_some_and(|hash| {
+                hash.len() == 40 && hash.bytes().all(|byte| byte.is_ascii_hexdigit())
+            })
+        }
         Some("cdn.discordapp.com") => {
             parts.len() >= 4
                 && ["app-icons", "app-assets", "quests"].contains(&parts[1])
@@ -301,6 +307,12 @@ mod tests {
     #[test]
     fn only_trusted_sources() {
         assert!(validated("https://cdn.discordapp.com/app-icons/123456/game.png").is_ok());
+        assert!(validated(
+            "https://avatars.steamstatic.com/0123456789abcdef0123456789abcdef01234567_medium.jpg"
+        )
+        .is_ok());
+        for value in ["https://avatars.steamstatic.com/not-a-hash_medium.jpg", "https://avatars.steamstatic.com/0123456789abcdef0123456789abcdef01234567_medium.jpg?token=1", "https://avatars.steamstatic.com.evil.test/0123456789abcdef0123456789abcdef01234567_medium.jpg"] { assert!(validated(value).is_err()); }
+
         for url in [
             "http://cdn.discordapp.com/app-icons/123456/a.png",
             "https://evil.com/a.png",

@@ -1,17 +1,17 @@
 {
-  "version": "3.8.0",
+  "version": "3.8.1",
   "en": [
-    "Discord and Steam services are grouped in the header; donations are inside Settings.",
-    "Edit Steam account labels, use stable Connected badges, and start or stop all eligible accounts together.",
-    "Search the Steam catalog; only games owned by the selected account can be started.",
-    "Connections & Privacy was removed. Automatic opening of required desktop apps is optional and OFF by default.",
-    "Platform sign-in and paid plans are still being prepared. Mandatory platform login is not enabled."
+    "Removed platform sign-in and Plans. Free appears beside LootLazy; Donate, Settings and Notifications stay at the edge of the header.",
+    "Steam Accounts now loads each account library before starting, including accounts not opened individually.",
+    "Account profile pictures, an additional running-game indicator, and a Sign out icon make account state clearer.",
+    "Playing elsewhere is shown inside the account and beside the reported game when Steam supplies its AppID. Account-wide Steam play locks are respected.",
+    "Selected games remain saved after Stop and across application restarts."
   ],
   "ar": [
-    "خدمات Discord وSteam مجمّعة في الهيدر، والتبرعات داخل الإعدادات.",
-    "تعديل اسم الحساب، وشارة اتصال ثابتة، وتشغيل أو إيقاف الحسابات المؤهلة معًا.",
-    "البحث في متجر Steam، مع تشغيل الألعاب التي يمتلكها الحساب فقط.",
-    "إزالة قسم الاتصالات والخصوصية. فتح التطبيقات المطلوبة تلقائيًا خيار اختياري ومقفول افتراضيًا.",
-    "تسجيل دخول المنصة والباقات المدفوعة قيد التجهيز؛ تسجيل الدخول الإجباري غير مفعّل."
+    "إزالة تسجيل دخول المنصة والباقات، وإظهار مجاني بجانب الاسم، وترتيب التبرع والإعدادات والإشعارات في طرف الهيدر.",
+    "تحميل مكتبة كل حساب قبل بدء تشغيله، حتى الحسابات التي لم يتم فتحها منفردة.",
+    "صور الحسابات ومؤشر إضافي للألعاب الشغالة وأيقونة تسجيل الخروج لتوضيح حالة كل حساب.",
+    "عرض اللعب من جلسة أخرى داخل الحساب وبجوار اللعبة عندما يوفّر Steam رقمها، مع احترام منع التشغيل للحساب كله.",
+    "الألعاب المختارة تظل محفوظة بعد الإيقاف وإعادة فتح التطبيق."
   ]
 }

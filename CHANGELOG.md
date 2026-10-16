@@ -1,5 +1,13 @@
 # Release history
 
+## 3.8.1 Beta
+
+- Remove platform sign-in and Plans; place Free beside the app name and Donate beside the edge-aligned utility controls.
+- Initialize each account library before Start/Start all validates ownership, independently of the selected account.
+- Show cached Steam profile avatars, a separate game-activity indicator and a Sign out icon.
+- Display Steam play-session locks inside accounts and on the reported game when known; preserve all saved selections and respect account-wide restrictions.
+- Document the future Achievements service plan; no achievement changes are implemented in this release.
+
 ## 3.8.0 Beta
 
 - Group Discord and Steam services in the header; move donations into Settings and add Plans.
