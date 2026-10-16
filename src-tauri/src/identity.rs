@@ -225,7 +225,7 @@ fn file(root: &Path) -> PathBuf {
 }
 fn persist(root: &Path, session: &Value) -> Result<(), String> {
     let file = file(root);
-    let temp = file.with_extension("bin.tmp");
+    let temp = file.with_extension(format!("{}.tmp", random()));
     checked_path(&file)?;
     checked_path(&temp)?;
     fs::create_dir_all(file.parent().ok_or("platform_auth_storage")?)
@@ -233,8 +233,21 @@ fn persist(root: &Path, session: &Value) -> Result<(), String> {
     let mut plain = serde_json::to_vec(session).map_err(|_| "platform_auth_storage")?;
     let encrypted = protect(&plain, true);
     plain.fill(0);
-    fs::write(&temp, encrypted?).map_err(|_| "platform_auth_storage")?;
-    fs::rename(&temp, &file).map_err(|_| "platform_auth_storage".into())
+    let encrypted = encrypted?;
+    let result = (|| -> std::io::Result<()> {
+        let mut output = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp)?;
+        output.write_all(&encrypted)?;
+        output.sync_all()?;
+        drop(output);
+        fs::rename(&temp, &file)
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(&temp);
+    }
+    result.map_err(|_| "platform_auth_storage".into())
 }
 fn load(root: &Path) -> Option<Value> {
     let file = file(root);
