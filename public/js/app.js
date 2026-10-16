@@ -14,6 +14,7 @@ function errorText(error,fallback='start_error'){
  return t(keys[code]||fallback);
 }
 function activityProblem(session){const status=session?.presence?.state;return ['unavailable','rejected','disconnected'].includes(status)?errorText(status):null;}
+function nativeErrorCode(error,prefixes=[]){const raw=String(error?.message||error);const parts=raw.split(':').map(part=>part.trim());return parts.find(part=>prefixes.some(prefix=>part.startsWith(prefix))&&Object.hasOwn(I18N.en,part))||parts.find(part=>Object.hasOwn(I18N.en,part))||'';}
 async function request(url,body){if(!window.lootlazyRequest)throw new Error('Native desktop bridge unavailable');return window.lootlazyRequest(url,body);}
 
 function busy(button,on){clearTimeout(button._busyTimer);const label=button.querySelector('[data-i18n]');if(on){button._busyStarted=performance.now();button.disabled=true;button.setAttribute('aria-busy','true');if(button.querySelector('.refresh-icon'))button.classList.add('is-refreshing');if(label){if(label.dataset.i18n!=='refreshing')button.dataset.normalLabel=label.dataset.i18n;label.dataset.i18n='refreshing';label.textContent=t('refreshing');}}else{const finish=()=>{button.disabled=false;button.setAttribute('aria-busy','false');button.classList.remove('is-refreshing');if(label&&button.dataset.normalLabel){label.dataset.i18n=button.dataset.normalLabel;label.textContent=t(label.dataset.i18n);}};const delay=button.querySelector('.refresh-icon')?Math.max(0,600-(performance.now()-button._busyStarted)):0;if(delay)button._busyTimer=setTimeout(finish,delay);else finish();}}

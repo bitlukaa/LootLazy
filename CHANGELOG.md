@@ -1,5 +1,15 @@
 # Release history
 
+## 3.9.1 Beta
+
+- Fixed achievement loading with modern Steam runtimes and the native callback layout. Confirmed read-only loading with CS2 and Wallpaper Engine on a live Steam client.
+- Achievements now reads owned games from the current desktop account and Steam library metadata instead of showing only installed games. Each game has a small thumbnail. Open Steam Library and refresh if its metadata is not synced yet.
+- Risky badges identify available multiplayer or anti-cheat metadata. Use at your own risk; unmarked games are not guaranteed safe.
+- Restored Steam Accounts labels and navigation icons. Set Status now uses the four themed buttons for all accounts.
+- Multi-account library lists show three rows with vertical scrolling, without horizontal wrapping or duplicate add icons.
+- Steam artwork uses cached headers and Steam metadata fallbacks. Discord service tabs now match Steam tab selection and inactive icon colors.
+- Fixed native diagnostic wrappers hiding the actual achievement and sign-in errors.
+
 ## 3.9.0 Beta
 
 - Steam Tools now contains Steam Idle, Multi-Account Idle and Achievements. Library and Active sessions remain inside their own service.

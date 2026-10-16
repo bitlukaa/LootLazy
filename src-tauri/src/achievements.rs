@@ -5,7 +5,7 @@ use std::{
     collections::HashSet,
     fs,
     io::{Read, Write},
-    path::Path,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::Mutex,
     time::{Duration, Instant},
@@ -29,9 +29,16 @@ struct Input {
     steam_id: String,
     #[serde(default)]
     changes: Vec<Change>,
+    #[serde(default)]
+    catalog: Option<Vec<crate::steam_library::Game>>,
 }
 fn validate(value: Value, apply: bool) -> Result<Input, String> {
     let input: Input = serde_json::from_value(value).map_err(|_| "achievements_invalid")?;
+    if input.catalog.as_ref().is_some_and(|items| {
+        items.len() > 100000 || items.iter().any(|g| g.app_id == 0 || g.name.len() > 1024)
+    }) {
+        return Err("achievements_invalid".into());
+    }
     if input.app_id == 0
         || input.changes.len() > 200
         || (!apply && !input.changes.is_empty())
@@ -84,6 +91,9 @@ pub fn request(root: &Path, dll: &Path, command: &str, body: Value) -> Result<Va
         return Err("achievements_invalid".into());
     }
     let input = validate(body, command == "apply")?;
+    if input.catalog.is_some() {
+        return Err("achievements_invalid".into());
+    }
     let _guard = REQUEST.try_lock().map_err(|_| "achievements_busy")?;
     let (_runtime, hash) = crate::steam_runtime::lock_verified(dll, None)?;
     if command == "apply" {
@@ -94,6 +104,7 @@ pub fn request(root: &Path, dll: &Path, command: &str, body: Value) -> Result<Va
             &Input {
                 app_id: input.app_id,
                 steam_id: String::new(),
+                catalog: None,
                 changes: vec![],
             },
         )?;
@@ -109,6 +120,30 @@ pub fn request(root: &Path, dll: &Path, command: &str, body: Value) -> Result<Va
         prune_backups(&directory);
     }
     run(root, dll, &hash, &input)
+}
+pub fn library(root: &Path, dll: &Path, roots: &[PathBuf], seeds: &[u32]) -> Result<Value, String> {
+    let catalog = crate::steam_library::read(roots)?;
+    let _guard = REQUEST.try_lock().map_err(|_| "achievements_busy")?;
+    let (_lock, hash) = crate::steam_runtime::lock_verified(dll, None)?;
+    let mut last = "steam_not_ready".to_string();
+    for app_id in seeds.iter().take(8) {
+        let input = Input {
+            app_id: *app_id,
+            steam_id: String::new(),
+            changes: vec![],
+            catalog: Some(catalog.clone()),
+        };
+        match run(root, dll, &hash, &input) {
+            Ok(result) => return Ok(result),
+            Err(error) => {
+                if !["steam_initialization_failed", "steam_not_owned"].contains(&error.as_str()) {
+                    return Err(error);
+                }
+                last = error;
+            }
+        }
+    }
+    Err(last)
 }
 fn prune_backups(directory: &Path) {
     let mut files: Vec<_> = fs::read_dir(directory)
@@ -232,7 +267,7 @@ fn run(root: &Path, dll: &Path, hash: &str, input: &Input) -> Result<Value, Stri
     let _ = fs::remove_dir_all(&dir);
     result
 }
-// Callback payloads use the SDK's 8-byte alignment; never dereference untrusted lengths.
+// SteamID is nested at offset 12 despite the callback's trailing 8-byte padding.
 fn callback_result(id: i32, bytes: &[u8], app: u32, steam: u64) -> Option<Result<(), String>> {
     let required = if id == 1101 {
         24
@@ -248,7 +283,7 @@ fn callback_result(id: i32, bytes: &[u8], app: u32, steam: u64) -> Option<Result
     if game as u32 != app {
         return None;
     }
-    if id == 1101 && u64::from_le_bytes(bytes[16..24].try_into().ok()?) != steam {
+    if id == 1101 && u64::from_le_bytes(bytes[12..20].try_into().ok()?) != steam {
         return None;
     }
     Some(if u32::from_le_bytes(bytes[8..12].try_into().ok()?) == 1 {
@@ -269,10 +304,10 @@ pub fn worker(args: &[String]) -> i32 {
     let result = (|| {
         let mut bytes = Vec::new();
         std::io::stdin()
-            .take(65537)
+            .take(8 * 1024 * 1024 + 1)
             .read_to_end(&mut bytes)
             .map_err(|_| "achievements_invalid")?;
-        if bytes.len() > 65536 {
+        if bytes.len() > 8 * 1024 * 1024 {
             return Err("achievements_invalid".into());
         }
         let value: Value = serde_json::from_slice(&bytes).map_err(|_| "achievements_invalid")?;
@@ -342,7 +377,7 @@ mod native {
         unsafe fn function<T: Copy>(&self, name: &str) -> Result<T, String> {
             let symbol = CString::new(name).map_err(|_| "achievements_not_supported")?;
             let address = GetProcAddress(self.library, symbol.as_ptr().cast())
-                .ok_or("achievements_not_supported")?;
+                .ok_or_else(|| format!("achievements_not_supported:{name}"))?;
             Ok(std::mem::transmute_copy(&address))
         }
         unsafe fn interface(&self, names: &[&str]) -> Result<*mut c_void, String> {
@@ -570,18 +605,25 @@ mod native {
             return Err("achievements_failed".into());
         }
         let shutdown = runtime.function::<unsafe extern "C" fn()>("SteamAPI_Shutdown")?;
-        let init: unsafe extern "C" fn() -> bool = runtime.function("SteamAPI_Init")?;
-        if !init() {
+        let initialized = if let Ok(init) =
+            runtime.function::<unsafe extern "C" fn(*mut i8) -> i32>("SteamAPI_InitFlat")
+        {
+            let mut message = [0i8; 1024];
+            init(message.as_mut_ptr()) == 0
+        } else {
+            let init: unsafe extern "C" fn() -> bool = runtime
+                .function("SteamAPI_Init")
+                .or_else(|_| runtime.function("SteamAPI_InitSafe"))?;
+            init()
+        };
+        if !initialized {
             return Err("steam_initialization_failed".into());
         }
         runtime.shutdown = Some(shutdown);
         let dispatch: unsafe extern "C" fn() = runtime.function("SteamAPI_ManualDispatch_Init")?;
         dispatch();
         let pipe: unsafe extern "C" fn() -> i32 = runtime.function("SteamAPI_GetHSteamPipe")?;
-        let stats = runtime.interface(&[
-            "SteamAPI_SteamUserStats_v013",
-            "SteamAPI_SteamUserStats_v012",
-        ])?;
+
         let user = runtime.interface(&[
             "SteamAPI_SteamUser_v023",
             "SteamAPI_SteamUser_v022",
@@ -600,6 +642,26 @@ mod native {
         if steam == 0 {
             return Err("steam_not_ready".into());
         }
+        if let Some(catalog) = &input.catalog {
+            let mut games = Vec::new();
+            for game in catalog {
+                runtime.alive()?;
+                if owned(apps, game.app_id) {
+                    games.push(game.clone());
+                }
+            }
+            if steam_id(user) != steam {
+                return Err("achievements_account_changed".into());
+            }
+            games.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+            return Ok(
+                json!({"games":games,"steamId":steam.to_string(),"source":"desktop_library_cache"}),
+            );
+        }
+        let stats = runtime.interface(&[
+            "SteamAPI_SteamUserStats_v013",
+            "SteamAPI_SteamUserStats_v012",
+        ])?;
         if !input.changes.is_empty() && input.steam_id != steam.to_string() {
             return Err("achievements_account_changed".into());
         }
@@ -709,7 +771,7 @@ mod tests {
         let mut data = vec![0u8; 24];
         data[..8].copy_from_slice(&5u64.to_le_bytes());
         data[8..12].copy_from_slice(&1u32.to_le_bytes());
-        data[16..24].copy_from_slice(&7u64.to_le_bytes());
+        data[12..20].copy_from_slice(&7u64.to_le_bytes());
         assert_eq!(callback_result(1101, &data, 5, 7), Some(Ok(())));
         assert_eq!(callback_result(1101, &data, 5, 8), None);
         assert_eq!(callback_result(1102, &data, 6, 7), None);
@@ -758,11 +820,13 @@ mod tests {
             app_id: 5,
             steam_id: String::new(),
             changes: vec![],
+            catalog: None,
         };
         let snapshot = unsafe { native::execute_loaded(&args, &list, &dll) }.unwrap();
         assert_eq!(snapshot["steamId"], "7");
         assert_eq!(snapshot["achievements"][0]["achieved"], false);
         let mut apply = Input {
+            catalog: None,
             app_id: 5,
             steam_id: "7".into(),
             changes: vec![
@@ -781,6 +845,28 @@ mod tests {
         let saved = unsafe { native::execute_loaded(&args, &apply, &dll) }.unwrap();
         assert_eq!(saved["achievements"][0]["achieved"], true);
         assert_eq!(saved["achievements"][1]["achieved"], false);
+        let library = Input {
+            app_id: 5,
+            steam_id: String::new(),
+            changes: vec![],
+            catalog: Some(vec![
+                crate::steam_library::Game {
+                    app_id: 42,
+                    name: "Owned".into(),
+                    risky: true,
+                    risk_reason: "multiplayer".into(),
+                },
+                crate::steam_library::Game {
+                    app_id: 9999,
+                    name: "Not owned".into(),
+                    risky: false,
+                    risk_reason: "unknown".into(),
+                },
+            ]),
+        };
+        let result = unsafe { native::execute_loaded(&args, &library, &dll) }.unwrap();
+        assert_eq!(result["games"].as_array().unwrap().len(), 1);
+        assert_eq!(result["games"][0]["appId"], 42);
         apply.app_id = 6;
         assert_eq!(
             unsafe { native::execute_loaded(&args, &apply, &dll) },

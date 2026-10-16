@@ -12,6 +12,7 @@ mod presence;
 mod rotation;
 mod steam_accounts;
 mod steam_client;
+mod steam_library;
 mod steam_runtime;
 mod steam_store;
 mod storage;
@@ -157,6 +158,7 @@ async fn api(
     let result = tauri::async_runtime::spawn_blocking(move || {
         let url =
             url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
+        if url.path()=="/api/achievements/games" {let (root,dll,roots,seeds)={let mut backend=state.lock().map_err(|_|"Backend unavailable")?;let (dll,roots,seeds)=backend.achievement_library_context()?;(backend.root.clone(),dll,roots,seeds)};return achievements::library(&root,&dll,&roots,&seeds);}
         if let Some(command) = url.path().strip_prefix("/api/achievements/") {
             let (root, dll) = { let mut backend = state.lock().map_err(|_| "Backend unavailable")?; (backend.root.clone(), backend.achievement_runtime()?) };
             return achievements::request(&root, &dll, command, body);

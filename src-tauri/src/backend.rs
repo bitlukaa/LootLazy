@@ -1595,10 +1595,56 @@ impl Backend {
     }
     pub fn achievement_runtime(&mut self) -> Result<PathBuf, String> {
         self.refresh_steam_runtime();
+        let extra: Vec<PathBuf> = self.overrides["settings"]["steam_paths"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|v| v.as_str().map(PathBuf::from))
+            .collect();
+        let roots = crate::rotation::libraries(&extra);
+        let mut candidates: Vec<_> = crate::rotation::runtime_candidates(&roots)
+            .into_iter()
+            .filter_map(|path| {
+                let size = std::fs::metadata(&path).ok()?.len();
+                if size > 8 * 1024 * 1024 {
+                    return None;
+                }
+                let bytes = std::fs::read(&path).ok()?;
+                let current = bytes
+                    .windows(b"SteamAPI_SteamUserStats_v013\0".len())
+                    .any(|w| w == b"SteamAPI_SteamUserStats_v013\0");
+                let legacy = bytes
+                    .windows(b"SteamAPI_SteamUserStats_v012\0".len())
+                    .any(|w| w == b"SteamAPI_SteamUserStats_v012\0");
+                (current || legacy).then_some((if current { 0 } else { 1 }, path))
+            })
+            .collect();
+        candidates.sort_by_key(|item| item.0);
+        if let Some((_, path)) = candidates.into_iter().next() {
+            self.steam_runtime = Some(path);
+        }
         self.ensure_steam_client()?;
         self.steam_runtime
             .clone()
             .ok_or_else(|| "steam_runtime_missing".into())
+    }
+    pub fn achievement_library_context(
+        &mut self,
+    ) -> Result<(PathBuf, Vec<PathBuf>, Vec<u32>), String> {
+        let dll = self.achievement_runtime()?;
+        let extra: Vec<PathBuf> = self.overrides["settings"]["steam_paths"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|v| v.as_str().map(PathBuf::from))
+            .collect();
+        let roots = crate::rotation::libraries(&extra);
+        let mut seeds: Vec<u32> = crate::rotation::installed_games(&roots)
+            .iter()
+            .filter_map(|g| g["steamId"].as_str()?.parse().ok())
+            .collect();
+        seeds.sort_by_key(|id| if *id == 730 { 0 } else { *id });
+        Ok((dll, roots, seeds))
     }
     fn refresh_steam_runtime(&mut self) {
         if self.steam_runtime.as_ref().is_some_and(|p| p.is_file()) {

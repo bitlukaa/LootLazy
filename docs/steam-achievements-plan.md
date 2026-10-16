@@ -13,7 +13,7 @@ Achievements is a separate service under Steam Tools, beside Steam Idle and Mult
 
 ## Verification and limits
 
-Native tests load an original fixture DLL and exercise real dynamic symbol resolution, asynchronous API-call results, achievement reading, unlock/relock, rejected StoreStats, rejected completion callbacks, changed accounts and stale state. Renderer tests cover review/cancel, failed saves, filtering, pagination and English/Arabic layouts. These tests do not modify a real Steam account. Live compatibility varies by installed Steam runtime and game; server-controlled achievements may reject changes. Achievement icons currently use LootLazy's trophy icon. Batch selection, stat editing and multi-account achievement changes are not included.
+Native tests load an original fixture DLL and exercise real dynamic symbol resolution, asynchronous API-call results, achievement reading, unlock/relock, rejected StoreStats, rejected completion callbacks, changed accounts and stale state. Renderer tests cover review/cancel, failed saves, filtering, pagination and English/Arabic layouts. Live read-only verification also confirmed CS2 and Wallpaper Engine achievement loading and account-filtered library discovery. No real achievements were changed. Live compatibility varies by installed Steam runtime and game; server-controlled achievements may reject changes. Game thumbnails use Steam cache/metadata artwork; achievement icons currently use LootLazy's trophy icon. Risky flags come from available multiplayer/anti-cheat categories and do not certify unmarked games as safe. Batch selection, stat editing and multi-account achievement changes are not included.
 
 ## API references
 

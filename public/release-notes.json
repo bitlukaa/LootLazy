@@ -1,19 +1,21 @@
 {
-  "version": "3.9.0",
+  "version": "3.9.1",
   "en": [
-    "Steam Tools now contains Steam Idle, Multi-Account Idle and Achievements. Library and Active sessions remain inside their own service.",
-    "Compact All accounts controls add Start all, Stop all and a shared Status selector. Account sessions always run continuously.",
-    "Browse your account library or add games directly from Steam catalog search. Steam determines whether activity can be registered for each AppID.",
-    "Account activity appears beside the label; edit labels using the pencil beside the name. Improved scrollbar spacing and clearer incorrect-password/Steam Guard/connection errors.",
-    "Achievements Beta adds game selection, filters, staged unlock/relock changes and a review before saving. Requires Steam Desktop; game/runtime support varies.",
-    "Removed Back to Settings from Donate and added a heart to the thank-you message."
+    "Fixed achievement loading with modern Steam runtimes and the native callback layout. Confirmed read-only loading with CS2 and Wallpaper Engine on a live Steam client.",
+    "Achievements now reads owned games from the current desktop account and Steam library metadata instead of showing only installed games. Each game has a small thumbnail. Open Steam Library and refresh if its metadata is not synced yet.",
+    "Risky badges identify available multiplayer or anti-cheat metadata. Use at your own risk; unmarked games are not guaranteed safe.",
+    "Restored Steam Accounts labels and navigation icons. Set Status now uses the four themed buttons for all accounts.",
+    "Multi-account library lists show three rows with vertical scrolling, without horizontal wrapping or duplicate add icons.",
+    "Steam artwork uses cached headers and Steam metadata fallbacks. Discord service tabs now match Steam tab selection and inactive icon colors.",
+    "Fixed native diagnostic wrappers hiding the actual achievement and sign-in errors."
   ],
   "ar": [
-    "خدمات Steam تشمل خمول Steam وخمول عدة حسابات والإنجازات، مع فصل المكتبة والجلسات داخل كل خدمة.",
-    "أدوات مدمجة لكل الحسابات لتشغيل الكل وإيقاف الكل وتغيير الحالة للجميع. تشغيل الحسابات مستمر بدون مدة محددة.",
-    "تصفح مكتبة الحساب أو أضف الألعاب مباشرة من البحث العام. Steam هو الذي يحدد تسجيل النشاط لكل لعبة.",
-    "مؤشر الألعاب بجانب اسم الحساب وقلم تعديل الاسم، مع تحسين مسافة شريط التمرير ورسائل أخطاء بيانات الدخول وSteam Guard والاتصال.",
-    "الإنجازات التجريبية تشمل اختيار اللعبة والبحث والتصفية ومراجعة الفتح والإغلاق قبل الحفظ. تحتاج Steam على الكمبيوتر والدعم يختلف حسب اللعبة.",
-    "إزالة الرجوع للإعدادات من التبرع وإضافة قلب لرسالة الشكر."
+    "إصلاح تحميل الإنجازات مع مكتبات Steam الحديثة وتصحيح قراءة رد Steam. تم اختبار القراءة الفعلية في CS2 وWallpaper Engine بدون تعديل أي إنجاز.",
+    "عرض ألعاب الحساب المفتوح في Steam من بيانات المكتبة بدل الألعاب المثبتة فقط، مع صورة صغيرة بجانب كل لعبة. افتح المكتبة في Steam وحدّثها إذا لم تكتمل مزامنة بياناتها.",
+    "شارة مخاطرة للألعاب التي تتوفر عنها معلومات لعب جماعي أو مكافحة غش. استخدم على مسؤوليتك؛ عدم ظهور الشارة لا يضمن الأمان.",
+    "استعادة اسم حسابات Steam وأيقونات التنقل، ووضع الحالات الأربع تحت تغيير الحالة لجميع الحسابات بتصميم التطبيق.",
+    "قائمة مكتبة الحساب تعرض ثلاث ألعاب مع تمرير رأسي، وإزالة التمرير الأفقي وعلامة الإضافة المكررة.",
+    "تحسين صور الألعاب باستخدام صور Steam المخزنة وبدائل بيانات المتجر، وتوحيد ألوان تبويبات Discord مع Steam.",
+    "إصلاح إخفاء رسائل أخطاء الإنجازات وبيانات الدخول خلف الرسالة العامة."
   ]
 }

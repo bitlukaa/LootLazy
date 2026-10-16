@@ -90,6 +90,65 @@ fn image_type(bytes: &[u8]) -> Result<&'static str, String> {
 }
 pub fn get(root: &Path, value: &str) -> Result<(Vec<u8>, &'static str), String> {
     let url = validated(value)?;
+    let parts: Vec<_> = url.path().split('/').collect();
+    let id = if parts.len() >= 6 && parts[1..4] == ["store_item_assets", "steam", "apps"] {
+        parts[4].parse::<u32>().ok().filter(|id| *id > 0)
+    } else {
+        None
+    };
+    if let Some(id) = id {
+        for steam in crate::executables::detected_roots() {
+            let cache = steam.join(format!("appcache/librarycache/{id}"));
+            let mut files = vec![cache.join("header.jpg")];
+            if let Ok(entries) = fs::read_dir(&cache) {
+                for entry in entries.flatten().take(64) {
+                    let name = entry.file_name().to_string_lossy().into_owned();
+                    if entry
+                        .file_type()
+                        .is_ok_and(|kind| kind.is_dir() && !kind.is_symlink())
+                        && name.len() == 40
+                        && name.bytes().all(|b| b.is_ascii_hexdigit())
+                    {
+                        files.push(entry.path().join("header.jpg"));
+                    }
+                }
+            }
+            files.extend([cache.join("library_600x900.jpg"), cache.join("logo.png")]);
+            for file in files {
+                if let Ok(meta) = fs::metadata(&file) {
+                    if meta.len() <= 4 * 1024 * 1024 {
+                        if let Ok(bytes) = fs::read(&file) {
+                            if let Ok(kind) = image_type(&bytes) {
+                                return Ok((bytes, kind));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    match get_direct(root, value) {
+        Ok(image) => Ok(image),
+        Err(original) => {
+            if let Some(id) = id {
+                if let Ok(games) = crate::steam_store::search(&id.to_string()) {
+                    if let Some(image) = games
+                        .first()
+                        .and_then(|game| game["image"].as_str())
+                        .filter(|image| *image != value)
+                    {
+                        if let Ok(image) = get_direct(root, image) {
+                            return Ok(image);
+                        }
+                    }
+                }
+            }
+            Err(original)
+        }
+    }
+}
+fn get_direct(root: &Path, value: &str) -> Result<(Vec<u8>, &'static str), String> {
+    let url = validated(value)?;
     let key = format!("{:x}", Sha256::digest(url.as_str().as_bytes()));
     {
         let mut failed = FAILED_URLS
