@@ -1,5 +1,14 @@
 # Release history
 
+## 3.9.4 Beta
+
+- Achievement library cards open games individually. Removed game checkboxes, Select all games, Clear selection and cross-game achievement operations.
+- Fixed the duplicate Executable control by keeping its existing dedicated dropdown. Removed Custom from the game executable choices and aligned the label beside the control.
+- Restored matching SVG dropdown chevrons and added clear hover/focus feedback to account Status options.
+- Game Time and Steam Idle default new sessions to Continuous. Run duration and optional sync controls are inside collapsed Advanced settings.
+- Shuffle games sits beside 10 / 50 / 100 / 200. Game Variety Start and Multi-Account Idle Start span their action area. Game Variety stops after the final game as requested.
+- Fresh account logons wait briefly before starting play activity, then re-check the connection and playing-elsewhere state. This addresses a startup race; it does not prove the cause of an external Steam desktop sign-out.
+
 ## 3.9.3 Beta
 
 - Achievements opens with a full-width game gallery using LootLazy cards, Steam artwork, search, refresh and game counts.

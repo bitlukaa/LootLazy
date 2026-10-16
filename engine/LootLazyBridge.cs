@@ -207,9 +207,14 @@ internal static class LootLazyBridge {
         SteamKit2.EResult.Timeout or SteamKit2.EResult.NoConnection or SteamKit2.EResult.ServiceUnavailable => "accounts_connection_failed",
         _ => null
     };
+    private static readonly ConcurrentDictionary<string, DateTimeOffset> LoginReadyAt = new(StringComparer.Ordinal);
+    internal static TimeSpan LoginSettleDelay(DateTimeOffset loggedOn, DateTimeOffset now) {
+        var remaining = TimeSpan.FromSeconds(2) - (now - loggedOn);
+        return remaining > TimeSpan.FromSeconds(2) ? TimeSpan.FromSeconds(2) : remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
+    }
     internal static bool LoginResult(Bot bot, SteamKit2.EResult result) {
         if (result is SteamKit2.EResult.LoggedInElsewhere or SteamKit2.EResult.AlreadyLoggedInElsewhere or SteamKit2.EResult.LogonSessionReplaced) { SessionConflict(bot); return true; }
-        if (result == SteamKit2.EResult.OK) AuthErrors.TryRemove(bot.BotName, out _);
+        if (result == SteamKit2.EResult.OK) { AuthErrors.TryRemove(bot.BotName, out _); LoginReadyAt[bot.BotName] = DateTimeOffset.UtcNow; }
         else if (LoginError(result) is { } error) AuthErrors[bot.BotName] = error;
         return result is SteamKit2.EResult.InvalidPassword or SteamKit2.EResult.AccountNotFound;
     }
@@ -219,6 +224,7 @@ internal static class LootLazyBridge {
         AuthErrors[id] = "accounts_session_conflict";
     }
     internal static void StopRequested(Bot bot) {
+        LoginReadyAt.TryRemove(bot.BotName, out _);
         if (Sessions.TryGetValue(bot.BotName, out var session)) session.Games = [];
     }
     internal static void Occupied(Bot bot) {
@@ -228,6 +234,13 @@ internal static class LootLazyBridge {
         if (!bot.IsConnectedAndLoggedOn) return;
         await PlayLock.WaitAsync().ConfigureAwait(false);
         try {
+            // A fresh logon can precede Steam's occupation callback; do not claim its play session yet.
+            if (LoginReadyAt.TryGetValue(bot.BotName, out var loggedOn) && Sessions.TryGetValue(bot.BotName, out var pending) && pending.Games.Length > 0) {
+                var delay = LoginSettleDelay(loggedOn, DateTimeOffset.UtcNow);
+                if (delay > TimeSpan.Zero) await Task.Delay(delay).ConfigureAwait(false);
+                if (!LoginReadyAt.TryGetValue(bot.BotName, out var currentLogon) || currentLogon != loggedOn) return;
+            }
+            if (!bot.IsConnectedAndLoggedOn) { StopRequested(bot); return; }
             uint[] games = Sessions.TryGetValue(bot.BotName, out var session) ? session.Games : [];
             if (!bot.IsPlayingPossible) { Occupied(bot); return; }
             await bot.ArchiHandler.PlayGames(games).ConfigureAwait(false);
@@ -444,8 +457,11 @@ internal static class LootLazyBridge {
             if (Sessions.TryGetValue(entry.Id, out var activeSession) && activeSession.Games.Length > 0) return Snapshot();
             var started = DateTimeOffset.UtcNow;
             Sessions[entry.Id] = new Session { Games = entry.Games.ToArray(), Started = started, Minutes = minutes, GameStarts = entry.Games.ToDictionary(game => game, _ => started) };
-            try { await ResetGames(selected).ConfigureAwait(false); }
-            catch { Sessions.TryRemove(entry.Id, out _); throw; }
+            try {
+                await ResetGames(selected).ConfigureAwait(false);
+                if (!selected.IsConnectedAndLoggedOn) Fail("accounts_not_ready");
+                if (!selected.IsPlayingPossible) Fail("accounts_playing_elsewhere");
+            } catch { Sessions.TryRemove(entry.Id, out _); throw; }
         } else if (command == "stop") {
             // Stop is a game-session action. The authenticated connection and library stay available.
             try { await EndSession(entry.Id, () => ResetGames(selected)).ConfigureAwait(false); }
@@ -497,6 +513,8 @@ internal static class LootLazyBridge {
         }
         if (args.Length == 1 && args[0] == "--self-test") {
             if (LoginError(SteamKit2.EResult.InvalidPassword) != "accounts_credentials_invalid" || LoginError(SteamKit2.EResult.Timeout) != "accounts_connection_failed" || LoginError(SteamKit2.EResult.TwoFactorCodeMismatch) != "accounts_guard_invalid" || LoginError(SteamKit2.EResult.OK) != null) return 30;
+            var settleAt = DateTimeOffset.UtcNow;
+            if (LoginSettleDelay(settleAt, settleAt) != TimeSpan.FromSeconds(2) || LoginSettleDelay(settleAt, settleAt.AddSeconds(1)) != TimeSpan.FromSeconds(1) || LoginSettleDelay(settleAt, settleAt.AddSeconds(3)) != TimeSpan.Zero) return 32;
             var conflictAccount = new Account("conflict-fixture", "Fixture", "fixture", [730], RememberLogin: true);
             Accounts[conflictAccount.Id] = conflictAccount;
             Sessions[conflictAccount.Id] = new Session { Games = [730] };

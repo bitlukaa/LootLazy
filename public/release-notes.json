@@ -1,17 +1,19 @@
 {
-  "version": "3.9.3",
+  "version": "3.9.4",
   "en": [
-    "Achievements opens with a full-width game gallery using LootLazy cards, Steam artwork, search, refresh and game counts.",
-    "Open a game on its own page inside LootLazy. Back to games restores the library search and scroll position; unsaved changes prompt before discarding.",
-    "Achievement details include icons, descriptions, unlock times, filters, Unlock all / Lock all and reviewed Commit changes. Library bulk game selection remains available.",
-    "Removed Risky badges, exclusion controls and native risk classification.",
-    "Confirmed write batches, encrypted saved logins and the optional Beta channel remain unchanged."
+    "Achievement library cards open games individually. Removed game checkboxes, Select all games, Clear selection and cross-game achievement operations.",
+    "Fixed the duplicate Executable control by keeping its existing dedicated dropdown. Removed Custom from the game executable choices and aligned the label beside the control.",
+    "Restored matching SVG dropdown chevrons and added clear hover/focus feedback to account Status options.",
+    "Game Time and Steam Idle default new sessions to Continuous. Run duration and optional sync controls are inside collapsed Advanced settings.",
+    "Shuffle games sits beside 10 / 50 / 100 / 200. Game Variety Start and Multi-Account Idle Start span their action area. Game Variety stops after the final game as requested.",
+    "Fresh account logons wait briefly before starting play activity, then re-check the connection and playing-elsewhere state. This addresses a startup race; it does not prove the cause of an external Steam desktop sign-out."
   ],
   "ar": [
-    "صفحة مكتبة إنجازات كاملة بتصميم LootLazy، بصور الألعاب والبحث والتحديث وعدد الألعاب.",
-    "صفحة مستقلة لكل لعبة داخل التطبيق، مع حفظ البحث ومكان التمرير عند الرجوع والتنبيه قبل تجاهل التغييرات غير المحفوظة.",
-    "عرض صور الإنجازات ووصفها ووقت فتحها مع الفلترة والتحديد الجماعي ومراجعة حفظ التغييرات. تحديد ألعاب متعددة متاح في المكتبة.",
-    "إزالة شارات Risky وخيار الاستبعاد وتصنيف المخاطرة من البيانات الأصلية.",
-    "الاحتفاظ بنظام تأكيد التغييرات على دفعات وتسجيل الدخول المحفوظ المشفر وقناة Beta الاختيارية."
+    "كل لعبة إنجازات مستقلة؛ إزالة تحديد الألعاب من المكتبة وأزرار تحديد الكل وإلغاء التحديد والتعديل عبر ألعاب متعددة.",
+    "إصلاح تكرار Executable والإبقاء على قائمة واحدة، وإزالة Custom من اختيارات ملف اللعبة ومحاذاة العنوان بجانب القائمة.",
+    "استعادة أسهم SVG المتناسقة مع التطبيق وإظهار تفاعل واضح عند المرور والتركيز على حالات الحساب.",
+    "بدء Game Time وSteam Idle افتراضيًا بوضع Continuous، ووضع المدة والمزامنة الاختيارية داخل إعدادات متقدمة مقفولة.",
+    "نقل خلط الألعاب بجانب أعداد الألعاب، وتوسيع زر بدء Game Variety وMulti-Account Idle. Game Variety يقف بعد آخر لعبة حسب اختيارك.",
+    "إعادة فحص حالة اتصال الحساب واللعب في مكان آخر بعد مهلة قصيرة عند تسجيل الدخول الحديث، لمعالجة سباق بدء الجلسة. هذا لا يثبت مصدر تسجيل خروج Steam الخارجي."
   ]
 }

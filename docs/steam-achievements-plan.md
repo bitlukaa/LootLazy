@@ -13,7 +13,7 @@ Achievements is a separate service under Steam Tools, beside Steam Idle and Mult
 
 ## Verification and limits
 
-Native tests load an original fixture DLL and exercise real dynamic symbol resolution, asynchronous API-call results, achievement reading, unlock/relock, rejected StoreStats, rejected completion callbacks, changed accounts and stale state. Renderer tests cover review/cancel, failed and partial saves, filtered bulk selection, automatic scrolling, themed selectors and English/Arabic layouts. Live read-only verification also confirmed CS2 and Wallpaper Engine achievement loading and account-filtered library discovery. No real achievements were changed. Live compatibility varies by installed Steam runtime and game; server-controlled achievements may reject changes. Game thumbnails use Steam cache/metadata artwork; achievement icons use bounded Steam RGBA thumbnails, with a trophy fallback when unavailable. Batch selection spans games on the current desktop account; stat editing and independent-account achievement changes are not included.
+Native tests load an original fixture DLL and exercise real dynamic symbol resolution, asynchronous API-call results, achievement reading, unlock/relock, rejected StoreStats, rejected completion callbacks, changed accounts and stale state. Renderer tests cover review/cancel, failed and partial saves, filtered per-game selection, automatic scrolling, themed selectors and English/Arabic layouts. Live read-only verification also confirmed CS2 and Wallpaper Engine achievement loading and account-filtered library discovery. No real achievements were changed. Live compatibility varies by installed Steam runtime and game; server-controlled achievements may reject changes. Game thumbnails use Steam cache/metadata artwork; achievement icons use bounded Steam RGBA thumbnails, with a trophy fallback when unavailable. Each game is independent. Library game selection and cross-game writes are not available; stat editing and independent-account achievement changes are not included.
 
 ## API references
 
@@ -24,9 +24,9 @@ Native tests load an original fixture DLL and exercise real dynamic symbol resol
 
 ### Review and collection behavior
 
-- The full-width library gallery has game artwork, search, counts, refresh and bulk selection. Risk classification has been removed.
-- Each game opens a separate in-app detail page. Back restores library search/scroll; leaving with pending changes requires explicitly discarding them. Detail bulk actions affect the open game, independently of library selections.
-- Bulk unlock/relock stages desired values across selected games without writes. Loading is sequential, cancellable between requests, and skips unavailable games with a visible summary.
+- The full-width library gallery has game artwork, search, counts and refresh. Risk classification has been removed.
+- Each game opens a separate in-app detail page. Back restores library search/scroll; leaving with pending changes requires explicitly discarding them. Unlock all / Lock all affects only the open game.
+- Unlock/relock stages desired values only for achievements matching the open game’s search/filter, without writes.
 - Commit changes reviews every staged change, then sends at most 200 changes per request. Only acknowledged batches leave the pending set. A failure stops the sequence and retains unfinished changes; no automatic write retry occurs.
 - Achievement lists are fully scrollable without pagination controls. Account library pages append on vertical scrolling and ignore responses from a previously selected account/query.
 - Native icons use Steam achievement handles and ISteamUtils RGBA extraction, with bounded 32px PNG thumbnails and a fallback when Steam supplies no image. Worker output is capped at 64 MiB; input remains capped at 8 MiB.
