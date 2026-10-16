@@ -404,3 +404,9 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .accounts-grid .button,.accounts-grid .button:hover,.accounts-grid .button:active:not(:disabled),#accounts-active-panel .button,#accounts-active-panel .button:hover,#accounts-active-panel .button:active:not(:disabled){transform:none}
 
 .account-game-row{gap:12px;flex-wrap:nowrap}.account-game-info{display:flex;align-items:center;gap:8px;flex:1;min-width:0}.account-game-info>strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.account-game-info .account-state{flex-shrink:0}.account-game-row .account-game-time{display:flex;align-items:center;gap:7px;white-space:nowrap}.account-game-row .clock-digits{font-size:13px}.account-game-row .account-game-time .muted{font-size:10px}.account-active-heading>.button{margin-inline-start:auto}@media(max-width:500px){.account-game-row .account-game-time .muted{display:none}.account-game-info{gap:5px}.account-game-info .account-state{font-size:9px}}
+
+.account-game-info .account-game-art{display:grid;width:32px;height:32px;flex:0 0 32px;border-radius:6px;overflow:hidden;background:var(--surface)}
+.account-game-art img{width:100%;height:100%;object-fit:cover}
+.account-game-art .art-placeholder{display:grid;place-items:center;width:100%;height:100%;color:var(--muted)}
+.account-game-art .art-placeholder[hidden]{display:none}
+.account-game-art .art-placeholder svg{width:18px;height:18px}

@@ -1,5 +1,10 @@
 # Release history
 
+## 3.7.7 Beta
+
+- Added small game thumbnails to Steam Accounts and its active sessions, keeping game names, Running badges and timers on one line.
+
+
 ## 3.7.6 — Steam status clarity
 
 - Rename Appear as to Status while keeping all four choices visible.
