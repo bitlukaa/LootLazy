@@ -6,14 +6,14 @@ Achievements is a separate service under Steam Tools, beside Steam Idle and Mult
 
 - Game selection, achievement names/descriptions, completion totals, locked/unlocked filters and search.
 - Original Rust flat-API bindings inside an isolated process for each AppID. No external achievement application is launched or bundled.
-- Individual unlock/relock changes staged locally, with a centered review before Apply.
+- Individual unlock/relock changes staged locally, with a centered review before Commit changes.
 - AppID/ownership checks, account identity checks and stale-state checks before writes.
 - Compact backups of affected original values before applying changes, retaining at most twenty generated backups.
 - StoreStats completion is required before reporting success. Rejected, timed-out or uncertain saves show an error and require refreshing; staged changes are never automatically replayed.
 
 ## Verification and limits
 
-Native tests load an original fixture DLL and exercise real dynamic symbol resolution, asynchronous API-call results, achievement reading, unlock/relock, rejected StoreStats, rejected completion callbacks, changed accounts and stale state. Renderer tests cover review/cancel, failed and partial saves, filtered bulk selection, automatic scrolling, themed selectors and English/Arabic layouts. Live read-only verification also confirmed CS2 and Wallpaper Engine achievement loading and account-filtered library discovery. No real achievements were changed. Live compatibility varies by installed Steam runtime and game; server-controlled achievements may reject changes. Game thumbnails use Steam cache/metadata artwork; achievement icons use bounded Steam RGBA thumbnails, with a trophy fallback when unavailable. Risky flags come from available multiplayer/anti-cheat categories and do not certify unmarked games as safe. Batch selection spans games on the current desktop account; stat editing and independent-account achievement changes are not included.
+Native tests load an original fixture DLL and exercise real dynamic symbol resolution, asynchronous API-call results, achievement reading, unlock/relock, rejected StoreStats, rejected completion callbacks, changed accounts and stale state. Renderer tests cover review/cancel, failed and partial saves, filtered bulk selection, automatic scrolling, themed selectors and English/Arabic layouts. Live read-only verification also confirmed CS2 and Wallpaper Engine achievement loading and account-filtered library discovery. No real achievements were changed. Live compatibility varies by installed Steam runtime and game; server-controlled achievements may reject changes. Game thumbnails use Steam cache/metadata artwork; achievement icons use bounded Steam RGBA thumbnails, with a trophy fallback when unavailable. Batch selection spans games on the current desktop account; stat editing and independent-account achievement changes are not included.
 
 ## API references
 
@@ -22,11 +22,12 @@ Native tests load an original fixture DLL and exercise real dynamic symbol resol
 - https://partner.steamgames.com/doc/features/achievements
 
 
-### 3.9.2 review and collection behavior
+### Review and collection behavior
 
-- Library selection supports all search results or exclusion of metadata-flagged Risky games. An unflagged game is not certified safe.
+- The full-width library gallery has game artwork, search, counts, refresh and bulk selection. Risk classification has been removed.
+- Each game opens a separate in-app detail page. Back restores library search/scroll; leaving with pending changes requires explicitly discarding them. Detail bulk actions affect the open game, independently of library selections.
 - Bulk unlock/relock stages desired values across selected games without writes. Loading is sequential, cancellable between requests, and skips unavailable games with a visible summary.
-- Apply reviews every staged change, then sends at most 200 changes per request. Only acknowledged batches leave the pending set. A failure stops the sequence and retains unfinished changes; no automatic write retry occurs.
+- Commit changes reviews every staged change, then sends at most 200 changes per request. Only acknowledged batches leave the pending set. A failure stops the sequence and retains unfinished changes; no automatic write retry occurs.
 - Achievement lists are fully scrollable without pagination controls. Account library pages append on vertical scrolling and ignore responses from a previously selected account/query.
 - Native icons use Steam achievement handles and ISteamUtils RGBA extraction, with bounded 32px PNG thumbnails and a fallback when Steam supplies no image. Worker output is capped at 64 MiB; input remains capped at 8 MiB.
 - SteamAPI_Shutdown only closes the worker API context. No desktop login revocation, Steam credential editing, or desktop LogOff API is used. Engine session-conflict callbacks stop reconnection attempts and preserve the encrypted saved login; the source of an external session conflict cannot be inferred from that callback alone.

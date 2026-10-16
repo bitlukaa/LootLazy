@@ -1,19 +1,17 @@
 {
-  "version": "3.9.2",
+  "version": "3.9.3",
   "en": [
-    "The All accounts Status control is a compact themed dropdown beside Start all and Stop all. Individual accounts show Set Status above their four options.",
-    "Library pages append automatically while scrolling. All achievements are available in a scrolling list without Load more or Previous.",
-    "Achievements adds game counts, Select all games, Exclude Risky, and reviewed bulk unlock/lock actions. Changes use bounded batches and retain unfinished work after failures. Unmarked games are not guaranteed safe.",
-    "Achievement icons load through Steam with bounded thumbnails. Games without available icons keep a fallback. Older runtimes use the local-user stats request; unavailable stats and denied access have clearer messages.",
-    "All select popups use the application theme, with keyboard navigation and English/Arabic layouts.",
-    "Steam-reported session conflicts now pause automatic account reconnection while keeping the saved login. This prevents reconnection contention; it does not establish the source of an external Steam sign-out."
+    "Achievements opens with a full-width game gallery using LootLazy cards, Steam artwork, search, refresh and game counts.",
+    "Open a game on its own page inside LootLazy. Back to games restores the library search and scroll position; unsaved changes prompt before discarding.",
+    "Achievement details include icons, descriptions, unlock times, filters, Unlock all / Lock all and reviewed Commit changes. Library bulk game selection remains available.",
+    "Removed Risky badges, exclusion controls and native risk classification.",
+    "Confirmed write batches, encrypted saved logins and the optional Beta channel remain unchanged."
   ],
   "ar": [
-    "قائمة حالة جماعية بتصميم التطبيق بجانب تشغيل الكل وإيقاف الكل، وعنوان تعيين الحالة فوق الحالات الأربع داخل الحساب.",
-    "تحميل صفحات المكتبة تلقائيًا أثناء التمرير وعرض الإنجازات بقائمة تمرير دون أزرار تحميل المزيد أو السابق.",
-    "عدد الألعاب وتحديد الكل واستبعاد Risky، مع مراجعة التغييرات الجماعية قبل التطبيق والاحتفاظ بالتغييرات المتبقية عند الفشل. عدم وجود شارة مخاطرة لا يضمن الأمان.",
-    "صور الإنجازات من Steam بحجم محدود مع صورة بديلة عند عدم توفر الصورة، وتحسين طلب الإحصاءات ورسائل عدم توفر البيانات.",
-    "توحيد القوائم المنسدلة مع تصميم التطبيق ودعم لوحة المفاتيح والعربية والإنجليزية.",
-    "إيقاف إعادة الاتصال التلقائي عند إبلاغ Steam عن تعارض جلسات، مع الاحتفاظ بالدخول المحفوظ. السبب الخارجي لتسجيل الخروج لم يتم إثباته."
+    "صفحة مكتبة إنجازات كاملة بتصميم LootLazy، بصور الألعاب والبحث والتحديث وعدد الألعاب.",
+    "صفحة مستقلة لكل لعبة داخل التطبيق، مع حفظ البحث ومكان التمرير عند الرجوع والتنبيه قبل تجاهل التغييرات غير المحفوظة.",
+    "عرض صور الإنجازات ووصفها ووقت فتحها مع الفلترة والتحديد الجماعي ومراجعة حفظ التغييرات. تحديد ألعاب متعددة متاح في المكتبة.",
+    "إزالة شارات Risky وخيار الاستبعاد وتصنيف المخاطرة من البيانات الأصلية.",
+    "الاحتفاظ بنظام تأكيد التغييرات على دفعات وتسجيل الدخول المحفوظ المشفر وقناة Beta الاختيارية."
   ]
 }

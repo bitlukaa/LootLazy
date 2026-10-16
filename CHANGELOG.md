@@ -1,5 +1,13 @@
 # Release history
 
+## 3.9.3 Beta
+
+- Achievements opens with a full-width game gallery using LootLazy cards, Steam artwork, search, refresh and game counts.
+- Open a game on its own page inside LootLazy. Back to games restores the library search and scroll position; unsaved changes prompt before discarding.
+- Achievement details include icons, descriptions, unlock times, filters, Unlock all / Lock all and reviewed Commit changes. Library bulk game selection remains available.
+- Removed Risky badges, exclusion controls and native risk classification.
+- Confirmed write batches, encrypted saved logins and the optional Beta channel remain unchanged.
+
 ## 3.9.2 Beta
 
 - The All accounts Status control is a compact themed dropdown beside Start all and Stop all. Individual accounts show Set Status above their four options.

@@ -977,14 +977,10 @@ mod tests {
                 crate::steam_library::Game {
                     app_id: 42,
                     name: "Owned".into(),
-                    risky: true,
-                    risk_reason: "multiplayer".into(),
                 },
                 crate::steam_library::Game {
                     app_id: 9999,
                     name: "Not owned".into(),
-                    risky: false,
-                    risk_reason: "unknown".into(),
                 },
             ]),
         };

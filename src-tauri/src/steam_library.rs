@@ -7,8 +7,6 @@ use std::{collections::BTreeMap, fs, path::PathBuf};
 pub struct Game {
     pub app_id: u32,
     pub name: String,
-    pub risky: bool,
-    pub risk_reason: String,
 }
 struct Reader<'a> {
     bytes: &'a [u8],
@@ -165,29 +163,9 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<Game>, String> {
             let kind = common["type"].as_str().unwrap_or("").to_ascii_lowercase();
             if ["game", "application", "demo"].contains(&kind.as_str()) {
                 if let Some(name) = common["name"].as_str().filter(|name| !name.is_empty()) {
-                    let flags = common["category"].as_object();
-                    let flag = |id: &str| {
-                        flags
-                            .and_then(|f| f.get(id))
-                            .is_some_and(|v| v == "1" || v == 1)
-                    };
-                    let vac = flag("category_8");
-                    let online = flag("category_1")
-                        || flag("category_20")
-                        || flag("category_36")
-                        || flag("category_38");
                     games.push(Game {
                         app_id,
                         name: name.chars().take(256).collect(),
-                        risky: vac || online,
-                        risk_reason: if vac {
-                            "anti_cheat"
-                        } else if online {
-                            "multiplayer"
-                        } else {
-                            "unknown"
-                        }
-                        .into(),
                     });
                 }
             }
@@ -235,7 +213,7 @@ mod tests {
         }
     }
     #[test]
-    fn parses_owned_candidates_and_flags_without_account_data() {
+    fn parses_application_candidates_without_account_data() {
         let mut bytes = Vec::new();
         bytes.extend(0x07564428u32.to_le_bytes());
         bytes.extend(1u32.to_le_bytes());
@@ -248,7 +226,10 @@ mod tests {
         let games = parse(&bytes).unwrap();
         assert_eq!(games.len(), 1);
         assert_eq!(games[0].name, "Fixture game");
-        assert!(games[0].risky);
+        assert_eq!(
+            serde_json::to_value(&games[0]).unwrap(),
+            serde_json::json!({"appId":42,"name":"Fixture game"})
+        );
     }
     #[test]
     #[ignore = "Requires an explicitly selected local Steam cache"]
