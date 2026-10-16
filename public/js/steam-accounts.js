@@ -46,11 +46,11 @@
  }
  async function startQr(context){
   if(auth!==context)return;context.method='qr';++context.sequence;clearQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_qr_loading');
-  if(!await ensureDraft(context)||!await disconnectAttempt(context))return;
+  if(!await ensureDraft(context)||!await disconnectAttempt(context)){if(auth===context)expireQr();return;}
   const sequence=context.sequence;
   if(await call('signin',{id:context.id,method:'qr'})){
    if(auth===context&&sequence===context.sequence)readQr(context);
-  }
+  }else if(auth===context)expireQr();
  }
  async function readQr(context){
   if(auth!==context||context.method!=='qr'||context.reading||model.busy)return;
@@ -70,7 +70,7 @@
     }
     el('account-auth-error').hidden=true;el('account-qr-frame').classList.remove('expired');el('account-qr-retry').hidden=true;el('account-qr-status').textContent=t('accounts_qr_wait');
    }else if(result.pending){el('account-qr-status').textContent=t('accounts_qr_loading');}else expireQr();
-  }catch(error){if(auth===context&&sequence===context.sequence){clearQr();el('account-qr-status').textContent=message(error);}}
+  }catch(error){if(auth===context&&sequence===context.sequence){expireQr();el('account-qr-status').textContent=message(error);}}
   finally{context.reading=false;}
  }
  function openAuth(account=null){
@@ -96,11 +96,11 @@
   const account=model.accounts.find(item=>item.id===context.id);
   const input=account?.input;
   el('account-auth-form').hidden=!!input;el('account-guard-form').hidden=!input;
-  for(const id of ['account-auth-submit','account-guard-submit','account-qr-refresh','account-qr-retry'])el(id).disabled=model.busy||context.finishing;
+  for(const id of ['account-auth-submit','account-guard-submit','account-qr-retry'])el(id).disabled=model.busy||context.finishing;
   if(input){
    text('account-guard-label',t('accounts_input_'+input.type));el('account-guard-code').type=['Password','SteamParentalCode'].includes(input.type)?'password':'text';
    if(context.challenge!==input.id){context.challenge=input.id;el('account-guard-code').value='';el('account-guard-code').focus();}
-   clearQr();el('account-qr-status').textContent=t('accounts_auth_pending');
+   clearQr();expireQr();el('account-qr-status').textContent=t('accounts_auth_pending');
   }
   if(account?.error){
    if(context.method==='qr'&&['accounts_qr_failed','accounts_qr_expired'].includes(account.error)){el('account-auth-error').hidden=true;expireQr();}
@@ -207,11 +207,11 @@
   el('accounts-add').onclick=()=>openAuth();el('accounts-retry').onclick=()=>{model.loaded=false;open();};
   for(const id of ['account-auth-close','account-auth-cancel'])el(id).onclick=()=>closeAuth();el('account-auth-close').innerHTML=getIcon('x');
   el('account-auth-dialog').addEventListener('cancel',event=>{event.preventDefault();closeAuth();});
-  el('account-qr-refresh').onclick=el('account-qr-retry').onclick=()=>{if(auth)startQr(auth);};el('account-qr-retry').querySelector('.refresh-icon').innerHTML=getIcon('refresh');el('account-qr-refresh').querySelector('.refresh-icon').innerHTML=getIcon('refresh');
+  el('account-qr-retry').onclick=()=>{if(auth)startQr(auth);};el('account-qr-retry').querySelector('.refresh-icon').innerHTML=getIcon('refresh');
   el('account-auth-form').onsubmit=async event=>{
    event.preventDefault();const context=auth;if(!context||model.busy)return;
    const login=el('account-auth-login').value.trim(),password=el('account-auth-password').value;el('account-auth-password').value='';
-   context.method='password';++context.sequence;clearQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_auth_pending');
+   context.method='password';++context.sequence;clearQr();expireQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_auth_pending');
    if(!await ensureDraft(context)||!await disconnectAttempt(context))return;
    const account=model.accounts.find(item=>item.id===context.id);
    if(context.draft&&account.login&&account.login!==login){if(!await call('remove',{id:context.id}))return;context.id=null;if(!await ensureDraft(context))return;}

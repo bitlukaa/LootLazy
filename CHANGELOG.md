@@ -1,5 +1,10 @@
 # Release history
 
+## 3.7.9 Beta
+
+- Simplified QR renewal to one Refresh QR code action on the blurred QR area. Removed the duplicate New code button and kept retry available after connection errors.
+
+
 ## 3.7.8 Beta
 
 - Add or remove Steam Account games while running, without restarting the other games or the session deadline. New games get their own elapsed timer.
