@@ -21,7 +21,7 @@ async function launch(){
  await run.close();
  // A synthetic protected login can be loaded after an app replacement without contacting Steam.
  const savedId='ll_'+'e'.repeat(32),base64=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
- const token=base64({alg:'none',typ:'JWT'})+'.'+base64({sub:'76561198000000000',exp:Math.floor(Date.now()/1000)+86400})+'.fixture-signature';
+ const token=base64({alg:'HS256',typ:'JWT'})+'.'+base64({sub:'76561198000000000',exp:Math.floor(Date.now()/1000)+86400})+'.'+Buffer.alloc(32,1).toString('base64url');
  const protectScript='Add-Type -AssemblyName System.Security; $taskBytes=[Text.Encoding]::UTF8.GetBytes([Console]::In.ReadToEnd()); [Console]::Write("LootLazy-DPAPI-v1:"+[Convert]::ToBase64String([Security.Cryptography.ProtectedData]::Protect($taskBytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)))';
  const protectedDb=require('node:child_process').execFileSync('powershell',['-NoProfile','-Command',protectScript],{input:JSON.stringify({BackingRefreshToken:token}),encoding:'utf8',windowsHide:true});
  fs.writeFileSync(path.join(fixture,'accounts.json'),JSON.stringify([{id:savedId,label:'Remembered fixture',login:'lootlazy_saved_fixture',games:[730],rememberLogin:false}]));
