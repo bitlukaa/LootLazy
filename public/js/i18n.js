@@ -878,3 +878,6 @@ Object.assign(I18N.ar,{achievements_intro:"إدارة إنجازات الحسا�
 
 Object.assign(I18N.en,{session_advanced:"Advanced settings"});
 Object.assign(I18N.ar,{session_advanced:"إعدادات متقدمة"});
+
+Object.assign(I18N.en,{game_time_badge_note:"Choose a game and start a continuous Discord session. Optional timing and sync are in Advanced settings.",game_variety_badge_note:"Choose how many games to run in order. The session stops after the last game."});
+Object.assign(I18N.ar,{game_time_badge_note:"اختر لعبة وابدأ جلسة Discord مستمرة. المدة والمزامنة الاختيارية داخل الإعدادات المتقدمة.",game_variety_badge_note:"اختر عدد الألعاب لتشغيلها بالترتيب. تتوقف الجلسة بعد آخر لعبة."});
