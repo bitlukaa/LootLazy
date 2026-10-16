@@ -208,9 +208,15 @@ internal static class LootLazyBridge {
         _ => null
     };
     internal static bool LoginResult(Bot bot, SteamKit2.EResult result) {
+        if (result is SteamKit2.EResult.LoggedInElsewhere or SteamKit2.EResult.AlreadyLoggedInElsewhere or SteamKit2.EResult.LogonSessionReplaced) { SessionConflict(bot); return true; }
         if (result == SteamKit2.EResult.OK) AuthErrors.TryRemove(bot.BotName, out _);
         else if (LoginError(result) is { } error) AuthErrors[bot.BotName] = error;
         return result is SteamKit2.EResult.InvalidPassword or SteamKit2.EResult.AccountNotFound;
+    }
+    internal static void SessionConflict(Bot bot) => SessionConflict(bot.BotName);
+    private static void SessionConflict(string id) {
+        if (Sessions.TryGetValue(id, out var session)) { session.Games = []; session.Blocked = true; }
+        AuthErrors[id] = "accounts_session_conflict";
     }
     internal static void StopRequested(Bot bot) {
         if (Sessions.TryGetValue(bot.BotName, out var session)) session.Games = [];
@@ -394,6 +400,7 @@ internal static class LootLazyBridge {
             if (!CanResume(entry, selected) || selected.KeepRunning) Fail("accounts_signin_required");
             await WaitConnections(entry.Id).ConfigureAwait(false);
             QrLogins.TryRemove(entry.Id, out _); QrCodes.TryRemove(entry.Id, out _);
+            AuthErrors.TryRemove(entry.Id, out _);
             Restoring[entry.Id] = 1;
             selected.BotConfig.OnlineStatus = Persona(entry.Presence);
             await selected.Start().ConfigureAwait(false);
@@ -490,6 +497,12 @@ internal static class LootLazyBridge {
         }
         if (args.Length == 1 && args[0] == "--self-test") {
             if (LoginError(SteamKit2.EResult.InvalidPassword) != "accounts_credentials_invalid" || LoginError(SteamKit2.EResult.Timeout) != "accounts_connection_failed" || LoginError(SteamKit2.EResult.TwoFactorCodeMismatch) != "accounts_guard_invalid" || LoginError(SteamKit2.EResult.OK) != null) return 30;
+            var conflictAccount = new Account("conflict-fixture", "Fixture", "fixture", [730], RememberLogin: true);
+            Accounts[conflictAccount.Id] = conflictAccount;
+            Sessions[conflictAccount.Id] = new Session { Games = [730] };
+            SessionConflict(conflictAccount.Id);
+            if (Sessions[conflictAccount.Id].Games.Length != 0 || !Sessions[conflictAccount.Id].Blocked || !Accounts[conflictAccount.Id].RememberLogin || AuthErrors[conflictAccount.Id] != "accounts_session_conflict") return 31;
+            Accounts.Remove(conflictAccount.Id); Sessions.TryRemove(conflictAccount.Id, out _); AuthErrors.TryRemove(conflictAccount.Id, out _);
             var statusPackets = new PresencePacketFixture();
             var isolatedClient = new SteamKit2.SteamClient { DebugNetworkListener = statusPackets };
             var friends = isolatedClient.GetHandler<SteamKit2.SteamFriends>();

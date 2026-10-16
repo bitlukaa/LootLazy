@@ -36,3 +36,5 @@ patch('Steam/Bot.cs','private string? RefreshToken;', 'private string? RefreshTo
 patch('Helpers/SerializableFile.cs','internal async Task MakeReadOnly() {','internal async Task FlushLootLazyState() {\n\t\tawait Save().ConfigureAwait(false);\n\t\tawait FileSemaphore.WaitAsync().ConfigureAwait(false);\n\t\tFileSemaphore.Release();\n\t}\n\n\tinternal async Task MakeReadOnly() {');
 fs.copyFileSync(path.join(root,'engine/LootLazyBridge.cs'),path.join(base,'LootLazyBridge.cs'));
 console.log('Applied reviewed LootLazy adapter patches to a temporary copy; upstream snapshot unchanged.');
+
+patch('Steam/Bot.cs','ArchiLogger.LogGenericInfo(Strings.FormatBotLoggedOff(callback.Result));','ArchiLogger.LogGenericInfo(Strings.FormatBotLoggedOff(callback.Result));\n\t\tif (LootLazyBridge.Enabled && callback.Result is EResult.LoggedInElsewhere or EResult.LogonSessionReplaced) { LootLazyBridge.SessionConflict(this); await Stop(true).ConfigureAwait(false); return; }');

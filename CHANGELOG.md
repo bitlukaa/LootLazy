@@ -1,5 +1,14 @@
 # Release history
 
+## 3.9.2 Beta
+
+- The All accounts Status control is a compact themed dropdown beside Start all and Stop all. Individual accounts show Set Status above their four options.
+- Library pages append automatically while scrolling. All achievements are available in a scrolling list without Load more or Previous.
+- Achievements adds game counts, Select all games, Exclude Risky, and reviewed bulk unlock/lock actions. Changes use bounded batches and retain unfinished work after failures. Unmarked games are not guaranteed safe.
+- Achievement icons load through Steam with bounded thumbnails. Games without available icons keep a fallback. Older runtimes use the local-user stats request; unavailable stats and denied access have clearer messages.
+- All select popups use the application theme, with keyboard navigation and English/Arabic layouts.
+- Steam-reported session conflicts now pause automatic account reconnection while keeping the saved login. This prevents reconnection contention; it does not establish the source of an external Steam sign-out.
+
 ## 3.9.1 Beta
 
 - Fixed achievement loading with modern Steam runtimes and the native callback layout. Confirmed read-only loading with CS2 and Wallpaper Engine on a live Steam client.

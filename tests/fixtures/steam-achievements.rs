@@ -24,3 +24,8 @@ unsafe fn change(key:*const c_char,state:bool)->bool{if CStr::from_ptr(key).to_b
 #[no_mangle]pub unsafe extern "C" fn SteamAPI_ISteamUserStats_SetAchievement(_:*mut c_void,key:*const c_char)->bool{change(key,true)}
 #[no_mangle]pub unsafe extern "C" fn SteamAPI_ISteamUserStats_ClearAchievement(_:*mut c_void,key:*const c_char)->bool{change(key,false)}
 #[no_mangle]pub extern "C" fn SteamAPI_ISteamUserStats_StoreStats(_:*mut c_void)->bool{if APP.load(SeqCst)==9{return false;}NEXT.store(1102,SeqCst);true}
+
+#[no_mangle]pub extern "C" fn SteamAPI_SteamUtils_v010()->*mut c_void{1usize as *mut c_void}
+#[no_mangle]pub extern "C" fn SteamAPI_ISteamUserStats_GetAchievementIcon(_:*mut c_void,_:*const c_char)->i32{1}
+#[no_mangle]pub unsafe extern "C" fn SteamAPI_ISteamUtils_GetImageSize(_:*mut c_void,_:i32,w:*mut u32,h:*mut u32)->bool{*w=2;*h=2;true}
+#[no_mangle]pub unsafe extern "C" fn SteamAPI_ISteamUtils_GetImageRGBA(_:*mut c_void,_:i32,pixels:*mut u8,bytes:i32)->bool{if bytes!=16{return false;}std::ptr::copy_nonoverlapping([255u8,100,0,255].repeat(4).as_ptr(),pixels,16);true}

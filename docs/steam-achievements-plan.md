@@ -20,3 +20,15 @@ Native tests load an original fixture DLL and exercise real dynamic symbol resol
 - https://partner.steamgames.com/doc/api/ISteamUserStats
 - https://partner.steamgames.com/doc/api/steam_api
 - https://partner.steamgames.com/doc/features/achievements
+
+
+### 3.9.2 review and collection behavior
+
+- Library selection supports all search results or exclusion of metadata-flagged Risky games. An unflagged game is not certified safe.
+- Bulk unlock/relock stages desired values across selected games without writes. Loading is sequential, cancellable between requests, and skips unavailable games with a visible summary.
+- Apply reviews every staged change, then sends at most 200 changes per request. Only acknowledged batches leave the pending set. A failure stops the sequence and retains unfinished changes; no automatic write retry occurs.
+- Achievement lists are fully scrollable without pagination controls. Account library pages append on vertical scrolling and ignore responses from a previously selected account/query.
+- Native icons use Steam achievement handles and ISteamUtils RGBA extraction, with bounded 32px PNG thumbnails and a fallback when Steam supplies no image. Worker output is capped at 64 MiB; input remains capped at 8 MiB.
+- SteamAPI_Shutdown only closes the worker API context. No desktop login revocation, Steam credential editing, or desktop LogOff API is used. Engine session-conflict callbacks stop reconnection attempts and preserve the encrypted saved login; the source of an external session conflict cannot be inferred from that callback alone.
+
+Validation uses an isolated native DLL fixture and browser mocks. No live achievements are changed by these checks.

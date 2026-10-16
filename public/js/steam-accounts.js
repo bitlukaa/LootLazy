@@ -150,7 +150,7 @@
    }
    el('accounts-list').replaceChildren(list);el('accounts-empty').hidden=accounts.length>0;
   }
-  el('accounts-start-all').disabled=model.busy||bulkBusy||!accounts.some(account=>account.connected&&account.state==='ready'&&account.games?.length);el('accounts-stop-running').disabled=model.busy||bulkBusy||!accounts.some(account=>account.state==='running');for(const control of document.querySelectorAll('[data-accounts-presence-all]')){control.disabled=model.busy||bulkBusy;control.setAttribute('aria-pressed',String(accounts.length>0&&accounts.every(account=>(account.presence||'online')===control.dataset.accountsPresenceAll)));}el('accounts-add').disabled=model.busy;el('accounts-retry').disabled=model.busy;
+  el('accounts-start-all').disabled=model.busy||bulkBusy||!accounts.some(account=>account.connected&&account.state==='ready'&&account.games?.length);el('accounts-stop-running').disabled=model.busy||bulkBusy||!accounts.some(account=>account.state==='running');for(const control of document.querySelectorAll('[data-accounts-presence-all]')){control.disabled=model.busy||bulkBusy;control.setAttribute('aria-pressed',String(accounts.length>0&&accounts.every(account=>(account.presence||'online')===control.dataset.accountsPresenceAll)));}el('accounts-status-trigger').disabled=model.busy||bulkBusy||!accounts.length;el('accounts-add').disabled=model.busy;el('accounts-retry').disabled=model.busy;
   const account=selected(),ready=!!account?.connected;
   el('account-session-panel').hidden=!ready;el('account-setup').hidden=!ready;el('accounts-workspace').classList.toggle('has-session',ready);
   if(!ready){model.libraryFor=null;model.libraryLoading=false;if(account?.error&&!auth){showError(account.error);}return;}
@@ -174,10 +174,11 @@
   for(const control of el('account-game-setup').querySelectorAll('#account-search-results button,#account-quick-picks button'))control.disabled=model.busy||!editable;
   if(editable&&model.libraryFor!==account.id&&!model.busy){model.libraryFor=account.id;queueMicrotask(()=>search());}
  }
+ let libraryPage=0,libraryTotal=0,libraryBusy=false;
  async function search(refresh=false,page=0){
   const account=selected(),query=el('account-search').value.trim(),sequence=++model.searchSequence;
   if(!account?.connected)return;
-  el('account-search-results').replaceChildren();el('account-quick-picks').replaceChildren();el('account-quick-games').hidden=true;
+  if(page===0){el('account-search-results').replaceChildren();el('account-quick-picks').replaceChildren();el('account-quick-games').hidden=true;libraryPage=0;libraryTotal=0;}libraryBusy=true;
   try{
    const result=await request(query?'/api/steam-accounts/search':'/api/steam-accounts/library',{id:account.id,query,refresh,offset:page*50});
    const games=result.games;model.libraryLoading=!!result.loading;
@@ -190,8 +191,9 @@
     const row=button(game.name,'plus',async()=>{if(model.busy||selected()?.id!==account.id)return;model.names[id]=game.name;localStorage.setItem('lootlazy_account_games',JSON.stringify(model.names));if(await call('games',{id:account.id,games:[...(selected()?.games||[]),id]})){el('account-search').value='';search();}},query?'account-search-result':'button button-secondary account-quick-pick');fragment.append(row);
    }
    if(!fragment.childNodes.length&&(query||model.libraryLoading||!(games||[]).length)){const empty=document.createElement('p');empty.className='muted';empty.textContent=t(model.libraryLoading?'accounts_library_loading':query?'accounts_no_results':'accounts_library_empty');fragment.append(empty);}
-   if(!query&&(choices.length||page>0||(result.total||0)>50)){const pager=document.createElement('div');pager.className='account-library-pager';if(page>0)pager.append(button(t('previous'),null,()=>search(false,page-1),'button button-quiet'));if((page+1)*50<(result.total||0))pager.append(button(t('load_more'),null,()=>search(false,page+1),'button button-quiet'));fragment.append(pager);el('account-quick-picks').replaceChildren(fragment);el('account-quick-games').hidden=false;}else el('account-search-results').replaceChildren(fragment);render();
-  }catch(error){if(sequence===model.searchSequence)showError(error);}
+   if(!query){libraryPage=page;libraryTotal=result.total||0;el('account-quick-picks').append(fragment);el('account-quick-games').hidden=false;}else el('account-search-results').replaceChildren(fragment);render();
+  }catch(error){if(sequence===model.searchSequence)showError(error);}finally{if(sequence===model.searchSequence){libraryBusy=false;const list=el('account-quick-picks');if(!query&&!model.libraryLoading&&(libraryPage+1)*50<libraryTotal&&list.scrollHeight<=list.clientHeight)setTimeout(()=>{if(sequence===model.searchSequence)search(false,libraryPage+1);},0);}}
+
  }
  function renderActive(){
   const list=el('accounts-active-list');if(!list)return;
@@ -234,7 +236,9 @@
   el('account-edit').onclick=()=>{const account=selected();if(!account||model.busy)return;editTarget=account.id;el('account-edit-label').value=account.label;el('account-edit-error').hidden=true;el('account-edit-dialog').showModal();el('account-edit-label').focus();};
   el('account-edit-form').onsubmit=async event=>{event.preventDefault();const label=el('account-edit-label').value.trim(),id=editTarget;if(!label||!id||model.busy)return;el('account-edit-save').disabled=true;try{if(await call('rename',{id,label}))el('account-edit-dialog').close();else{el('account-edit-error').textContent=el('accounts-error').textContent;el('account-edit-error').hidden=false;}}finally{el('account-edit-save').disabled=false;}};
   el('accounts-start-all').onclick=()=>bulkRun('start');
-  for(const control of document.querySelectorAll('[data-accounts-presence-all]'))control.onclick=()=>bulkRun('presence',control.dataset.accountsPresenceAll);
+  for(const control of document.querySelectorAll('[data-accounts-presence-all]'))control.onclick=()=>{el('accounts-status-menu').hidden=true;el('accounts-status-trigger').setAttribute('aria-expanded','false');bulkRun('presence',control.dataset.accountsPresenceAll);};
+  el('account-quick-picks').addEventListener('scroll',()=>{const list=el('account-quick-picks');if(!libraryBusy&&!el('account-search').value.trim()&&(libraryPage+1)*50<libraryTotal&&list.scrollTop+list.clientHeight>=list.scrollHeight-60)search(false,libraryPage+1);});
+  const closeStatus=()=>{el('accounts-status-menu').hidden=true;el('accounts-status-trigger').setAttribute('aria-expanded','false');};el('accounts-status-trigger').onclick=()=>{el('accounts-status-menu').hidden=!el('accounts-status-menu').hidden;el('accounts-status-trigger').setAttribute('aria-expanded',String(!el('accounts-status-menu').hidden));};document.addEventListener('click',event=>{if(!event.target.closest('.accounts-bulk-presence'))closeStatus();});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!el('accounts-status-menu').hidden){closeStatus();el('accounts-status-trigger').focus();}if(event.target.closest('.accounts-bulk-presence')&&['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();el('accounts-status-menu').hidden=false;el('accounts-status-trigger').setAttribute('aria-expanded','true');const choices=[...el('accounts-status-menu').querySelectorAll('button:not(:disabled)')],index=choices.indexOf(document.activeElement);choices[event.key==='Home'?0:event.key==='End'?choices.length-1:Math.max(0,Math.min(choices.length-1,index+(event.key==='ArrowDown'?1:-1)))]?.focus();}});
   el('accounts-stop-running').onclick=()=>window.lootlazySteamAccounts.stopAll();
   el('account-signout').onclick=()=>{if(selected())call('disconnect',{id:selected().id,signOut:true});};
   for(const choice of document.querySelectorAll('[data-account-presence]'))choice.onclick=()=>{const account=selected();if(account)call('presence',{id:account.id,presence:choice.dataset.accountPresence});};

@@ -255,7 +255,7 @@ fn run(root: &Path, dll: &Path, hash: &str, input: &Input) -> Result<Value, Stri
             std::thread::sleep(Duration::from_millis(40));
         }
         let file = fs::File::open(output).map_err(|_| "achievements_failed")?;
-        if file.metadata().map_err(|_| "achievements_failed")?.len() > 8 * 1024 * 1024 {
+        if file.metadata().map_err(|_| "achievements_failed")?.len() > 64 * 1024 * 1024 {
             return Err("achievements_failed".into());
         }
         let response: Value = serde_json::from_reader(file).map_err(|_| "achievements_failed")?;
@@ -290,7 +290,11 @@ fn callback_result(id: i32, bytes: &[u8], app: u32, steam: u64) -> Option<Result
         Ok(())
     } else {
         Err(if id == 1101 {
-            "achievements_read_failed"
+            match u32::from_le_bytes(bytes[8..12].try_into().unwrap()) {
+                15 => "achievements_access_denied",
+                2 | 9 => "achievements_stats_unavailable",
+                _ => "achievements_read_failed",
+            }
         } else {
             "achievements_store_failed"
         }
@@ -501,6 +505,111 @@ mod native {
             }
             Err("achievements_timeout".into())
         }
+        unsafe fn icons(&self, items: &mut [Value]) {
+            use base64::Engine;
+            let Ok(utils) = self
+                .runtime
+                .interface(&["SteamAPI_SteamUtils_v010", "SteamAPI_SteamUtils_v009"])
+            else {
+                return;
+            };
+            let Ok(get) = self
+                .runtime
+                .function::<unsafe extern "C" fn(*mut c_void, *const c_char) -> i32>(
+                    "SteamAPI_ISteamUserStats_GetAchievementIcon",
+                )
+            else {
+                return;
+            };
+            let Ok(size) =
+                self.runtime
+                    .function::<unsafe extern "C" fn(*mut c_void, i32, *mut u32, *mut u32) -> bool>(
+                        "SteamAPI_ISteamUtils_GetImageSize",
+                    )
+            else {
+                return;
+            };
+            let Ok(rgba) = self
+                .runtime
+                .function::<unsafe extern "C" fn(*mut c_void, i32, *mut u8, i32) -> bool>(
+                    "SteamAPI_ISteamUtils_GetImageRGBA",
+                )
+            else {
+                return;
+            };
+            // Trigger all downloads first; one bounded wait covers the whole collection.
+            for item in items.iter() {
+                if let Ok(name) = CString::new(item["name"].as_str().unwrap_or("")) {
+                    get(self.stats, name.as_ptr());
+                }
+            }
+            let until = Instant::now() + Duration::from_millis(1200);
+            loop {
+                if self.account().is_err() {
+                    return;
+                }
+                let mut missing = false;
+                for item in items.iter_mut().filter(|item| item.get("icon").is_none()) {
+                    let Ok(name) = CString::new(item["name"].as_str().unwrap_or("")) else {
+                        continue;
+                    };
+                    let handle = get(self.stats, name.as_ptr());
+                    if handle <= 0 {
+                        missing = true;
+                        continue;
+                    }
+                    let (mut w, mut h) = (0u32, 0u32);
+                    if !size(utils, handle, &mut w, &mut h)
+                        || w == 0
+                        || h == 0
+                        || w > 512
+                        || h > 512
+                    {
+                        continue;
+                    }
+                    let mut pixels = vec![0u8; (w * h * 4) as usize];
+                    if !rgba(utils, handle, pixels.as_mut_ptr(), pixels.len() as i32) {
+                        continue;
+                    }
+                    let mut thumbnail = vec![0u8; 32 * 32 * 4];
+                    for y in 0..32usize {
+                        for x in 0..32usize {
+                            let source =
+                                ((y * h as usize / 32) * w as usize + x * w as usize / 32) * 4;
+                            thumbnail[(y * 32 + x) * 4..(y * 32 + x) * 4 + 4]
+                                .copy_from_slice(&pixels[source..source + 4]);
+                        }
+                    }
+                    let mut bytes = Vec::new();
+                    let mut encoder = png::Encoder::new(&mut bytes, 32, 32);
+                    encoder.set_color(png::ColorType::Rgba);
+                    encoder.set_depth(png::BitDepth::Eight);
+                    if let Ok(mut writer) = encoder.write_header() {
+                        if writer.write_image_data(&thumbnail).is_err() {
+                            continue;
+                        }
+                    }
+                    if !bytes.is_empty() && bytes.len() < 6144 {
+                        item["icon"] = json!(format!(
+                            "data:image/png;base64,{}",
+                            base64::engine::general_purpose::STANDARD.encode(bytes)
+                        ));
+                    }
+                }
+                if !missing || Instant::now() >= until {
+                    break;
+                }
+                // Pump image-ready callbacks without mixing them with stats acknowledgments.
+                let Ok(run) = self
+                    .runtime
+                    .function::<unsafe extern "C" fn(i32)>("SteamAPI_ManualDispatch_RunFrame")
+                else {
+                    break;
+                };
+                run(self.pipe);
+                std::thread::sleep(Duration::from_millis(40));
+            }
+        }
         unsafe fn snapshot(&self) -> Result<Value, String> {
             self.account()?;
             let count: unsafe extern "C" fn(*mut c_void) -> u32 = self
@@ -544,6 +653,8 @@ mod native {
                 let description = bounded(attr(self.stats, c.as_ptr(), c"desc".as_ptr()), 2048)?;
                 achievements.push(json!({"name":key,"title":if title.is_empty(){key.clone()}else{title},"description":description,"achieved":achieved,"unlockedAt":unlocked}));
             }
+            self.icons(&mut achievements);
+            self.account()?;
             Ok(
                 json!({"appId":self.app,"steamId":self.steam.to_string(),"achievements":achievements}),
             )
@@ -673,14 +784,23 @@ mod native {
             app: input.app_id,
             pipe: pipe(),
         };
-        // RequestUserStats remains available across stats interface revisions.
-        let request: unsafe extern "C" fn(*mut c_void, u64) -> u64 =
-            runtime.function("SteamAPI_ISteamUserStats_RequestUserStats")?;
-        let call = request(stats, steam);
-        if call == 0 {
-            return Err("achievements_read_failed".into());
+        // Older runtimes require the local-user request; it is absent in v013.
+        if let Ok(current) = runtime.function::<unsafe extern "C" fn(*mut c_void) -> bool>(
+            "SteamAPI_ISteamUserStats_RequestCurrentStats",
+        ) {
+            if !current(stats) {
+                return Err("steam_not_ready".into());
+            }
+            api.wait(1101, 0)?;
+        } else {
+            let request: unsafe extern "C" fn(*mut c_void, u64) -> u64 =
+                runtime.function("SteamAPI_ISteamUserStats_RequestUserStats")?;
+            let call = request(stats, steam);
+            if call == 0 {
+                return Err("achievements_stats_unavailable".into());
+            }
+            api.wait(1101, call)?;
         }
-        api.wait(1101, call)?;
         let snapshot = api.snapshot()?;
         if input.changes.is_empty() {
             return Ok(snapshot);
@@ -824,6 +944,10 @@ mod tests {
         };
         let snapshot = unsafe { native::execute_loaded(&args, &list, &dll) }.unwrap();
         assert_eq!(snapshot["steamId"], "7");
+        assert!(snapshot["achievements"][0]["icon"]
+            .as_str()
+            .unwrap()
+            .starts_with("data:image/png;base64,iVBOR"));
         assert_eq!(snapshot["achievements"][0]["achieved"], false);
         let mut apply = Input {
             catalog: None,
