@@ -760,8 +760,8 @@ Object.assign(I18N.en,{
   "download_discord": "Download Discord",
   "download_steam": "Download Steam",
   "download_open_failed": "Could not open the download page. Try again.",
-  "discord_not_installed": "Discord Desktop is not installed. Download it from Settings, then try again.",
-  "steam_not_installed": "Steam is not installed. Download it from Settings, then try again.",
+  "discord_not_installed": "Discord Desktop is not installed. Install it, then try again.",
+  "steam_not_installed": "Steam is not installed. Install it, then try again.",
   "discord_running": "Running",
   "discord_not_running": "Not running",
   "connection_discord_title": "Discord Client",
@@ -788,8 +788,8 @@ Object.assign(I18N.ar,{
   "download_discord": "تحميل Discord",
   "download_steam": "تحميل Steam",
   "download_open_failed": "تعذّر فتح صفحة التحميل. حاول مجددًا.",
-  "discord_not_installed": "تطبيق Discord المكتبي غير مثبت. حمّله من الإعدادات ثم حاول مجددًا.",
-  "steam_not_installed": "Steam غير مثبت. حمّله من الإعدادات ثم حاول مجددًا.",
+  "discord_not_installed": "تطبيق Discord المكتبي غير مثبت. ثبّته ثم حاول مجددًا.",
+  "steam_not_installed": "Steam غير مثبت. ثبّته ثم حاول مجددًا.",
   "discord_running": "قيد التشغيل",
   "discord_not_running": "غير مشغّل",
   "connection_discord_title": "تطبيق ديسكورد (Discord)",
@@ -851,3 +851,6 @@ Object.assign(I18N.ar,{platform_auth_unavailable:'خدمة الحسابات غي
 
 Object.assign(I18N.en,{accounts_bulk_failed:'Could not complete the action for: {accounts}'});
 Object.assign(I18N.ar,{accounts_bulk_failed:'تعذر إكمال العملية للحسابات: {accounts}'});
+
+Object.assign(I18N.en,{auto_open_platforms_title:'Open required apps automatically',auto_open_platforms_desc:'Open Steam or Discord only when a service needs it. When off, open the required app yourself.',discord_open_required:'Open Discord Desktop, then try again. Automatic app opening is off in Settings.',steam_open_required:'Open Steam, then try again. Automatic app opening is off in Settings.'});
+Object.assign(I18N.ar,{auto_open_platforms_title:'فتح التطبيقات المطلوبة تلقائيًا',auto_open_platforms_desc:'افتح Steam أو Discord فقط عند بدء خدمة تحتاجه. عند إيقاف الخيار، افتح التطبيق المطلوب يدويًا.',discord_open_required:'افتح Discord على الكمبيوتر ثم حاول مجددًا. الفتح التلقائي مقفول في الإعدادات.',steam_open_required:'افتح Steam ثم حاول مجددًا. الفتح التلقائي مقفول في الإعدادات.'});
