@@ -1,5 +1,13 @@
 # Release history
 
+## 3.8.0 Beta
+
+- Group Discord and Steam services in the header; move donations into Settings and add Plans.
+- Edit Steam account labels, keep Connected badges stable, and start or stop all eligible Steam Accounts together.
+- Search the Steam catalog while keeping play restricted to games owned by the selected account.
+- Remove Connections & Privacy and add optional on-demand desktop app launching, OFF by default.
+- Platform sign-in and paid plans are still being prepared; mandatory platform login is not enabled in this Beta.
+
 ## 3.7.9 Beta
 
 - Required sign-in fields now show an asterisk. Account labels are required for both password and QR sign-in.
