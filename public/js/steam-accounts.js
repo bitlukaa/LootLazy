@@ -80,7 +80,7 @@
   el('account-auth-title').textContent=t(account?'accounts_signin':'accounts_add');
   el('account-auth-label').value=account?.label||'';el('account-auth-label').readOnly=!!account;el('account-auth-label').closest('label').hidden=!!account;
   el('account-auth-login').value=account?.login||'';el('account-auth-login').readOnly=!!account?.login;
-  el('account-auth-password').required=!account;el('account-auth-password').placeholder='';
+  el('account-auth-password').required=true;el('account-auth-password').placeholder='';
   el('account-qr-status').textContent=t(account?.active?'accounts_auth_pending':'accounts_qr_loading');
   el('account-auth-dialog').showModal();el(account?'account-auth-password':'account-auth-label').focus();renderAuth();if(!account?.active)startQr(context);
  }
@@ -97,7 +97,7 @@
   const context=auth;if(!context)return;
   const account=model.accounts.find(item=>item.id===context.id);
   const input=account?.input;
-  el('account-auth-login').required=!account?.connected;el('account-auth-password').required=context.draft&&!account?.connected;text('account-auth-submit',t(account?.connected?'accounts_continue':'accounts_signin'));
+  el('account-auth-login').required=!account?.connected;el('account-auth-password').required=!account?.connected;text('account-auth-submit',t(account?.connected?'accounts_continue':'accounts_signin'));
   el('account-auth-form').hidden=!!input;el('account-guard-form').hidden=!input;
   for(const id of ['account-auth-submit','account-guard-submit','account-qr-retry'])el(id).disabled=model.busy||context.finishing||(id==='account-qr-retry'&&!!account?.connected);
   if(input){
@@ -208,7 +208,7 @@
   el('accounts-stop-all').onclick=()=>window.lootlazySteamAccounts.stopAll();
   el('accounts-stop-all').prepend(document.createRange().createContextualFragment(getIcon('square')));
   el('accounts-add').onclick=()=>openAuth();el('accounts-retry').onclick=()=>{model.loaded=false;open();};
-  for(const id of ['account-auth-close','account-auth-cancel'])el(id).onclick=()=>closeAuth();el('account-auth-close').innerHTML=getIcon('x');
+  el('account-auth-close').onclick=()=>closeAuth();el('account-auth-close').innerHTML=getIcon('x');
   el('account-auth-dialog').addEventListener('cancel',event=>{event.preventDefault();closeAuth();});
   el('account-qr-retry').onclick=()=>{if(auth)startQr(auth);};el('account-qr-retry').querySelector('.refresh-icon').innerHTML=getIcon('refresh');
   el('account-auth-form').onsubmit=async event=>{

@@ -381,7 +381,7 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .account-qr-code:empty::before{content:'…';font-size:28px;color:#77809a}.account-qr-code svg{display:block;flex-shrink:0;max-width:none;transform:none;direction:ltr;stroke:none;image-rendering:pixelated}.account-qr-code svg path{fill:#000;stroke:none}.account-qr-code svg rect{fill:#fff;stroke:none}
 .account-auth-columns input:focus{outline:none;box-shadow:0 0 0 2px var(--selected);border-color:var(--accent)}
 .account-qr-column p{font-size:10px;line-height:1.7;margin:10px 0 0}.account-qr-column .button{font-size:11px;min-height:28px;margin-top:9px;padding:4px 7px}.account-qr-column .button svg{width:12px;height:12px}
-#account-auth-dialog>.dialog-actions{margin-top:16px}#account-remove-dialog p{line-height:1.7;margin-top:14px;font-size:12px}
+#account-remove-dialog p{line-height:1.7;margin-top:14px;font-size:12px}
 @media(max-width:900px){.accounts-grid.has-session{grid-template-columns:1fr}}
 @media(max-width:650px){.account-auth-columns{grid-template-columns:1fr}.account-credentials{border-inline-end:0;padding-inline-end:0;border-bottom:1px solid var(--line);padding-bottom:22px}.account-label-field{grid-template-columns:1fr}.account-label-field input{width:100%}.account-row-actions{gap:5px}}
 
