@@ -1,19 +1,17 @@
 {
-  "version": "3.9.4",
+  "version": "3.10.0",
   "en": [
-    "Achievement library cards open games individually. Removed game checkboxes, Select all games, Clear selection and cross-game achievement operations.",
-    "Fixed the duplicate Executable control by keeping its existing dedicated dropdown. Removed Custom from the game executable choices and aligned the label beside the control.",
-    "Restored matching SVG dropdown chevrons and added clear hover/focus feedback to account Status options.",
-    "Game Time and Steam Idle default new sessions to Continuous. Run duration and optional sync controls are inside collapsed Advanced settings.",
-    "Shuffle games sits beside 10 / 50 / 100 / 200. Game Variety Start and Multi-Account Idle Start span their action area. Game Variety stops after the final game as requested.",
-    "Fresh account logons wait briefly before starting play activity, then re-check the connection and playing-elsewhere state. This addresses a startup race; it does not prove the cause of an external Steam desktop sign-out."
+    "Independent achievement management: open and manage achievements one game at a time. Removed game selection checkboxes and cross-game operations.",
+    "Steam services & multi-account idle: full multi-account idling support, background logins, continuous sessions, and streamlined session setup.",
+    "Session controls: unified Executable selector, themed chevrons, continuous defaults for Game Time and Steam Idle, and full-width Start actions.",
+    "Startup verification: fresh account logons verify connection and playing-elsewhere state before starting activity.",
+    "All saved accounts, encrypted credentials, settings, and update channel choices are preserved."
   ],
   "ar": [
-    "كل لعبة إنجازات مستقلة؛ إزالة تحديد الألعاب من المكتبة وأزرار تحديد الكل وإلغاء التحديد والتعديل عبر ألعاب متعددة.",
-    "إصلاح تكرار Executable والإبقاء على قائمة واحدة، وإزالة Custom من اختيارات ملف اللعبة ومحاذاة العنوان بجانب القائمة.",
-    "استعادة أسهم SVG المتناسقة مع التطبيق وإظهار تفاعل واضح عند المرور والتركيز على حالات الحساب.",
-    "بدء Game Time وSteam Idle افتراضيًا بوضع Continuous، ووضع المدة والمزامنة الاختيارية داخل إعدادات متقدمة مقفولة.",
-    "نقل خلط الألعاب بجانب أعداد الألعاب، وتوسيع زر بدء Game Variety وMulti-Account Idle. Game Variety يقف بعد آخر لعبة حسب اختيارك.",
-    "إعادة فحص حالة اتصال الحساب واللعب في مكان آخر بعد مهلة قصيرة عند تسجيل الدخول الحديث، لمعالجة سباق بدء الجلسة. هذا لا يثبت مصدر تسجيل خروج Steam الخارجي."
+    "إدارة الإنجازات بشكل مستقل: فتح وإدارة إنجازات كل لعبة على حدة دون عمليات جماعية عبر ألعاب متعددة.",
+    "خدمات Steam وتشغيل الحسابات المتعددة: دعم كامل لتشغيل حسابات متعددة في وضع الخمول، وتسجيل دخول في الخلفية، وجلسات مستمرة مع واجهة مبسطة.",
+    "تحسين عناصر التحكم بالجلسات: قائمة موحدة لاختيار ملف اللعبة، وأسهم متناسقة، وبدء Game Time وSteam Idle افتراضيًا بوضع Continuous، وتوسيع أزرار البدء.",
+    "التحقق عند بدء التشغيل: إعادة فحص الاتصال وحالة اللعب في مكان آخر عند تسجيل الدخول الجديد قبل بدء النشاط.",
+    "الحفاظ على جميع الحسابات وبيانات الاعتماد المشفرة والإعدادات وتفضيلات قنوات التحديث دون أي مساس."
   ]
 }

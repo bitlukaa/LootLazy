@@ -1,5 +1,14 @@
 # Release history
 
+## 3.10.0
+
+- Promoted Beta 3.9.4 features to Stable: independent game achievement management, Steam tools with multi-account idling, and refined session controls.
+- Achievement library cards open games individually without cross-game operations.
+- New Game Time and Steam Idle sessions default to Continuous, with duration and optional sync under Advanced settings.
+- Streamlined session setup with unified Executable dropdown, matching SVG chevrons, and full-width Start actions.
+- Fresh account logons verify connection and playing-elsewhere state before starting activity.
+- Preserves all saved accounts, encrypted credentials, settings, and update channel choices.
+
 ## 3.9.4 Beta
 
 - Achievement library cards open games individually. Removed game checkboxes, Select all games, Clear selection and cross-game achievement operations.
