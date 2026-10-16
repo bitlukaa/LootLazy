@@ -2,6 +2,8 @@
 
 ## 3.7.9 Beta
 
+- Account labels are now required for both password and QR sign-in.
+
 - Simplified QR renewal to one Refresh QR code action on the blurred QR area. Removed the duplicate New code button and kept retry available after connection errors.
 
 

@@ -191,7 +191,7 @@
   <div class="account-credentials">
    <form id="account-auth-form">
     <h3 data-i18n="accounts_password_heading">Use your Steam account</h3>
- <label class="account-label-field"><span data-i18n="accounts_label">Account label</span><input id="account-auth-label" type="text" maxlength="48" data-i18n-placeholder="accounts_label_hint"></label>
+ <label class="account-label-field"><span><span data-i18n="accounts_label">Account label</span> <span aria-hidden="true">*</span></span><input id="account-auth-label" type="text" maxlength="48" pattern=".*\S.*" data-i18n-placeholder="accounts_label_hint" required></label>
 
     <label><span data-i18n="accounts_login">Steam login name</span><input id="account-auth-login" type="text" maxlength="64" pattern="[A-Za-z0-9_]+" autocomplete="username" required></label>
     <label><span data-i18n="accounts_password">Password</span><input id="account-auth-password" type="password" maxlength="256" autocomplete="current-password"></label>

@@ -339,8 +339,7 @@ internal static class LootLazyBridge {
         if (command == "commit") {
             if (!selected.IsConnectedAndLoggedOn || !ValidLogin(entry.Login)) Fail("accounts_not_ready");
             string label = Drafts.Contains(entry.Id) ? Text(body, "label").Trim() : entry.Label;
-            if (label.Length == 0) label = entry.Login;
-            if (label.Length > 48 || label.Any(char.IsControl)) Fail("accounts_invalid");
+            if (label.Length is < 1 or > 48 || label.Any(char.IsControl)) Fail("accounts_invalid");
             // Persist the protected login database before reporting that sign-in has been saved.
             await selected.FlushLootLazyLogin().ConfigureAwait(false);
             bool draft = Drafts.Remove(entry.Id);
