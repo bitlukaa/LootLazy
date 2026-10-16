@@ -234,11 +234,12 @@ fn persist(root: &Path, session: &Value) -> Result<(), String> {
     let encrypted = protect(&plain, true);
     plain.fill(0);
     let encrypted = encrypted?;
+    let mut output = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temp)
+        .map_err(|_| "platform_auth_storage")?;
     let result = (|| -> std::io::Result<()> {
-        let mut output = fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temp)?;
         output.write_all(&encrypted)?;
         output.sync_all()?;
         drop(output);
