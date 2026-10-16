@@ -1,5 +1,13 @@
 # Release history
 
+## 3.7.5 — Remember Steam sign-ins
+
+- Restore remembered Steam logins after reopening or updating LootLazy, without starting games automatically. Sign out keeps the account saved and prevents automatic login.
+- Finish saving the protected login session before confirming account sign-in. Passwords are not stored.
+- Refresh an expired QR code from a soft overlay instead of an alarming error. Wrong-account and connection problems remain visible.
+- Remove the saved-login placeholder from the password field.
+- Match Stable and Beta confirmation messages to their buttons and the following update step.
+
 ## 3.7.4 — Clearer Steam sessions
 
 - Choose Online, Away, Invisible or Offline for each Steam account. Your choice is remembered.

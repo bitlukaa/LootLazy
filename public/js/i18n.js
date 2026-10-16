@@ -268,8 +268,8 @@ const I18N = {
     "channel_leave_title": "العودة إلى Stable",
     "channel_join_action": "الانضمام إلى Beta",
     "channel_leave_action": "العودة إلى Stable",
-    "channel_join_confirm": "الانضمام للتجريبية؟ قد تحتوي على مشاكل. لن يبدأ التثبيت حتى تضغط تثبيت التحديث.",
-    "channel_leave_confirm": "العودة للمستقرة؟ قد يثبت إصدار أقدم وتتوقف المميزات التجريبية. إعداداتك محفوظة. اضغط تثبيت التحديث لإكمال العودة.",
+    "channel_join_confirm": "الانضمام للتجريبية؟ قد تحتوي على مشاكل. اضغط الانضمام إلى Beta، ثم ثبّت التحديث المتاح.",
+    "channel_leave_confirm": "العودة للمستقرة؟ قد يثبت إصدار أقدم وتتوقف المميزات التجريبية. إعداداتك محفوظة. اضغط العودة إلى Stable، ثم ثبّت التحديث المتاح.",
     "updates_current": "تستخدم أحدث إصدار.",
     "updates_unavailable": "تعذر فحص التحديثات حاليًا. حاول لاحقًا.",
     "updates_ready": "تحقق من وجود إصدار جديد.",
@@ -586,8 +586,8 @@ const I18N = {
     "channel_leave_title": "Return to Stable",
     "channel_join_action": "Join Beta",
     "channel_leave_action": "Return to Stable",
-    "channel_join_confirm": "Join Beta? Early features may have bugs. Nothing installs until you click Install update.",
-    "channel_leave_confirm": "Return to Stable? This may install an older version and disable beta features. Your settings are kept. Click Install update to finish switching.",
+    "channel_join_confirm": "Join Beta? Early features may have bugs. Click Join Beta, then install the available update.",
+    "channel_leave_confirm": "Return to Stable? This may install an older version and disable beta features. Your settings are kept. Click Return to Stable, then install the available update.",
     "updates_current": "You're up to date.",
     "updates_unavailable": "Could not check for updates. Try again later.",
     "updates_ready": "Check for a new release.",
@@ -839,3 +839,6 @@ Object.assign(I18N.ar,{accounts_auth_busy:"جارٍ إغلاق محاولة ال
 
 Object.assign(I18N.en,{accounts_state_ready:"Signed in",accounts_appear_as:"Appear as",accounts_presence_online:"Online",accounts_presence_away:"Away",accounts_presence_invisible:"Invisible",accounts_presence_offline:"Offline",accounts_elapsed:"Elapsed",accounts_remaining:"Remaining",accounts_game_selected:"Selected"});
 Object.assign(I18N.ar,{accounts_state_ready:"مسجل الدخول",accounts_appear_as:"الظهور كـ",accounts_presence_online:"متصل",accounts_presence_away:"بعيد",accounts_presence_invisible:"متخفي",accounts_presence_offline:"غير متصل",accounts_elapsed:"الوقت المنقضي",accounts_remaining:"الوقت المتبقي",accounts_game_selected:"مختارة"});
+
+Object.assign(I18N.en,{accounts_qr_tap_refresh:"Click to refresh QR code",accounts_qr_expired_short:"Refresh the code to continue.",accounts_signin_required:"Your saved Steam login needs to be renewed. Sign in to continue."});
+Object.assign(I18N.ar,{accounts_qr_tap_refresh:"اضغط لتجديد رمز QR",accounts_qr_expired_short:"جدّد الرمز للمتابعة.",accounts_signin_required:"جلسة Steam المحفوظة تحتاج تجديدًا. سجّل الدخول للمتابعة."});
