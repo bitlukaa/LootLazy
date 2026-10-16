@@ -144,7 +144,7 @@
   if(!ready){model.libraryFor=null;model.libraryLoading=false;if(account?.error&&!auth){showError(account.error);}return;}
   text('account-title',account.label);text('account-login',account.login);
   el('account-signout').disabled=model.busy;el('account-presence').value=account.presence||'online';for(const choice of document.querySelectorAll('[data-account-presence]')){choice.disabled=model.busy;choice.setAttribute('aria-pressed',String(choice.dataset.accountPresence===(account.presence||'online')));}
-  const running=account.state==='running',editable=!running;
+  const running=account.state==='running',editable=true;
   el('account-start').hidden=running;el('account-stop').hidden=!running;el('account-game-setup').hidden=false;
   el('account-start').disabled=model.busy||!account.games?.length||account.state==='blocked';el('account-stop').disabled=model.busy;
   el('account-refresh-library').disabled=model.busy||!editable;el('account-duration').disabled=model.busy||running;
@@ -152,31 +152,31 @@
   for(const preset of document.querySelectorAll('[data-account-duration]')){const value=preset.dataset.accountDuration;const active=value==='custom'?![0,15,30,60].includes(duration):Number(value)===duration;preset.classList.toggle('active',active);preset.setAttribute('aria-pressed',String(active));preset.disabled=model.busy||running;}
   for(const control of el('account-custom-time').querySelectorAll('input,button'))control.disabled=model.busy||running;
   if(running){el('account-custom-time').hidden=true;el('account-duration-error').hidden=true;}
-  el('account-search').disabled=model.busy||!editable;el('account-search').closest('.search-field').hidden=running;el('account-library-hint').textContent=t('accounts_library_ready_hint');el('account-library-hint').hidden=running;el('account-quick-games').hidden=!editable||!el('account-quick-picks').querySelector('button');el('account-games-hint').hidden=editable;
-  const gameSignature=JSON.stringify([account.id,account.games,model.names,editable,model.busy,currentLang]);
+  el('account-search').disabled=model.busy||!editable;el('account-search').closest('.search-field').hidden=false;el('account-library-hint').textContent=t('accounts_library_ready_hint');el('account-library-hint').hidden=false;el('account-quick-games').hidden=!editable||!el('account-quick-picks').querySelector('button');el('account-games-hint').hidden=editable;
+  const gameSignature=JSON.stringify([account.id,account.games,model.names,running,editable,model.busy,currentLang]);
   if(el('account-games').dataset.signature!==gameSignature){
    el('account-games').dataset.signature=gameSignature;const games=document.createDocumentFragment();
-   for(const id of account.games||[]){const row=document.createElement('div');row.className='account-game-row';row.dataset.game=id;const name=document.createElement('strong');name.textContent=model.names[id]||'Steam App '+id;name.title=name.textContent;const remove=button(t('accounts_remove_game'),'x',()=>call('games',{id:account.id,games:account.games.filter(value=>value!==id)}),'icon-button');remove.setAttribute('aria-label',t('accounts_remove_game')+': '+name.textContent);remove.disabled=model.busy||!editable;remove.hidden=running;const info=document.createElement('div');info.className='account-game-info';info.append(gameArtwork(id),name);row.append(info);if(running){const badge=document.createElement('span');badge.className='account-state running';badge.textContent=t('accounts_state_running');info.append(badge);const time=document.createElement('div');time.className='account-game-time';const label=document.createElement('span');label.className='muted';const digits=document.createElement('strong');digits.className='clock-digits';time.append(label,digits);row.append(time);}row.append(remove);games.append(row);}
+   for(const id of account.games||[]){const row=document.createElement('div');row.className='account-game-row';row.dataset.game=id;const name=document.createElement('strong');name.textContent=model.names[id]||'Steam App '+id;name.title=name.textContent;const remove=button(t('accounts_remove_game'),'x',()=>call('games',{id:account.id,games:account.games.filter(value=>value!==id)}),'icon-button');remove.setAttribute('aria-label',t('accounts_remove_game')+': '+name.textContent);remove.disabled=model.busy||!editable;remove.hidden=false;const info=document.createElement('div');info.className='account-game-info';info.append(gameArtwork(id),name);row.append(info);if(running){const badge=document.createElement('span');badge.className='account-state running';badge.textContent=t('accounts_state_running');info.append(badge);const time=document.createElement('div');time.className='account-game-time';const label=document.createElement('span');label.className='muted';const digits=document.createElement('strong');digits.className='clock-digits';time.append(label,digits);row.append(time);}row.append(remove);games.append(row);}
    el('account-games').replaceChildren(games);el('account-no-games').hidden=!!account.games?.length;el('account-games').hidden=!account.games?.length;
   }
-  for(const gameTime of el('account-games').querySelectorAll('.account-game-time')){const remaining=account.minutes>0;gameTime.querySelector('.muted').textContent=t(remaining?'accounts_remaining':'accounts_elapsed');textNode(gameTime.querySelector('.clock-digits'),clock(remaining?Math.max(0,account.minutes*60-(account.elapsedSeconds||0)):account.elapsedSeconds||0));}
+  for(const gameTime of el('account-games').querySelectorAll('.account-game-time')){const remaining=account.minutes>0;gameTime.querySelector('.muted').textContent=t(remaining?'accounts_remaining':'accounts_elapsed');textNode(gameTime.querySelector('.clock-digits'),clock(remaining?Math.max(0,account.minutes*60-(account.elapsedSeconds||0)):account.gameElapsedSeconds?.[gameTime.closest('[data-game]').dataset.game]??account.elapsedSeconds??0));}
   for(const control of el('account-game-setup').querySelectorAll('#account-search-results button,#account-quick-picks button'))control.disabled=model.busy||!editable;
   if(editable&&model.libraryFor!==account.id&&!model.busy){model.libraryFor=account.id;queueMicrotask(()=>search());}
  }
  async function search(refresh=false){
   const account=selected(),query=el('account-search').value.trim(),sequence=++model.searchSequence;
-  if(!account?.connected||account.state==='running')return;
+  if(!account?.connected)return;
   el('account-search-results').replaceChildren();el('account-quick-picks').replaceChildren();el('account-quick-games').hidden=true;
   try{
    const result=await request('/api/steam-accounts/library',{id:account.id,query,refresh});
    const games=result.games;model.libraryLoading=!!result.loading;
    if(result.error)throw Error(result.error);
-   if(sequence!==model.searchSequence||selected()?.id!==account.id)return;
+   if(sequence!==model.searchSequence||selected()?.id!==account.id||!selected()?.connected)return;
    const fragment=document.createDocumentFragment();
-   const available=(games||[]).filter(game=>{const id=Number(game.steamId||game.id);return Number.isInteger(id)&&id>0&&!account.games?.includes(id);});
+   const available=(games||[]).filter(game=>{const id=Number(game.steamId||game.id);return Number.isInteger(id)&&id>0&&!selected()?.games?.includes(id);});
    const choices=query?available:[...available].sort((a,b)=>{const rank=id=>[730,570,440].includes(Number(id))?[730,570,440].indexOf(Number(id)):3;return rank(a.steamId||a.id)-rank(b.steamId||b.id);}).slice(0,3);
    for(const game of choices){const id=Number(game.steamId||game.id);
-    const row=button(game.name,'plus',async()=>{if(model.busy)return;model.names[id]=game.name;localStorage.setItem('lootlazy_account_games',JSON.stringify(model.names));if(await call('games',{id:account.id,games:[...(selected()?.games||[]),id]})){el('account-search').value='';search();}},query?'account-search-result':'button button-secondary account-quick-pick');fragment.append(row);
+    const row=button(game.name,'plus',async()=>{if(model.busy||selected()?.id!==account.id)return;model.names[id]=game.name;localStorage.setItem('lootlazy_account_games',JSON.stringify(model.names));if(await call('games',{id:account.id,games:[...(selected()?.games||[]),id]})){el('account-search').value='';search();}},query?'account-search-result':'button button-secondary account-quick-pick');fragment.append(row);
    }
    if(!fragment.childNodes.length&&(query||model.libraryLoading||!(games||[]).length)){const empty=document.createElement('p');empty.className='muted';empty.textContent=t(model.libraryLoading?'accounts_library_loading':query?'accounts_no_results':'accounts_library_empty');fragment.append(empty);}
    if(!query&&choices.length){el('account-quick-picks').replaceChildren(fragment);el('account-quick-games').hidden=false;}else el('account-search-results').replaceChildren(fragment);render();
@@ -193,12 +193,12 @@
     const heading=document.createElement('div');heading.className='account-active-heading';const title=document.createElement('strong');title.textContent=account.label;
     const badge=document.createElement('span');badge.className='account-state running';badge.textContent=t('accounts_state_running');
     const stop=button(t('quest_stop'),'square',()=>call('stop',{id:account.id}),'button button-danger');stop.disabled=model.busy;heading.append(title,stop);card.append(heading);
-    for(const id of account.games||[]){const row=document.createElement('div');row.className='account-game-row';const name=document.createElement('strong');name.textContent=model.names[id]||'Steam App '+id;name.title=name.textContent;const info=document.createElement('div');info.className='account-game-info';const badge=document.createElement('span');badge.className='account-state running';badge.textContent=t('accounts_state_running');info.append(gameArtwork(id),name,badge);const time=document.createElement('div');time.className='account-game-time';const label=document.createElement('span');label.className='muted';label.textContent=t(account.minutes>0?'accounts_remaining':'accounts_elapsed');const digits=document.createElement('strong');digits.className='clock-digits';time.append(label,digits);row.append(info,time);card.append(row);}
+    for(const id of account.games||[]){const row=document.createElement('div');row.className='account-game-row';row.dataset.game=id;const name=document.createElement('strong');name.textContent=model.names[id]||'Steam App '+id;name.title=name.textContent;const info=document.createElement('div');info.className='account-game-info';const badge=document.createElement('span');badge.className='account-state running';badge.textContent=t('accounts_state_running');info.append(gameArtwork(id),name,badge);const time=document.createElement('div');time.className='account-game-time';const label=document.createElement('span');label.className='muted';label.textContent=t(account.minutes>0?'accounts_remaining':'accounts_elapsed');const digits=document.createElement('strong');digits.className='clock-digits';time.append(label,digits);row.append(info,time);card.append(row);}
     fragment.append(card);
    }
    list.replaceChildren(fragment);
   }
-  for(const account of running){const row=[...list.children].find(item=>item.dataset.account===account.id);if(row)for(const digits of row.querySelectorAll('.clock-digits'))textNode(digits,clock(account.minutes>0?Math.max(0,account.minutes*60-(account.elapsedSeconds||0)):account.elapsedSeconds||0));}
+  for(const account of running){const row=[...list.children].find(item=>item.dataset.account===account.id);if(row)for(const digits of row.querySelectorAll('.clock-digits'))textNode(digits,clock(account.minutes>0?Math.max(0,account.minutes*60-(account.elapsedSeconds||0)):account.gameElapsedSeconds?.[digits.closest('[data-game]').dataset.game]??account.elapsedSeconds??0));}
  }
 
  document.addEventListener('DOMContentLoaded',()=>{

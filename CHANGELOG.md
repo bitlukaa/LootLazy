@@ -1,5 +1,12 @@
 # Release history
 
+## 3.7.8 Beta
+
+- Add or remove Steam Account games while running, without restarting the other games or the session deadline. New games get their own elapsed timer.
+- Removing the last game ends only the game session and keeps the account signed in.
+- Hardened game selection validation, failed-edit recovery and session-expiry handling.
+
+
 ## 3.7.7 Beta
 
 - Added small game thumbnails to Steam Accounts and its active sessions, keeping game names, Running badges and timers on one line.

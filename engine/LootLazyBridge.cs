@@ -66,6 +66,7 @@ internal static class LootLazyBridge {
     private sealed record Challenge(string Id, ASF.EUserInputType Type, TaskCompletionSource<string?> Completion);
     private sealed class Session {
         internal uint[] Games = [];
+        internal Dictionary<uint, DateTimeOffset> GameStarts = [];
         internal DateTimeOffset Started;
         internal int Minutes;
         internal bool Blocked;
@@ -150,6 +151,19 @@ internal static class LootLazyBridge {
         } else if (Sessions.TryRemove(id, out var session)) session.Games = [];
         await send().ConfigureAwait(false);
     }
+    private static async Task UpdateSessionGames(string id, uint[] games, Func<Task> send) {
+        if (!Sessions.TryGetValue(id, out var previous) || previous.Games.Length == 0) return;
+        var now = DateTimeOffset.UtcNow;
+        var updated = new Session {
+            Games = games.ToArray(), Started = previous.Started, Minutes = previous.Minutes, Blocked = previous.Blocked,
+            GameStarts = games.ToDictionary(game => game, game => previous.GameStarts.TryGetValue(game, out var started) ? started : previous.Games.Contains(game) ? previous.Started : now)
+        };
+        // An expiry or Stop that already ended this session must not be undone by an edit.
+        if (!Sessions.TryUpdate(id, updated, previous)) return;
+        try { await send().ConfigureAwait(false); }
+        catch { Sessions.TryUpdate(id, previous, updated); throw; }
+        if (games.Length == 0) ((ICollection<KeyValuePair<string, Session>>)Sessions).Remove(new(id, updated));
+    }
     private static readonly Dictionary<string, Account> Accounts = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, Challenge> Challenges = new(StringComparer.Ordinal);
     private sealed record Library(ulong SteamId, Dictionary<uint, string> Games);
@@ -211,7 +225,7 @@ internal static class LootLazyBridge {
             bool connected = bot?.IsConnectedAndLoggedOn == true;
             bool running = connected && bot!.IsPlayingPossible && session?.Games.Length > 0;
             string state = input != null ? "input" : running ? "running" : connected && !bot!.IsPlayingPossible ? "blocked" : connected ? "ready" : bot?.KeepRunning == true ? "connecting" : "offline";
-            return new { id = account.Id, label = account.Label, login = account.Login, draft = Drafts.Contains(account.Id), games = account.Games, presence = account.Presence, rememberLogin = account.RememberLogin, canResume = CanResume(account, bot), state, connected, active = bot?.KeepRunning == true, steamId = bot?.SSteamID ?? "0", input = input == null ? null : new { id = input.Id, type = input.Type.ToString() }, elapsedSeconds = running ? Math.Max(0, (long)(DateTimeOffset.UtcNow - session!.Started).TotalSeconds) : 0, minutes = session?.Minutes ?? 0, error = AuthErrors.TryGetValue(account.Id, out var authError) ? authError : bot == null && !OfflineTest ? "accounts_restore_failed" : bot != null && !bot.KeepRunning && bot.LastLogOnResult is not (SteamKit2.EResult.Invalid or SteamKit2.EResult.OK) ? "accounts_login_failed" : null };
+            return new { id = account.Id, label = account.Label, login = account.Login, draft = Drafts.Contains(account.Id), games = account.Games, presence = account.Presence, rememberLogin = account.RememberLogin, canResume = CanResume(account, bot), state, connected, active = bot?.KeepRunning == true, steamId = bot?.SSteamID ?? "0", input = input == null ? null : new { id = input.Id, type = input.Type.ToString() }, elapsedSeconds = running ? Math.Max(0, (long)(DateTimeOffset.UtcNow - session!.Started).TotalSeconds) : 0, minutes = session?.Minutes ?? 0, gameElapsedSeconds = running ? session!.Games.ToDictionary(game => game, game => Math.Max(0, (long)(DateTimeOffset.UtcNow - (session.GameStarts.TryGetValue(game, out var started) ? started : session.Started)).TotalSeconds)) : new Dictionary<uint, long>(), error = AuthErrors.TryGetValue(account.Id, out var authError) ? authError : bot == null && !OfflineTest ? "accounts_restore_failed" : bot != null && !bot.KeepRunning && bot.LastLogOnResult is not (SteamKit2.EResult.Invalid or SteamKit2.EResult.OK) ? "accounts_login_failed" : null };
         }).ToArray();
         return new { protocol = 1, accounts = result, active = IsBusy() };
     }
@@ -287,13 +301,20 @@ internal static class LootLazyBridge {
             return Snapshot();
         }
         if (command == "games") {
-            if ((Sessions.TryGetValue(entry.Id, out var playing) && playing.Games.Length > 0) || (selected?.KeepRunning == true && !selected.IsConnectedAndLoggedOn) || Challenges.ContainsKey(entry.Id)) Fail("accounts_stop_first");
+            if ((selected?.KeepRunning == true && !selected.IsConnectedAndLoggedOn) || Challenges.ContainsKey(entry.Id)) Fail("accounts_not_ready");
             if (!body.TryGetProperty("games", out var values) || values.ValueKind != JsonValueKind.Array || values.GetArrayLength() > 32) Fail("accounts_invalid");
-            uint[] games = values.EnumerateArray().Select(value => value.GetUInt32()).Distinct().ToArray();
-            if (games.Any(id => id == 0)) Fail("accounts_invalid");
+            var parsed = new List<uint>();
+            foreach (var value in values.EnumerateArray()) {
+                if (value.ValueKind != JsonValueKind.Number || !value.TryGetUInt32(out uint game) || game == 0) Fail("accounts_invalid");
+                parsed.Add(value.GetUInt32());
+            }
+            uint[] games = parsed.Distinct().ToArray();
             if (!OfflineTest && (selected?.IsConnectedAndLoggedOn != true || !Libraries.TryGetValue(entry.Id, out var owned) || owned.SteamId != selected.SteamID || games.Any(id => !owned.Games.ContainsKey(id)))) Fail("accounts_not_owned");
+            if (Sessions.TryGetValue(entry.Id, out var playing) && playing.Games.Length > 0 && selected?.IsPlayingPossible != true) Fail("accounts_playing_elsewhere");
             Accounts[entry.Id] = entry with { Games = games };
-            Save();
+            try { Save(); } catch { Accounts[entry.Id] = entry; throw; }
+            try { await UpdateSessionGames(entry.Id, games, () => selected == null ? Task.CompletedTask : ResetGames(selected)).ConfigureAwait(false); }
+            catch { Accounts[entry.Id] = entry; Save(); throw; }
             return Snapshot();
         }
         if (command == "presence") {
@@ -375,7 +396,9 @@ internal static class LootLazyBridge {
             }
             int minutes = body.TryGetProperty("minutes", out var duration) ? duration.GetInt32() : 0;
             if (minutes is < 0 or > 1440) Fail("accounts_invalid");
-            Sessions[entry.Id] = new Session { Games = entry.Games.ToArray(), Started = DateTimeOffset.UtcNow, Minutes = minutes };
+            if (Sessions.TryGetValue(entry.Id, out var activeSession) && activeSession.Games.Length > 0) return Snapshot();
+            var started = DateTimeOffset.UtcNow;
+            Sessions[entry.Id] = new Session { Games = entry.Games.ToArray(), Started = started, Minutes = minutes, GameStarts = entry.Games.ToDictionary(game => game, _ => started) };
             try { await ResetGames(selected).ConfigureAwait(false); }
             catch { Sessions.TryRemove(entry.Id, out _); throw; }
         } else if (command == "stop") {
@@ -452,6 +475,23 @@ internal static class LootLazyBridge {
             if (!Sessions.TryGetValue("fixture", out var remaining) || remaining != currentSession || resetCount != 0) return 11;
             await EndSession("fixture", () => { resetCount++; return Task.CompletedTask; }).ConfigureAwait(false);
             if (Sessions.ContainsKey("fixture") || resetCount != 1) return 9;
+            var sessionStarted = DateTimeOffset.UtcNow.AddMinutes(-5);
+            var liveSession = new Session { Games = [730], Started = sessionStarted, Minutes = 15, GameStarts = new() { [730] = sessionStarted } };
+            Sessions["live-fixture"] = liveSession;
+            uint[] sentGames = [];
+            Task CaptureGames() { sentGames = Sessions.TryGetValue("live-fixture", out var active) ? active.Games.ToArray() : []; return Task.CompletedTask; }
+            await UpdateSessionGames("live-fixture", [730, 570], CaptureGames).ConfigureAwait(false);
+            var expanded = Sessions["live-fixture"];
+            if (!sentGames.SequenceEqual(new uint[] { 730, 570 }) || expanded.Started != sessionStarted || expanded.Minutes != 15 || expanded.GameStarts[730] != sessionStarted || expanded.GameStarts[570] < DateTimeOffset.UtcNow.AddSeconds(-5)) return 17;
+            await EndSession("live-fixture", () => throw new InvalidOperationException("Stale expiry sent a packet"), liveSession).ConfigureAwait(false);
+            if (Sessions["live-fixture"] != expanded) return 18;
+            try { await UpdateSessionGames("live-fixture", [570], () => throw new IOException("Fixture send failed")).ConfigureAwait(false); return 19; } catch (IOException) { }
+            if (Sessions["live-fixture"] != expanded) return 20;
+            await UpdateSessionGames("live-fixture", [570], CaptureGames).ConfigureAwait(false);
+            if (!sentGames.SequenceEqual(new uint[] { 570 }) || Sessions["live-fixture"].GameStarts[570] != expanded.GameStarts[570]) return 21;
+            await UpdateSessionGames("live-fixture", [], CaptureGames).ConfigureAwait(false);
+            if (sentGames.Length != 0 || Sessions.ContainsKey("live-fixture")) return 22;
+            await UpdateSessionGames("live-fixture", [730], () => throw new InvalidOperationException("Stopped session restarted")).ConfigureAwait(false);
             const string secret = "{\"BackingRefreshToken\":\"fixture-refresh-token\",\"BackingSteamGuardData\":\"fixture-guard-secret\"}";
             string encrypted = LootLazyVault.Encode("ll_test.db", secret);
             if (encrypted.Contains("fixture", StringComparison.Ordinal) || LootLazyVault.Decode("ll_test.db", encrypted) != secret) return 2;

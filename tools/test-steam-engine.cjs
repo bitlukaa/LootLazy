@@ -25,8 +25,9 @@ async function launch(parentId=process.pid){
  assert.equal((await run.call('presence',{id,presence:'busy'})).error,'accounts_invalid');
  assert.equal((await run.call('add',{label:'Duplicate',login:'TEST_LOGIN'})).error,'accounts_duplicate');
  result=await run.call('games',{id,games:[570,730,570]});assert.deepEqual(result.result.accounts[0].games,[570,730]);
- assert.equal((await run.call('games',{id,games:[0]})).error,'accounts_invalid');
+ for(const games of [[0],[-1],[1.5],['730'],[null],Array.from({length:33},(_,i)=>i+1)])assert.equal((await run.call('games',{id,games})).error,'accounts_invalid');assert.deepEqual((await run.call('status')).result.accounts[0].games,[570,730],'Rejected input leaves the saved games unchanged');
  assert.equal((await run.call('games',{id:'../../outside',games:[570]})).error,'accounts_missing');
+ fs.mkdirSync(path.join(fixture,'accounts.json.new'));assert.equal((await run.call('games',{id,games:[440]})).ok,false);assert.deepEqual((await run.call('status')).result.accounts[0].games,[570,730],'A failed disk save does not change in-memory selection');fs.rmdirSync(path.join(fixture,'accounts.json.new'));
  assert.equal((await run.call('command',{id,value:'!anything'})).error,'accounts_invalid');
  assert.equal((await run.call('signin',{id,password:'fixture-password-never-store'})).error,'accounts_not_ready');
  assert.ok(!fs.readFileSync(path.join(fixture,'accounts.json'),'utf8').includes('fixture-password'));
