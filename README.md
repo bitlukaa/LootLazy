@@ -24,6 +24,8 @@ Choose your games, set your time, and let LootLazy manage the sessions. Whether 
 - **🔀 Game Variety** — Mix things up with a lineup of games that runs in order.
 - **🏆 Quests** — Browse desktop play quests and manage their sessions in one place.
 - **💤 Steam Idle** — Keep owned games active for playtime and eligible trading-card drops.
+- **👥 Multi-Account Idle (Beta)** — Independent Steam connections, compact bulk controls and continuous game sessions.
+- **🏆 Achievements (Beta)** — Review individual achievement changes before saving through Steam Desktop. Game support varies.
 - **🔗 Stay in sync** — Run matching Discord and Steam sessions side by side.
 - **🎨 Make it yours** — Light or dark, English or Arabic, with tray controls and notifications that keep you in the loop.
 

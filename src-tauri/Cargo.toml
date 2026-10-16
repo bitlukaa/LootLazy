@@ -1,6 +1,6 @@
 [package]
 name = "lootlazy"
-version = "3.8.1"
+version = "3.9.0"
 edition = "2021"
 description = "LootLazy portable desktop application"
 license = "MIT"

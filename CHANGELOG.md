@@ -1,5 +1,16 @@
 # Release history
 
+## 3.9.0 Beta
+
+- Steam Tools now contains Steam Idle, Multi-Account Idle and Achievements. Library and Active sessions remain inside their own service.
+- Compact All accounts controls add Start all, Stop all and a shared Status selector. Account sessions always run continuously.
+- Browse your account library or add games directly from Steam catalog search. Steam determines whether activity can be registered for each AppID.
+- Account activity appears beside the label; edit labels using the pencil beside the name. Improved scrollbar spacing and clearer incorrect-password/Steam Guard/connection errors.
+- Achievements Beta adds game selection, filters, staged unlock/relock changes and a review before saving. Requires Steam Desktop; game/runtime support varies.
+- Removed Back to Settings from Donate and added a heart to the thank-you message.
+
+- Native achievement bindings are verified with an isolated fixture DLL; no live achievement writes were performed during verification.
+
 ## 3.8.1 Beta
 
 - Remove platform sign-in and Plans; place Free beside the app name and Donate beside the edge-aligned utility controls.

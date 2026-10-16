@@ -1,17 +1,19 @@
 {
-  "version": "3.8.1",
+  "version": "3.9.0",
   "en": [
-    "Removed platform sign-in and Plans. Free appears beside LootLazy; Donate, Settings and Notifications stay at the edge of the header.",
-    "Steam Accounts now loads each account library before starting, including accounts not opened individually.",
-    "Account profile pictures, an additional running-game indicator, and a Sign out icon make account state clearer.",
-    "Playing elsewhere is shown inside the account and beside the reported game when Steam supplies its AppID. Account-wide Steam play locks are respected.",
-    "Selected games remain saved after Stop and across application restarts."
+    "Steam Tools now contains Steam Idle, Multi-Account Idle and Achievements. Library and Active sessions remain inside their own service.",
+    "Compact All accounts controls add Start all, Stop all and a shared Status selector. Account sessions always run continuously.",
+    "Browse your account library or add games directly from Steam catalog search. Steam determines whether activity can be registered for each AppID.",
+    "Account activity appears beside the label; edit labels using the pencil beside the name. Improved scrollbar spacing and clearer incorrect-password/Steam Guard/connection errors.",
+    "Achievements Beta adds game selection, filters, staged unlock/relock changes and a review before saving. Requires Steam Desktop; game/runtime support varies.",
+    "Removed Back to Settings from Donate and added a heart to the thank-you message."
   ],
   "ar": [
-    "إزالة تسجيل دخول المنصة والباقات، وإظهار مجاني بجانب الاسم، وترتيب التبرع والإعدادات والإشعارات في طرف الهيدر.",
-    "تحميل مكتبة كل حساب قبل بدء تشغيله، حتى الحسابات التي لم يتم فتحها منفردة.",
-    "صور الحسابات ومؤشر إضافي للألعاب الشغالة وأيقونة تسجيل الخروج لتوضيح حالة كل حساب.",
-    "عرض اللعب من جلسة أخرى داخل الحساب وبجوار اللعبة عندما يوفّر Steam رقمها، مع احترام منع التشغيل للحساب كله.",
-    "الألعاب المختارة تظل محفوظة بعد الإيقاف وإعادة فتح التطبيق."
+    "خدمات Steam تشمل خمول Steam وخمول عدة حسابات والإنجازات، مع فصل المكتبة والجلسات داخل كل خدمة.",
+    "أدوات مدمجة لكل الحسابات لتشغيل الكل وإيقاف الكل وتغيير الحالة للجميع. تشغيل الحسابات مستمر بدون مدة محددة.",
+    "تصفح مكتبة الحساب أو أضف الألعاب مباشرة من البحث العام. Steam هو الذي يحدد تسجيل النشاط لكل لعبة.",
+    "مؤشر الألعاب بجانب اسم الحساب وقلم تعديل الاسم، مع تحسين مسافة شريط التمرير ورسائل أخطاء بيانات الدخول وSteam Guard والاتصال.",
+    "الإنجازات التجريبية تشمل اختيار اللعبة والبحث والتصفية ومراجعة الفتح والإغلاق قبل الحفظ. تحتاج Steam على الكمبيوتر والدعم يختلف حسب اللعبة.",
+    "إزالة الرجوع للإعدادات من التبرع وإضافة قلب لرسالة الشكر."
   ]
 }

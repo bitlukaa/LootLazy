@@ -1593,6 +1593,13 @@ impl Backend {
         }
         let _ = self.save("steam_search.json", &json!(self.steam_search));
     }
+    pub fn achievement_runtime(&mut self) -> Result<PathBuf, String> {
+        self.refresh_steam_runtime();
+        self.ensure_steam_client()?;
+        self.steam_runtime
+            .clone()
+            .ok_or_else(|| "steam_runtime_missing".into())
+    }
     fn refresh_steam_runtime(&mut self) {
         if self.steam_runtime.as_ref().is_some_and(|p| p.is_file()) {
             return;

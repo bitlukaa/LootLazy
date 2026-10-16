@@ -1,10 +1,10 @@
 (() => {
  const el=id=>document.getElementById(id);
- const model={accounts:[],selected:null,loaded:false,busy:false,pending:0,epoch:0,polling:false,commands:Promise.resolve(),searchSequence:0,searchTimer:null,names:{},signature:'',libraryFor:null,libraryLoading:false,durations:{}};
+ const model={accounts:[],selected:null,loaded:false,busy:false,pending:0,epoch:0,polling:false,commands:Promise.resolve(),searchSequence:0,searchTimer:null,names:{},signature:'',libraryFor:null,libraryLoading:false};
  let auth=null,removalTarget=null,editTarget=null,bulkBusy=false;
- try{model.names=JSON.parse(localStorage.getItem('lootlazy_account_games')||'{}');model.selected=localStorage.getItem('lootlazy_selected_account');model.durations=JSON.parse(localStorage.getItem('lootlazy_account_durations')||'{}');}catch{model.names={};}
+ try{model.names=JSON.parse(localStorage.getItem('lootlazy_account_games')||'{}');model.selected=localStorage.getItem('lootlazy_selected_account');}catch{model.names={};}
  const message=error=>{const key=String(error?.message||error).split(':')[0].trim();return t(key.startsWith('accounts_')&&I18N.en[key]?key:'accounts_failed');};
- function showError(error){const target=el(auth?'account-auth-error':'accounts-error');target.textContent=message(error);target.hidden=false;}
+ function showError(error){const credential=auth?.method==='password'&&['accounts_credentials_invalid','accounts_login_failed'].includes(String(error?.message||error).split(':')[0].trim());const target=el(credential?'account-credentials-error':auth?'account-auth-error':'accounts-error');target.textContent=message(error);target.hidden=false;if(credential){el('account-auth-error').hidden=true;for(const id of ['account-auth-login','account-auth-password'])el(id).setAttribute('aria-invalid','true');}}
  function gameArtwork(id){const image=document.createElement('span');image.className='artwork account-game-art';image.setAttribute('aria-hidden','true');image.innerHTML=artwork({third_party_skus:[{distributor:'steam',id:String(id)}]});return image;}
  function accountAvatar(account){const node=document.createElement('span');node.className='account-avatar';node.setAttribute('aria-hidden','true');node.dataset.initials=Array.from(account.label||'?').slice(0,2).join('').toUpperCase();if(/^https:\/\/avatars\.steamstatic\.com\/[a-f0-9]{40}_medium\.jpg$/i.test(account.avatarUrl||'')){const img=document.createElement('img');img.src='http://artwork.localhost/?url='+encodeURIComponent(account.avatarUrl);img.alt='';img.loading='lazy';img.onerror=()=>img.remove();node.append(img);}return node;}
  function selected(){return model.accounts.find(account=>account.id===model.selected&&!account.draft);}
@@ -46,7 +46,7 @@
   return auth===context;
  }
  async function startQr(context){
-  if(auth!==context)return;context.method='qr';++context.sequence;clearQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_qr_loading');
+  if(auth!==context)return;context.method='qr';++context.sequence;el('account-credentials-error').hidden=true;for(const id of ['account-auth-login','account-auth-password'])el(id).removeAttribute('aria-invalid');clearQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_qr_loading');
   if(!await ensureDraft(context)||!await disconnectAttempt(context)){if(auth===context)expireQr();return;}
   const sequence=context.sequence;
   if(await call('signin',{id:context.id,method:'qr'})){
@@ -77,7 +77,7 @@
  function openAuth(account=null){
   if(auth||model.busy)return;
   const context=auth={id:account?.id||null,draft:!account,method:account?.active?'existing':'qr',sequence:0,reading:false,finishing:false};
-  el('account-auth-form').reset();el('account-guard-form').reset();el('account-auth-error').hidden=true;clearQr();
+  el('account-auth-form').reset();for(const id of ['account-auth-login','account-auth-password'])el(id).removeAttribute('aria-invalid');el('account-guard-form').reset();el('account-auth-error').hidden=true;el('account-credentials-error').hidden=true;clearQr();
   el('account-auth-title').textContent=t(account?'accounts_signin':'accounts_add');
   el('account-auth-label').value=account?.label||'';el('account-auth-label').readOnly=!!account;el('account-auth-label').closest('label').hidden=!!account;
   el('account-auth-login').value=account?.login||'';el('account-auth-login').readOnly=!!account?.login;
@@ -107,6 +107,8 @@
    clearQr();expireQr();el('account-qr-status').textContent=t('accounts_auth_pending');
   }
   if(account?.error){
+   if(['accounts_credentials_invalid','accounts_login_failed'].includes(account.error)&&context.method!=='qr'){el('account-credentials-error').textContent=t('accounts_credentials_invalid');el('account-credentials-error').hidden=false;el('account-auth-login').setAttribute('aria-invalid','true');el('account-auth-password').setAttribute('aria-invalid','true');el('account-auth-error').hidden=true;}
+   else
    if(context.method==='qr'&&['accounts_qr_failed','accounts_qr_expired'].includes(account.error)){el('account-auth-error').hidden=true;expireQr();}
    else{showError(account.error);if(context.method==='qr')expireQr();}
   }
@@ -124,11 +126,11 @@
  }
  function textNode(node,value){if(node.textContent!==value)node.textContent=value;}
  function text(id,value){const node=el(id);if(node.textContent!==value)node.textContent=value;}
- function selectAccount(account){el('account-custom-time').hidden=true;el('account-duration-error').hidden=true;rememberSelection(account.id);model.libraryFor=null;el('account-search').value='';el('account-search-results').replaceChildren();render();if(!account.connected){if(account.active&&!account.input)return;if(account.canResume&&!account.error){call('resume',{id:account.id});return;}openAuth(account);}}
+ function selectAccount(account){rememberSelection(account.id);model.libraryFor=null;el('account-search').value='';el('account-search-results').replaceChildren();render();if(!account.connected){if(account.active&&!account.input&&!account.error)return;if(account.canResume&&!account.error){call('resume',{id:account.id});return;}openAuth(account);}}
  function confirmRemoval(account){removalTarget=account.id;el('account-remove-warning').textContent=t('accounts_remove_named',{label:account.label});el('account-remove-dialog').showModal();}
- async function bulkRun(command){
-  if(model.busy||bulkBusy)return false;bulkBusy=true;const targets=model.accounts.filter(account=>!account.draft&&(command==='start'?account.connected&&account.state==='ready'&&account.games?.length:account.state==='running'));const failed=[];
-  try{render();for(const account of targets){if(!await call(command,{id:account.id,...(command==='start'?{minutes:Number(model.durations[account.id]||0)}:{})}))failed.push(account.label+': '+(model.lastError||t('accounts_failed')));}if(failed.length){el('accounts-error').textContent=t('accounts_bulk_failed',{accounts:failed.join(', ')});el('accounts-error').hidden=false;}return !failed.length;}finally{bulkBusy=false;render();}
+ async function bulkRun(command,presence=null){
+  if(model.busy||bulkBusy)return false;bulkBusy=true;const targets=model.accounts.filter(account=>!account.draft&&(command==='presence'?true:command==='start'?account.connected&&account.state==='ready'&&account.games?.length:account.state==='running'));const failed=[];
+  try{render();for(const account of targets){if(!await call(command,{id:account.id,...(command==='start'?{minutes:0}:command==='presence'?{presence}:{})}))failed.push(account.label+': '+(model.lastError||t('accounts_failed')));}if(failed.length){el('accounts-error').textContent=t('accounts_bulk_failed',{accounts:failed.join(', ')});el('accounts-error').hidden=false;}return !failed.length;}finally{bulkBusy=false;render();}
  }
  function render(){
   if(!el('accounts-list'))return;
@@ -143,12 +145,12 @@
     const actions=document.createElement('div');actions.className='account-row-actions';
     if(account.connected){const badge=document.createElement('span');badge.className='account-state ready';badge.textContent=t('accounts_connected');actions.append(badge);}
     else{const signin=button(t(account.active&&!account.input?'accounts_reconnecting':account.input?'accounts_continue':'accounts_signin'),null,()=>selectAccount(account),'account-state offline account-signin-action');signin.disabled=model.busy;actions.append(signin);}
-    if(account.state==='running'||account.state==='blocked'){const activity=document.createElement('span');activity.className='account-activity'+(account.state==='blocked'?' elsewhere':'');const count=account.runningGameCount??account.games?.length??0;activity.innerHTML=getIcon('gamepad');if(account.state==='running'){const n=document.createElement('span');n.textContent=number(count);activity.append(n);}activity.title=t(account.state==='running'?'accounts_running_count':'accounts_state_blocked',{count:number(count)});activity.setAttribute('aria-label',activity.title);actions.append(activity);}
+    if(account.state==='running'||account.state==='blocked'){const activity=document.createElement('span');activity.className='account-activity'+(account.state==='blocked'?' elsewhere':'');const count=account.runningGameCount??account.games?.length??0;activity.innerHTML=getIcon('gamepad');if(account.state==='running'){const n=document.createElement('span');n.textContent=number(count);activity.append(n);}activity.title=t(account.state==='running'?'accounts_running_count':'accounts_state_blocked',{count:number(count)});activity.setAttribute('aria-label',activity.title);select.append(activity);}
     const remove=button(t('accounts_remove')+': '+account.label,'x',()=>confirmRemoval(account),'icon-button');remove.classList.add('account-remove-control');remove.dataset.removeAccount=account.id;remove.disabled=model.busy;actions.append(remove);row.append(select,actions);list.append(row);
    }
    el('accounts-list').replaceChildren(list);el('accounts-empty').hidden=accounts.length>0;
   }
-  el('accounts-start-all').disabled=model.busy||bulkBusy||!accounts.some(account=>account.connected&&account.state==='ready'&&account.games?.length);el('accounts-stop-running').disabled=model.busy||bulkBusy||!accounts.some(account=>account.state==='running');el('accounts-add').disabled=model.busy;el('accounts-retry').disabled=model.busy;
+  el('accounts-start-all').disabled=model.busy||bulkBusy||!accounts.some(account=>account.connected&&account.state==='ready'&&account.games?.length);el('accounts-stop-running').disabled=model.busy||bulkBusy||!accounts.some(account=>account.state==='running');el('accounts-presence-all').disabled=model.busy||bulkBusy;el('accounts-add').disabled=model.busy;el('accounts-retry').disabled=model.busy;
   const account=selected(),ready=!!account?.connected;
   el('account-session-panel').hidden=!ready;el('account-setup').hidden=!ready;el('accounts-workspace').classList.toggle('has-session',ready);
   if(!ready){model.libraryFor=null;model.libraryLoading=false;if(account?.error&&!auth){showError(account.error);}return;}
@@ -158,12 +160,8 @@
   el('account-elsewhere-note').hidden=!blocked;el('account-elsewhere-note').textContent=t('accounts_elsewhere_note');
   el('account-start').hidden=running;el('account-stop').hidden=!running;el('account-game-setup').hidden=false;
   el('account-start').disabled=model.busy||!account.games?.length||account.state==='blocked';el('account-stop').disabled=model.busy;
-  el('account-refresh-library').disabled=model.busy||!editable;el('account-duration').disabled=model.busy||running;
-  const duration=running?account.minutes||0:Number(model.durations[account.id]||0);el('account-duration').value=String(duration);
-  for(const preset of document.querySelectorAll('[data-account-duration]')){const value=preset.dataset.accountDuration;const active=value==='custom'?![0,15,30,60].includes(duration):Number(value)===duration;preset.classList.toggle('active',active);preset.setAttribute('aria-pressed',String(active));preset.disabled=model.busy||running;}
-  for(const control of el('account-custom-time').querySelectorAll('input,button'))control.disabled=model.busy||running;
-  if(running){el('account-custom-time').hidden=true;el('account-duration-error').hidden=true;}
-  el('account-search').disabled=model.busy||!editable;el('account-search').closest('.search-field').hidden=false;el('account-library-hint').textContent=t('accounts_library_ready_hint');el('account-library-hint').hidden=false;el('account-quick-games').hidden=!editable||!el('account-quick-picks').querySelector('button');el('account-games-hint').hidden=editable;
+  el('account-refresh-library').disabled=model.busy||!editable;
+  el('account-search').disabled=model.busy||!editable;el('account-search').closest('.search-field').hidden=false;el('account-library-hint').textContent=t('accounts_library_hint');el('account-library-hint').hidden=false;el('account-quick-games').hidden=!editable||!el('account-quick-picks').querySelector('button');el('account-games-hint').hidden=editable;
   const gameSignature=JSON.stringify([account.id,account.games,account.playingAppId,account.playingGameName,model.names,running,blocked,editable,model.busy,currentLang]);
   if(el('account-games').dataset.signature!==gameSignature){
    el('account-games').dataset.signature=gameSignature;const games=document.createDocumentFragment();
@@ -176,28 +174,28 @@
   for(const control of el('account-game-setup').querySelectorAll('#account-search-results button,#account-quick-picks button'))control.disabled=model.busy||!editable;
   if(editable&&model.libraryFor!==account.id&&!model.busy){model.libraryFor=account.id;queueMicrotask(()=>search());}
  }
- async function search(refresh=false){
+ async function search(refresh=false,page=0){
   const account=selected(),query=el('account-search').value.trim(),sequence=++model.searchSequence;
   if(!account?.connected)return;
   el('account-search-results').replaceChildren();el('account-quick-picks').replaceChildren();el('account-quick-games').hidden=true;
   try{
-   const result=await request(query?'/api/steam-accounts/search':'/api/steam-accounts/library',{id:account.id,query,refresh});
+   const result=await request(query?'/api/steam-accounts/search':'/api/steam-accounts/library',{id:account.id,query,refresh,offset:page*50});
    const games=result.games;model.libraryLoading=!!result.loading;
    if(result.error)throw Error(result.error);
    if(sequence!==model.searchSequence||selected()?.id!==account.id||!selected()?.connected)return;
    const fragment=document.createDocumentFragment();
    const available=(games||[]).filter(game=>{const id=Number(game.steamId||game.id);return Number.isInteger(id)&&id>0&&!selected()?.games?.includes(id);});
-   const choices=query?available:[...available].sort((a,b)=>{const rank=id=>[730,570,440].includes(Number(id))?[730,570,440].indexOf(Number(id)):3;return rank(a.steamId||a.id)-rank(b.steamId||b.id);}).slice(0,3);
-   for(const game of choices){const id=Number(game.steamId||game.id);if(query&&game.owned===false){const row=button(game.name+' · '+t('accounts_not_owned_action'),'external-link',()=>request('/api/steam-accounts/store',{id}),'account-search-result');fragment.append(row);continue;}
+   const choices=available;
+   for(const game of choices){const id=Number(game.steamId||game.id);
     const row=button(game.name,'plus',async()=>{if(model.busy||selected()?.id!==account.id)return;model.names[id]=game.name;localStorage.setItem('lootlazy_account_games',JSON.stringify(model.names));if(await call('games',{id:account.id,games:[...(selected()?.games||[]),id]})){el('account-search').value='';search();}},query?'account-search-result':'button button-secondary account-quick-pick');fragment.append(row);
    }
    if(!fragment.childNodes.length&&(query||model.libraryLoading||!(games||[]).length)){const empty=document.createElement('p');empty.className='muted';empty.textContent=t(model.libraryLoading?'accounts_library_loading':query?'accounts_no_results':'accounts_library_empty');fragment.append(empty);}
-   if(!query&&choices.length){el('account-quick-picks').replaceChildren(fragment);el('account-quick-games').hidden=false;}else el('account-search-results').replaceChildren(fragment);render();
+   if(!query&&(choices.length||page>0||(result.total||0)>50)){const pager=document.createElement('div');pager.className='account-library-pager';if(page>0)pager.append(button(t('previous'),null,()=>search(false,page-1),'button button-quiet'));if((page+1)*50<(result.total||0))pager.append(button(t('load_more'),null,()=>search(false,page+1),'button button-quiet'));fragment.append(pager);el('account-quick-picks').replaceChildren(fragment);el('account-quick-games').hidden=false;}else el('account-search-results').replaceChildren(fragment);render();
   }catch(error){if(sequence===model.searchSequence)showError(error);}
  }
  function renderActive(){
   const list=el('accounts-active-list');if(!list)return;
-  const running=model.accounts.filter(account=>!account.draft&&account.state==='running');el('accounts-active-panel').hidden=!running.length;text('accounts-session-count',number(running.length));el('accounts-stop-all').disabled=model.busy;window.lootlazyRotations?.refreshSteamSummary?.();
+  const running=model.accounts.filter(account=>!account.draft&&account.state==='running');el('accounts-active-panel').hidden=!running.length;el('accounts-active-empty').hidden=!!running.length;el('accounts-active-nav-badge').hidden=!running.length;el('accounts-active-nav-badge').textContent=number(running.length);text('accounts-session-count',number(running.length));el('accounts-stop-all').disabled=model.busy;window.lootlazyRotations?.refreshSteamSummary?.();
   const signature=JSON.stringify([running.map(account=>[account.id,account.label,account.games,account.minutes]),model.names,model.busy,currentLang]);
   if(list.dataset.signature!==signature){
    list.dataset.signature=signature;const fragment=document.createDocumentFragment();
@@ -225,7 +223,7 @@
    event.preventDefault();const context=auth;if(!context||model.busy)return;
    if(model.accounts.find(account=>account.id===context.id)?.connected){await finishAuth(context);return;}
    const login=el('account-auth-login').value.trim(),password=el('account-auth-password').value;el('account-auth-password').value='';
-   context.method='password';++context.sequence;clearQr();expireQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_auth_pending');
+   el('account-credentials-error').hidden=true;el('account-auth-login').removeAttribute('aria-invalid');el('account-auth-password').removeAttribute('aria-invalid');context.method='password';++context.sequence;clearQr();expireQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_auth_pending');
    if(!await ensureDraft(context)||!await disconnectAttempt(context))return;
    const account=model.accounts.find(item=>item.id===context.id);
    if(context.draft&&account.login&&account.login!==login){if(!await call('remove',{id:context.id}))return;context.id=null;if(!await ensureDraft(context))return;}
@@ -236,21 +234,18 @@
   el('account-edit').onclick=()=>{const account=selected();if(!account||model.busy)return;editTarget=account.id;el('account-edit-label').value=account.label;el('account-edit-error').hidden=true;el('account-edit-dialog').showModal();el('account-edit-label').focus();};
   el('account-edit-form').onsubmit=async event=>{event.preventDefault();const label=el('account-edit-label').value.trim(),id=editTarget;if(!label||!id||model.busy)return;el('account-edit-save').disabled=true;try{if(await call('rename',{id,label}))el('account-edit-dialog').close();else{el('account-edit-error').textContent=el('accounts-error').textContent;el('account-edit-error').hidden=false;}}finally{el('account-edit-save').disabled=false;}};
   el('accounts-start-all').onclick=()=>bulkRun('start');
+  el('accounts-presence-all').onchange=async()=>{const value=el('accounts-presence-all').value;if(value)await bulkRun('presence',value);el('accounts-presence-all').value='';};
   el('accounts-stop-running').onclick=()=>window.lootlazySteamAccounts.stopAll();
   el('account-signout').onclick=()=>{if(selected())call('disconnect',{id:selected().id,signOut:true});};
   for(const choice of document.querySelectorAll('[data-account-presence]'))choice.onclick=()=>{const account=selected();if(account)call('presence',{id:account.id,presence:choice.dataset.accountPresence});};
-  function setDuration(minutes){const account=selected();if(!account)return;model.durations[account.id]=minutes;try{localStorage.setItem('lootlazy_account_durations',JSON.stringify(model.durations));}catch{}el('account-custom-time').hidden=true;el('account-duration-error').hidden=true;render();}
-  for(const preset of document.querySelectorAll('[data-account-duration]'))preset.onclick=()=>{if(preset.dataset.accountDuration!=='custom'){setDuration(Number(preset.dataset.accountDuration));return;}const minutes=Number(el('account-duration').value)||15;el('account-hours').value=String(Math.floor(minutes/60));el('account-minutes').value=String(minutes%60);el('account-custom-time').hidden=false;el('account-duration-error').hidden=true;el('account-hours').focus();};
-  el('account-time-save').onclick=()=>{const hours=Number(el('account-hours').value),mins=Number(el('account-minutes').value),minutes=hours*60+mins;if(!el('account-hours').value||!el('account-minutes').value||!Number.isInteger(hours)||!Number.isInteger(mins)||hours<0||mins<0||mins>59||minutes<1||minutes>1440){el('account-duration-error').hidden=false;return;}setDuration(minutes);};
-  el('account-time-cancel').onclick=()=>{el('account-custom-time').hidden=true;el('account-duration-error').hidden=true;};
-  el('account-start').onclick=()=>{if(selected())call('start',{id:selected().id,minutes:Number(el('account-duration').value)});};
+  el('account-start').onclick=()=>{if(selected())call('start',{id:selected().id,minutes:0});};
   el('account-stop').onclick=()=>{if(selected())call('stop',{id:selected().id});};
   el('account-remove-cancel').onclick=()=>{removalTarget=null;el('account-remove-dialog').close();};
   el('account-remove-confirm').onclick=async()=>{const id=removalTarget;removalTarget=null;el('account-remove-dialog').close();if(id)await call('remove',{id});};
   el('account-search').oninput=()=>{clearTimeout(model.searchTimer);++model.searchSequence;model.searchTimer=setTimeout(()=>search(),300);};
-  for(const [id,icon]of [['accounts-add','plus'],['accounts-retry','refresh'],['account-start','play'],['account-stop','square']]){const span=document.createElement('span');span.innerHTML=getIcon(icon);el(id).prepend(span);}
+  for(const [id,icon]of [['accounts-add','plus'],['accounts-retry','refresh'],['account-start','play'],['account-stop','square'],['accounts-start-all','play'],['accounts-stop-running','square']]){const span=document.createElement('span');span.innerHTML=getIcon(icon);el(id).prepend(span);}
   el('account-signout-icon').innerHTML=getIcon('log-out');
-  el('account-refresh-library').onclick=()=>search(true);el('account-refresh-library').innerHTML=getIcon('refresh');el('account-search-icon').innerHTML=getIcon('search');el('steam-mode-accounts-icon').innerHTML=getIcon('users');
+  el('account-refresh-library').onclick=()=>search(true);el('account-refresh-library').innerHTML=getIcon('refresh');el('account-search-icon').innerHTML=getIcon('search');
   setInterval(poll,1500);
  });
  window.lootlazySteamAccounts={open,translate(){model.signature='';render();},async stopAll(){return bulkRun('stop');},activeCount:()=>model.accounts.filter(account=>!account.draft&&account.state==='running').length};
