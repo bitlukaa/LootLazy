@@ -21,6 +21,8 @@ async function launch(parentId=process.pid){
  const pending=await run.call('add',{label:'Pending must not persist',login:'',method:'qr',draft:true});const pendingId=pending.result.accounts[0].id;assert.equal(pending.result.accounts[0].draft,true);assert.ok(!fs.readFileSync(path.join(fixture,'accounts.json'),'utf8').includes(pendingId));assert.equal((await run.call('commit',{id:pendingId,label:'Not authenticated'})).error,'accounts_not_ready');
  await run.close();run=await launch();assert.deepEqual((await run.call('status')).result.accounts,[]);assert.equal(fs.existsSync(path.join(fixture,'config',pendingId+'.json')),false,'Abandoned draft config is removed on restart');
  let result=await run.call('add',{label:'Account one',login:'test_login'});assert.equal(result.ok,true);const id=result.result.accounts[0].id;assert.match(id,/^ll_[a-f0-9]{32}$/);
+ for(const presence of ['online','away','invisible','offline']){const changed=await run.call('presence',{id,presence});assert.equal(changed.ok,true);assert.equal(changed.result.accounts[0].presence,presence);assert.deepEqual(changed.result.accounts[0].games,[]);}
+ assert.equal((await run.call('presence',{id,presence:'busy'})).error,'accounts_invalid');
  assert.equal((await run.call('add',{label:'Duplicate',login:'TEST_LOGIN'})).error,'accounts_duplicate');
  result=await run.call('games',{id,games:[570,730,570]});assert.deepEqual(result.result.accounts[0].games,[570,730]);
  assert.equal((await run.call('games',{id,games:[0]})).error,'accounts_invalid');
@@ -30,7 +32,9 @@ async function launch(parentId=process.pid){
  assert.ok(!fs.readFileSync(path.join(fixture,'accounts.json'),'utf8').includes('fixture-password'));
  assert.ok(!fs.readFileSync(path.join(fixture,'config',id+'.json'),'utf8').includes('SteamPassword'));
  const config=JSON.parse(fs.readFileSync(path.join(fixture,'config',id+'.json'),'utf8'));assert.equal(config.Enabled,false);assert.equal(config.RemoteCommunication,0);assert.equal(config.TradeCheckPeriod,0);assert.equal(config.FarmingPreferences,9);
- await run.close();run=await launch();result=await run.call('status');assert.deepEqual(result.result.accounts[0].games,[570,730]);assert.equal(result.result.active,false);
+ await run.close();run=await launch();result=await run.call('status');assert.deepEqual(result.result.accounts[0].games,[570,730]);assert.equal(result.result.active,false);assert.equal(result.result.accounts[0].presence,'offline','Appearance is saved across restart');
+ // Older account files have no presence field; they retain the original Online default.
+ await run.close();const legacy=JSON.parse(fs.readFileSync(path.join(fixture,'accounts.json'),'utf8'));delete legacy[0].presence;fs.writeFileSync(path.join(fixture,'accounts.json'),JSON.stringify(legacy));run=await launch();assert.equal((await run.call('status')).result.accounts[0].presence,'online');
  assert.equal((await run.call('remove',{id})).ok,true);assert.deepEqual((await run.call('status')).result.accounts,[]);assert.equal(fs.existsSync(path.join(fixture,'config',id+'.json')),false);
  for(let index=0;index<20;index++)assert.equal((await run.call('add',{label:'Capacity '+index,login:'capacity_'+index})).ok,true);
  assert.equal((await run.call('add',{label:'Overflow',login:'capacity_overflow'})).error,'accounts_invalid');

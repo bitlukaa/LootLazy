@@ -263,6 +263,7 @@ pub fn request(root: &Path, command: &str, body: Value) -> Result<Value, String>
         "qr",
         "commit",
         "disconnect",
+        "presence",
     ]
     .contains(&command)
     {

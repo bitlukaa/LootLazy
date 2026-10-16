@@ -43,7 +43,12 @@ internal static class LootLazyVault {
 
 internal static class LootLazyBridge {
     internal static bool Enabled => true;
-    private sealed record Account(string Id, string Label, string Login, uint[] Games);
+    private sealed record Account(string Id, string Label, string Login, uint[] Games, string Presence = "online");
+    private static SteamKit2.EPersonaState Persona(string presence) => presence switch {
+        "online" => SteamKit2.EPersonaState.Online, "away" => SteamKit2.EPersonaState.Away,
+        "invisible" => SteamKit2.EPersonaState.Invisible, "offline" => SteamKit2.EPersonaState.Offline,
+        _ => throw new InvalidOperationException("accounts_invalid")
+    };
     private sealed record Challenge(string Id, ASF.EUserInputType Type, TaskCompletionSource<string?> Completion);
     private sealed class Session {
         internal uint[] Games = [];
@@ -146,7 +151,7 @@ internal static class LootLazyBridge {
     private static void WriteConfig(Account account) {
         string path = ConfigPath(account.Id);
         LootLazyVault.CheckPath(path);
-        File.WriteAllText(path, JsonSerializer.Serialize(new { Enabled = false, MachineName = "LootLazy", SteamLogin = account.Login, UseLoginKeys = true, FarmingPreferences = 9, RemoteCommunication = 0, BotBehaviour = 64, TradeCheckPeriod = 0, AcceptGifts = false, GamesPlayedWhileIdle = Array.Empty<uint>() }));
+        File.WriteAllText(path, JsonSerializer.Serialize(new { Enabled = false, MachineName = "LootLazy", SteamLogin = account.Login, OnlineStatus = (int)Persona(account.Presence), UseLoginKeys = true, FarmingPreferences = 9, RemoteCommunication = 0, BotBehaviour = 64, TradeCheckPeriod = 0, AcceptGifts = false, GamesPlayedWhileIdle = Array.Empty<uint>() }));
     }
     internal static async Task<string?> InputAsync(ASF.EUserInputType type, string id) {
         if (!ValidId(id) || Bot.Bots?.TryGetValue(id, out var inputBot) != true || !inputBot.KeepRunning) return null;
@@ -182,7 +187,7 @@ internal static class LootLazyBridge {
             bool connected = bot?.IsConnectedAndLoggedOn == true;
             bool running = connected && bot!.IsPlayingPossible && session?.Games.Length > 0;
             string state = input != null ? "input" : running ? "running" : connected && !bot!.IsPlayingPossible ? "blocked" : connected ? "ready" : bot?.KeepRunning == true ? "connecting" : "offline";
-            return new { id = account.Id, label = account.Label, login = account.Login, draft = Drafts.Contains(account.Id), games = account.Games, state, connected, active = bot?.KeepRunning == true, steamId = bot?.SSteamID ?? "0", input = input == null ? null : new { id = input.Id, type = input.Type.ToString() }, elapsedSeconds = running ? Math.Max(0, (long)(DateTimeOffset.UtcNow - session!.Started).TotalSeconds) : 0, minutes = session?.Minutes ?? 0, error = AuthErrors.TryGetValue(account.Id, out var authError) ? authError : bot == null && !OfflineTest ? "accounts_restore_failed" : bot != null && !bot.KeepRunning && bot.LastLogOnResult is not (SteamKit2.EResult.Invalid or SteamKit2.EResult.OK) ? "accounts_login_failed" : null };
+            return new { id = account.Id, label = account.Label, login = account.Login, draft = Drafts.Contains(account.Id), games = account.Games, presence = account.Presence, state, connected, active = bot?.KeepRunning == true, steamId = bot?.SSteamID ?? "0", input = input == null ? null : new { id = input.Id, type = input.Type.ToString() }, elapsedSeconds = running ? Math.Max(0, (long)(DateTimeOffset.UtcNow - session!.Started).TotalSeconds) : 0, minutes = session?.Minutes ?? 0, error = AuthErrors.TryGetValue(account.Id, out var authError) ? authError : bot == null && !OfflineTest ? "accounts_restore_failed" : bot != null && !bot.KeepRunning && bot.LastLogOnResult is not (SteamKit2.EResult.Invalid or SteamKit2.EResult.OK) ? "accounts_login_failed" : null };
         }).ToArray();
         return new { protocol = 1, accounts = result, active = IsBusy() };
     }
@@ -217,7 +222,7 @@ internal static class LootLazyBridge {
         return new { games = Array.Empty<object>(), total = 0, loading = LibraryRequests.ContainsKey(id), active = IsBusy(), error = LibraryErrors.ContainsKey(id) ? "accounts_library_failed" : null };
     }
     private static async Task<object> Handle(string command, JsonElement body) {
-        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr", "commit", "disconnect" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
+        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr", "commit", "disconnect", "presence" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
         await BindQrIdentities().ConfigureAwait(false);
         if (command == "status") return Snapshot();
         if (command == "add") {
@@ -266,6 +271,17 @@ internal static class LootLazyBridge {
             Save();
             return Snapshot();
         }
+        if (command == "presence") {
+            string presence = Text(body, "presence");
+            var persona = Persona(presence);
+            Accounts[entry.Id] = entry with { Presence = presence };
+            try { Save(); } catch { Accounts[entry.Id] = entry; throw; }
+            if (selected != null) {
+                selected.BotConfig.OnlineStatus = persona;
+                if (selected.IsConnectedAndLoggedOn) selected.ResetPersonaState();
+            }
+            return Snapshot();
+        }
         if (OfflineTest || selected == null) { Fail(OfflineTest ? "accounts_not_ready" : "accounts_restore_failed"); return null!; }
         if (command == "qr") {
             QrCodes.TryGetValue(entry.Id, out var qr);
@@ -303,6 +319,7 @@ internal static class LootLazyBridge {
             if (qr) QrLogins[entry.Id] = DateTimeOffset.UtcNow.AddMinutes(3); else QrLogins.TryRemove(entry.Id, out _);
             selected.BotConfig.SteamLogin = qr && Drafts.Contains(entry.Id) ? "" : entry.Login;
             selected.BotConfig.IsSteamLoginSet = false;
+            selected.BotConfig.OnlineStatus = Persona(entry.Presence);
             if (password.Length > 0) selected.SetUserInput(ASF.EUserInputType.Password, password);
             await selected.Start().ConfigureAwait(false);
         } else if (command == "input") {

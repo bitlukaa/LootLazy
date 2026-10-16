@@ -836,3 +836,6 @@ Object.assign(I18N.ar,{"accounts_label_hint":"اختياري، مثل الحسا
 
 Object.assign(I18N.en,{accounts_auth_busy:"The previous sign-in is still closing. Please try again in a moment."});
 Object.assign(I18N.ar,{accounts_auth_busy:"جارٍ إغلاق محاولة الدخول السابقة. حاول مجددًا بعد لحظات."});
+
+Object.assign(I18N.en,{accounts_state_ready:"Signed in",accounts_appear_as:"Appear as",accounts_presence_online:"Online",accounts_presence_away:"Away",accounts_presence_invisible:"Invisible",accounts_presence_offline:"Offline",accounts_elapsed:"Elapsed",accounts_remaining:"Remaining",accounts_game_selected:"Selected"});
+Object.assign(I18N.ar,{accounts_state_ready:"مسجل الدخول",accounts_appear_as:"الظهور كـ",accounts_presence_online:"متصل",accounts_presence_away:"بعيد",accounts_presence_invisible:"متخفي",accounts_presence_offline:"غير متصل",accounts_elapsed:"الوقت المنقضي",accounts_remaining:"الوقت المتبقي",accounts_game_selected:"مختارة"});

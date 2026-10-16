@@ -1,5 +1,13 @@
 # Release history
 
+## 3.7.4 — Clearer Steam sessions
+
+- Choose Online, Away, Invisible or Offline for each Steam account. Your choice is remembered.
+- Keep Sign out in the account details, with Signed in and Running badges in the account list.
+- See each selected game in its own card with running status and elapsed or remaining time.
+- Use familiar duration buttons and a custom timer, starting with Continuous.
+- Manage Steam Library and Steam Accounts sessions in separate cards with independent controls.
+
 ## 3.7.3 — Simpler Steam sign-in
 
 - Use your Steam name and password or scan a QR code from the same centered card.

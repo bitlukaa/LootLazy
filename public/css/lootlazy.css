@@ -387,3 +387,10 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 
 .app-version-line{display:flex;align-items:center;gap:7px;margin-top:4px}.updates-settings .app-version-line #app-version{margin-top:0}
 .build-channel-badge{display:inline-flex;align-items:center;background:var(--selected);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 15%,var(--line));border-radius:5px;font-size:9px;font-weight:600;line-height:1.4;padding:2px 6px;white-space:nowrap}.brand .build-channel-badge{font-size:8px;padding:1px 5px}
+
+/* Account controls follow the shared session and duration styling. */
+.account-presence{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px}.account-presence label{font-size:12px}.account-presence select{max-width:190px}
+.account-duration{display:block;margin:20px 0 15px}.account-duration .duration-presets{display:flex;flex-wrap:wrap;gap:7px}.account-duration .duration-preset{flex:1;min-width:70px}.account-duration .duration-custom{flex-wrap:wrap}
+#account-games{display:grid;gap:10px;max-height:330px}.account-game-card{padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);min-width:0}.account-game-info{display:grid;gap:8px;min-width:0}.account-game-info>strong{font-size:13px;overflow-wrap:anywhere}.account-game-info .account-state{justify-self:start}.account-game-time{display:grid;gap:5px;text-align:end;flex-shrink:0}.account-game-time .muted{font-size:10px}.account-game-time .clock-digits{font-size:17px}.account-game-card>.icon-button{flex-shrink:0}#account-signout{font-size:12px;padding:7px 11px;min-height:34px}
+
+.steam-active-view{display:grid;gap:22px}#accounts-active-list{display:grid;gap:14px}.account-active-card{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface-2);display:grid;gap:10px}.account-active-heading{display:flex;align-items:center;gap:10px}.account-active-heading>strong{min-width:0;overflow-wrap:anywhere}.account-active-heading>.button{margin-inline-start:auto}.account-active-card .account-game-card{background:var(--surface)}

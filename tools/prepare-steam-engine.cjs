@@ -29,5 +29,7 @@ patch('Steam/Bot.cs','if (!await LoginWithQrCode(machineName).ConfigureAwait(fal
 patch('Steam/Bot.cs','private async void OnConnected(SteamClient.ConnectedCallback callback) {','private async void OnConnected(SteamClient.ConnectedCallback callback) {\n\t\tusing var lootlazyConnection = LootLazyBridge.BeginConnection(this);');
 patch('Steam/Bot.cs','pollResult = await authSession.PollingWaitForResultAsync().ConfigureAwait(false);','pollResult = await authSession.PollingWaitForResultAsync(lootlazyConnection.Token).ConfigureAwait(false);');
 patch('Steam/Bot.cs','} catch (OperationCanceledException) {\n\t\t\t\tLoginFailures += botCredentialsProvider.LoginFailures;', '} catch (OperationCanceledException) {\n\t\t\t\tif (LootLazyBridge.Enabled && lootlazyConnection.Token.IsCancellationRequested) return;\n\t\t\t\tLoginFailures += botCredentialsProvider.LoginFailures;');
+patch('Steam/Storage/BotConfig.cs','public EPersonaState OnlineStatus { get; init; }','public EPersonaState OnlineStatus { get; set; }');
+patch('Steam/Bot.cs','if (BotConfig.OnlineStatus == EPersonaState.Offline) {\n\t\t\treturn;\n\t\t}', 'if (!LootLazyBridge.Enabled && BotConfig.OnlineStatus == EPersonaState.Offline) {\n\t\t\treturn;\n\t\t}');
 fs.copyFileSync(path.join(root,'engine/LootLazyBridge.cs'),path.join(base,'LootLazyBridge.cs'));
 console.log('Applied reviewed LootLazy adapter patches to a temporary copy; upstream snapshot unchanged.');

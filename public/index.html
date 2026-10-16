@@ -93,12 +93,13 @@
  <div id="accounts-workspace" class="accounts-grid">
   <section class="panel"><div class="panel-heading"><h2 data-i18n="accounts_title">Steam Accounts</h2><div class="account-heading-actions"><button id="accounts-retry" class="icon-button" type="button" data-i18n-aria-label="accounts_retry"></button><button id="accounts-add" class="button button-secondary" type="button"><span data-i18n="accounts_add">Add account</span></button></div></div><p id="accounts-empty" class="muted" data-i18n="accounts_empty">Add your first Steam account.</p><div id="accounts-list" class="accounts-list"></div></section>
   <section id="account-session-panel" class="panel" hidden>
-   <div id="account-setup" hidden><div class="panel-heading"><div><h2 id="account-title"></h2><p id="account-login" class="muted"></p></div><span id="account-state" class="account-state"></span></div>
+   <div id="account-setup" hidden><div class="panel-heading"><div><h2 id="account-title"></h2><p id="account-login" class="muted"></p></div><button id="account-signout" class="button button-secondary" type="button" data-i18n="accounts_signout">Sign out</button></div>
+    <div class="account-presence"><label for="account-presence" data-i18n="accounts_appear_as">Appear as</label><select id="account-presence"><option value="online" data-i18n="accounts_presence_online">Online</option><option value="away" data-i18n="accounts_presence_away">Away</option><option value="invisible" data-i18n="accounts_presence_invisible">Invisible</option><option value="offline" data-i18n="accounts_presence_offline">Offline</option></select></div>
     <div id="account-game-setup">
     <div class="account-games-heading"><h3 class="account-games-title" data-i18n="accounts_games">Selected games</h3><button id="account-refresh-library" class="icon-button" type="button" data-i18n-aria-label="refresh_catalog"></button></div><p id="account-library-hint" class="muted"></p>
     <div class="search-field account-search"><span id="account-search-icon" aria-hidden="true"></span><input id="account-search" type="search" autocomplete="off" data-i18n-placeholder="search_placeholder" data-i18n-aria-label="search_placeholder"></div><div id="account-quick-games" hidden><h3 data-i18n="accounts_quick_picks">Quick picks</h3><div id="account-quick-picks"></div></div><div id="account-search-results" class="account-search-results"></div>
     <p id="account-games-hint" class="muted" hidden data-i18n="accounts_games_locked">Stop the session before changing games.</p><p id="account-no-games" class="muted" data-i18n="accounts_choose_games">Choose at least one game.</p><div id="account-games"></div>
-    <div class="account-duration"><label for="account-duration" data-i18n="duration">Run duration</label><select id="account-duration"><option value="0" data-i18n="idle_continuous">Continuous</option><option value="15" data-i18n="idle_15m">15 min</option><option value="30" data-i18n="idle_30m">30 min</option><option value="60" data-i18n="idle_1h">1 hour</option></select><strong id="account-running-time" class="clock-digits" hidden></strong></div>
+    <div class="duration-section account-duration"><div class="section-heading"><h3 data-i18n="duration">Run duration</h3></div><input id="account-duration" type="hidden" value="0"><div class="duration-presets"><button type="button" class="duration-preset active" data-account-duration="0" data-i18n="idle_continuous">Continuous</button><button type="button" class="duration-preset" data-account-duration="15" data-i18n="idle_15m">15 min</button><button type="button" class="duration-preset" data-account-duration="30" data-i18n="idle_30m">30 min</button><button type="button" class="duration-preset" data-account-duration="60" data-i18n="idle_1h">1 hour</button><button type="button" class="duration-preset" data-account-duration="custom" data-i18n="idle_custom">Custom</button></div><div id="account-custom-time" class="duration-custom" hidden><label><span data-i18n="hours">Hours</span><input id="account-hours" type="number" min="0" max="24" value="0"></label><span class="time-separator">:</span><label><span data-i18n="minutes">Minutes</span><input id="account-minutes" type="number" min="0" max="59" value="15"></label><div class="custom-time-actions"><button id="account-time-save" type="button" class="button button-primary" data-i18n="save_apply">Save</button><button id="account-time-cancel" type="button" class="button button-secondary" data-i18n="cancel">Cancel</button></div></div><p id="account-duration-error" class="duration-error" data-i18n="invalid_duration" hidden></p></div>
     <div class="session-actions"><button id="account-start" class="button button-primary" type="button" hidden><span data-i18n="rotation_start">Start</span></button><button id="account-stop" class="button button-danger" type="button" hidden><span data-i18n="quest_stop">Stop</span></button></div></div>
    </div>
   </section>
@@ -107,7 +108,7 @@
  <div id="steam-active-mode-view" class="steam-active-view" hidden>
   <section id="steam-sessions-panel" class="panel rotation-panel">
    <div class="rotation-summary">
-    <div class="page-title"><h2 data-i18n="steam_active_sessions">Active sessions</h2><span id="steam-session-count" class="count-badge">0</span></div>
+    <div class="page-title"><h2 data-i18n="steam_mode_library">Steam Library</h2><span id="steam-session-count" class="count-badge">0</span></div>
     <div class="rotation-actions">
      <button id="steam-pause-all" class="button button-secondary" type="button" data-i18n="steam_pause_all">Pause all</button>
      <button id="steam-stop-all" class="button button-danger" type="button" data-i18n="steam_stop_all">Stop all</button>
@@ -119,8 +120,8 @@
     <p data-i18n="steam_no_active_hint">Select a game from your Steam library to start idling.</p>
    </div>
    <div id="steam-list" class="rotation-list" hidden></div>
-   <section id="accounts-active-panel" hidden><h3 data-i18n="accounts_title">Steam Accounts</h3><div id="accounts-active-list"></div></section>
   </section>
+  <section id="accounts-active-panel" class="panel rotation-panel" hidden><div class="rotation-summary"><div class="page-title"><h2 data-i18n="accounts_title">Steam Accounts</h2><span id="accounts-session-count" class="count-badge">0</span></div><button id="accounts-stop-all" class="button button-danger" type="button" data-i18n="steam_stop_all">Stop all</button></div><div id="accounts-active-list"></div></section>
  </div>
 </section>
 <section id="view-quests" class="view-panel">
