@@ -5,13 +5,13 @@ if(-not (Test-Path -LiteralPath $assetsPath)){
     Write-Output 'Project assets not found; skipping notices.'
     return
 }
-$assets=Get-Content -LiteralPath $assetsPath -Raw | ConvertFrom-Json
+$assets=Get-Content -LiteralPath $assetsPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $cache=$assets.packageFolders.PSObject.Properties.Name | Select-Object -First 1
 $parts=[Collections.Generic.List[string]]::new()
 $parts.Add('LootLazy Steam account engine - Standalone SteamKit2 client')
 $parts.Add('Copyright 2026 LootLazy. All rights reserved.')
 $parts.Add('Private pipe protocol, encrypted DPAPI storage, parent-owned lifecycle.')
-$version=(Get-Content -LiteralPath (Join-Path $projectRoot 'src-tauri/tauri.conf.json') -Raw | ConvertFrom-Json).version
+$version=(Get-Content -LiteralPath (Join-Path $projectRoot 'src-tauri/tauri.conf.json') -Raw -Encoding UTF8 | ConvertFrom-Json).version
 $parts.Add('Source repository: https://github.com/bitlukaa/LootLazy/tree/v'+$version)
 
 $licenses=[Collections.Generic.HashSet[string]]::new()
@@ -26,7 +26,7 @@ if($target){
         $folder=Join-Path $cache $package
         $spec=Get-ChildItem -LiteralPath $folder -Filter '*.nuspec' -ErrorAction SilentlyContinue | Select-Object -First 1
         if(!$spec){continue}
-        [xml]$xml=Get-Content -LiteralPath $spec.FullName -Raw
+        [xml]$xml=Get-Content -LiteralPath $spec.FullName -Raw -Encoding UTF8
         $metadata=$xml.SelectSingleNode('//*[local-name()="metadata"]')
         $license=$metadata.SelectSingleNode('*[local-name()="license"]')
         $authors=$metadata.SelectSingleNode('*[local-name()="authors"]')
@@ -39,7 +39,7 @@ if($target){
         if($license){$parts.Add('License: '+$license.InnerText);if($license.type -eq 'expression'){[void]$licenses.Add($license.InnerText)}}
         $files=@(Get-ChildItem -LiteralPath $folder -File -ErrorAction SilentlyContinue | Where-Object {$_.Name -match '^(license|copying|notice|third.party|3rd party)' -and $_.Length -lt 3000000})
         if($license -and $license.type -eq 'file'){ $file=Join-Path $folder $license.InnerText; if(Test-Path -LiteralPath $file){$files+=Get-Item -LiteralPath $file} }
-        foreach($file in ($files|Sort-Object FullName -Unique)){$parts.Add((Get-Content -LiteralPath $file.FullName -Raw))}
+        foreach($file in ($files|Sort-Object FullName -Unique)){$parts.Add((Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8))}
     }
 }
 $noticeDir=Join-Path $projectRoot 'public/assets/third-party'

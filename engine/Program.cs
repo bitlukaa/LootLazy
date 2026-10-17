@@ -251,6 +251,7 @@ internal sealed class SteamAccount : IDisposable {
         Interlocked.Increment(ref ConnectionSerial);
         Program.SuspendSession(Id, DateTimeOffset.UtcNow);
         if (Authenticating) {
+            Program.RecordAuthFailure("connection_lost_during_auth", new IOException());
             try { AuthenticationCancellation?.Cancel(); } catch (ObjectDisposedException) { }
             return;
         }
@@ -297,6 +298,7 @@ internal sealed class SteamAccount : IDisposable {
         try {
             if (!KeepRunning) { Client.Disconnect(); return; }
             LastLogOnResult = callback.Result;
+            if (callback.Result != EResult.OK) Program.RecordAuthFailure("client_logon", new AuthenticationException("", callback.Result));
             Program.LoginResult(this, callback.Result);
             if (callback.Result == EResult.OK) {
                 Interlocked.Increment(ref ConnectionSerial);
@@ -313,7 +315,7 @@ internal sealed class SteamAccount : IDisposable {
                     Program.AuthenticationFailed(this, Program.LoginError(callback.Result) ?? "accounts_signin_required");
                 Stop();
             }
-        } catch { Program.AuthenticationFailed(this, "accounts_connection_failed"); Stop(); }
+        } catch (Exception error) { Program.RecordAuthFailure("client_logon_callback", error); Program.AuthenticationFailed(this, "accounts_login_failed"); Stop(); }
     }
 
     private void OnLoggedOff(SteamUser.LoggedOffCallback callback) {
@@ -353,6 +355,13 @@ internal sealed class SteamAccount : IDisposable {
         public Task<bool> AcceptDeviceConfirmationAsync() => Task.FromResult(false);
     }
 
+    internal AuthSessionDetails AuthenticationDetails(string password, bool qr, CancellationToken token) => new() {
+        DeviceFriendlyName = "LootLazy", Username = Login, Password = qr ? null : password,
+        GuardData = Database?.SteamGuardData, IsPersistentSession = true,
+        // QR has no code-entry fallback: let SteamKit wait for phone approval.
+        Authenticator = qr ? null : new GuardAuthenticator(this, token)
+    };
+
     internal void BeginSignIn(string password, bool qr) {
         if (!qr && string.IsNullOrEmpty(password)) { Start(); return; }
         if (LoginPacer.CoolingDown) throw new InvalidOperationException("accounts_rate_limited");
@@ -365,6 +374,7 @@ internal sealed class SteamAccount : IDisposable {
         cancellation.CancelAfter(TimeSpan.FromMinutes(3));
         AuthenticationCancellation = cancellation;
         string? attempt = Program.QrAttemptId(this);
+        string authStage = "connect";
         _ = Task.Run(async () => {
             using (flow)
             using (cancellation) {
@@ -378,28 +388,29 @@ internal sealed class SteamAccount : IDisposable {
                         Client.Connect();
                         await ConnectionReady.Task.WaitAsync(token).ConfigureAwait(false);
                     }
-                    var details = new AuthSessionDetails {
-                        DeviceFriendlyName = "LootLazy", Username = Login, Password = password,
-                        GuardData = Database?.SteamGuardData, IsPersistentSession = true,
-                        Authenticator = new GuardAuthenticator(this, token)
-                    };
+                    authStage = "begin";
+                    var details = AuthenticationDetails(password, qr, token);
                     AuthPollResult result;
                     if (qr) {
                         var auth = await Client.Authentication.BeginAuthSessionViaQRAsync(details).WaitAsync(token).ConfigureAwait(false);
+                        authStage = "qr_publish";
                         Program.PublishQr(this, attempt, auth.ChallengeURL);
                         auth.ChallengeURLChanged = () => Program.PublishQr(this, attempt, auth.ChallengeURL);
-                        result = await auth.PollingWaitForResultAsync(token).ConfigureAwait(false);
+                        authStage = "poll";
+                        result = await auth.PollingWaitForResultAsync(token).WaitAsync(token).ConfigureAwait(false);
                     } else {
                         var auth = await Client.Authentication.BeginAuthSessionViaCredentialsAsync(details).WaitAsync(token).ConfigureAwait(false);
                         details.Password = null;
                         password = "";
-                        result = await auth.PollingWaitForResultAsync(token).ConfigureAwait(false);
+                        authStage = "confirmation";
+                        result = await auth.PollingWaitForResultAsync(token).WaitAsync(token).ConfigureAwait(false);
                     }
                     token.ThrowIfCancellationRequested();
                     if (generation != AuthenticationGeneration || !KeepRunning) return;
                     if (!string.IsNullOrEmpty(Login) && !result.AccountName.Equals(Login, StringComparison.OrdinalIgnoreCase)) {
                         throw new InvalidOperationException("accounts_qr_mismatch");
                     }
+                    authStage = "save";
                     Database ??= new BotDatabase(Path.Combine("config", Id + ".db"));
                     try { await Database.StoreLogin(result.RefreshToken, result.NewGuardData).ConfigureAwait(false); }
                     catch (IOException) { throw new InvalidOperationException("accounts_save_failed"); }
@@ -408,18 +419,21 @@ internal sealed class SteamAccount : IDisposable {
                     Login = result.AccountName;
                     Program.ClearQr(this, attempt);
                     Authenticating = false;
+                    authStage = "logon";
                     LogOnInternal();
                 } catch (OperationCanceledException) {
                     if (generation == AuthenticationGeneration && KeepRunning) {
-                        Program.AuthenticationFailed(this, LoginPacer.CoolingDown ? "accounts_rate_limited" : qr ? "accounts_qr_expired" : "accounts_connection_failed");
+                        Program.RecordAuthFailure(authStage, new OperationCanceledException());
+                        Program.AuthenticationFailed(this, LoginPacer.CoolingDown ? "accounts_rate_limited" : qr ? "accounts_qr_expired" : Client.IsConnected ? "accounts_auth_expired" : "accounts_connection_failed");
                         Stop();
                     }
                 } catch (Exception error) {
                     if (generation == AuthenticationGeneration) {
+                        Program.RecordAuthFailure(authStage, error);
                         if (error is AuthenticationException limited && LoginPacer.IsThrottled(limited.Result)) LoginPacer.Throttled();
                         string code = error is AuthenticationException authError ? LoginPacer.IsThrottled(authError.Result) ? "accounts_rate_limited" : Program.LoginError(authError.Result) ?? "accounts_login_failed"
                             : error is InvalidOperationException && error.Message is "accounts_qr_mismatch" or "accounts_save_failed" ? error.Message
-                            : qr ? "accounts_qr_failed" : "accounts_connection_failed";
+                            : qr ? "accounts_qr_failed" : error is IOException or System.Net.Sockets.SocketException ? "accounts_connection_failed" : "accounts_login_failed";
                         Program.AuthenticationFailed(this, code);
                         Stop();
                     }
@@ -708,6 +722,20 @@ internal static class Program {
         catch (TimeoutException) { return null; }
         finally { if (Challenges.TryGetValue(id, out var current) && current.Id == challenge.Id) Challenges.TryRemove(id, out _); }
     }
+
+    // Fixed diagnostic fields only: never exception messages, credentials, IDs, URLs or tokens.
+    internal static void RecordAuthFailure(string stage, Exception error) {
+        try {
+            const string path = "auth-diagnostic.log";
+            LootLazyVault.CheckPath(path);
+            string line = $"{DateTimeOffset.UtcNow:O} stage={stage} type={error.GetType().Name} result={(error is AuthenticationException failure ? failure.Result.ToString() : "none")}\n";
+            lock (AuthDiagnosticLock) {
+                if (File.Exists(path) && new FileInfo(path).Length > 16384) File.WriteAllText(path, line);
+                else File.AppendAllText(path, line);
+            }
+        } catch { }
+    }
+    private static readonly object AuthDiagnosticLock = new();
 
     internal static void AuthenticationFailed(SteamAccount account, string error) => AuthErrors[account.Id] = error;
 
@@ -1019,6 +1047,7 @@ internal static class Program {
             if (!Challenges.TryGetValue(entry.Id, out var challenge) || challenge.Id != Text(body, "challengeId") || challenge.Completion.Task.IsCompleted) Fail("accounts_input_expired");
             string value = Text(body, "value");
             if (value.Length is < 1 or > 256) Fail("accounts_invalid");
+            AuthErrors.TryRemove(entry.Id, out _);
             challenge!.Completion.TrySetResult(value);
         } else if (command == "start") {
             if (!selected.IsConnectedAndLoggedOn) Fail("accounts_not_ready");
@@ -1168,6 +1197,13 @@ internal static class Program {
             ResumeSession("pause-fixture", policyNow.AddMinutes(3));
             if (Sessions.ContainsKey("pause-fixture")) return 54;
 
+            RecordAuthFailure("fixture", new InvalidOperationException("secret-fixture-must-never-be-logged"));
+            string diagnostic = File.ReadAllText("auth-diagnostic.log");
+            if (!diagnostic.Contains("stage=fixture type=InvalidOperationException result=none") || diagnostic.Contains("secret-fixture")) return 60;
+            File.WriteAllText("auth-diagnostic.log", new string('x', 17000));
+            RecordAuthFailure("fixture", new IOException("secret-fixture"));
+            if (new FileInfo("auth-diagnostic.log").Length > 1024) return 61;
+
             var ids = Enumerable.Range(0, 64).Select(_ => SteamAccount.NewLoginId()).ToArray();
             if (ids.Any(id => id == 0) || ids.Distinct().Count() != ids.Length) return 33;
             string authId = "ll_" + new string('a', 32);
@@ -1187,6 +1223,19 @@ internal static class Program {
                 guardAccount.Authenticating = false;
                 using var guardCancellation = new CancellationTokenSource();
                 var authenticator = new SteamAccount.GuardAuthenticator(guardAccount, guardCancellation.Token);
+                // Exercise SteamKit's real QR confirmation selection without connecting or approving a login.
+                var qrResponse = new CAuthentication_BeginAuthSessionViaQR_Response { client_id = 1, interval = 1, challenge_url = "https://s.team/q/1/fixture" };
+                qrResponse.allowed_confirmations.Add(new CAuthentication_AllowedConfirmation { confirmation_type = EAuthSessionGuardType.k_EAuthSessionGuardType_DeviceConfirmation });
+                QrAuthSession QrSession(IAuthenticator? handler) => (QrAuthSession)Activator.CreateInstance(typeof(QrAuthSession), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, null, [guardAccount.Client.Authentication, handler!, qrResponse], null)!;
+                using (var canceledQr = new CancellationTokenSource()) {
+                    canceledQr.Cancel();
+                    var qrDetails = guardAccount.AuthenticationDetails("must-not-use-password", true, canceledQr.Token);
+                    if (qrDetails.Password != null) return 57;
+                    try { await QrSession(qrDetails.Authenticator).PollingWaitForResultAsync(canceledQr.Token).ConfigureAwait(false); return 58; }
+                    catch (OperationCanceledException) { }
+                    try { await QrSession(authenticator).PollingWaitForResultAsync(canceledQr.Token).ConfigureAwait(false); return 59; }
+                    catch (InvalidOperationException) { } // Negative control reproduces the previous immediate failure.
+                }
                 var device = authenticator.GetDeviceCodeAsync(false);
                 if (!Challenges.TryGetValue(authId, out var challenge) || challenge.Type != EUserInputType.TwoFactorAuthentication) return 34;
                 challenge.Completion.TrySetResult("12345");

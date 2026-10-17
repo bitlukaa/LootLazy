@@ -6,7 +6,7 @@
  function syncPrivacy(){const login=el('account-login');if(login){login.classList.toggle('privacy-blurred',privacyBlurred);login.tabIndex=privacyBlurred?0:-1;}const toggle=el('account-edit-privacy-toggle');if(toggle)toggle.setAttribute('aria-checked',String(privacyBlurred));}
  try{model.names=JSON.parse(localStorage.getItem('lootlazy_account_games')||'{}');model.selected=localStorage.getItem('lootlazy_selected_account');}catch{model.names={};}
  const message=error=>{const key=nativeErrorCode(error,['accounts_']);return t(key.startsWith('accounts_')&&I18N.en[key]?key:'accounts_failed');};
- function showError(error){const credential=auth?.method==='password'&&['accounts_credentials_invalid','accounts_login_failed'].includes(nativeErrorCode(error,['accounts_']));const target=el(credential?'account-credentials-error':auth?'account-auth-error':'accounts-error');target.textContent=message(error);target.hidden=false;if(credential){el('account-auth-error').hidden=true;for(const id of ['account-auth-login','account-auth-password'])el(id).setAttribute('aria-invalid','true');}}
+ function showError(error){const credential=auth?.method==='password'&&['accounts_credentials_invalid'].includes(nativeErrorCode(error,['accounts_']));const target=el(credential?'account-credentials-error':auth?'account-auth-error':'accounts-error');target.textContent=message(error);target.hidden=false;if(credential){el('account-auth-error').hidden=true;for(const id of ['account-auth-login','account-auth-password'])el(id).setAttribute('aria-invalid','true');}}
  function gameArtwork(id){const image=document.createElement('span');image.className='artwork account-game-art';image.setAttribute('aria-hidden','true');image.innerHTML=artwork({third_party_skus:[{distributor:'steam',id:String(id)}]});return image;}
  function accountAvatar(account){const node=document.createElement('span');node.className='account-avatar';node.setAttribute('aria-hidden','true');node.dataset.initials=Array.from(account.label||'?').slice(0,2).join('').toUpperCase();if(/^https:\/\/avatars\.steamstatic\.com\/[a-f0-9]{40}_medium\.jpg$/i.test(account.avatarUrl||'')){const img=document.createElement('img');img.src='http://artwork.localhost/?url='+encodeURIComponent(account.avatarUrl);img.alt='';img.loading='lazy';img.onerror=()=>img.remove();node.append(img);}return node;}
  function selected(){return model.accounts.find(account=>account.id===model.selected&&!account.draft);}
@@ -108,8 +108,9 @@
    if(context.challenge!==input.id){context.challenge=input.id;el('account-guard-code').value='';el('account-guard-code').focus();}
    clearQr();expireQr();el('account-qr-status').textContent=t('accounts_auth_pending');
   }
-  if(account?.error){
-   if(['accounts_credentials_invalid','accounts_login_failed'].includes(account.error)&&context.method!=='qr'){el('account-credentials-error').textContent=t('accounts_credentials_invalid');el('account-credentials-error').hidden=false;el('account-auth-login').setAttribute('aria-invalid','true');el('account-auth-password').setAttribute('aria-invalid','true');el('account-auth-error').hidden=true;}
+  const staleQrError=context.method==='password'&&['accounts_qr_failed','accounts_qr_expired','accounts_qr_mismatch'].includes(account?.error);
+  if(account?.error&&!staleQrError){
+   if(['accounts_credentials_invalid'].includes(account.error)&&context.method!=='qr'){el('account-credentials-error').textContent=t('accounts_credentials_invalid');el('account-credentials-error').hidden=false;el('account-auth-login').setAttribute('aria-invalid','true');el('account-auth-password').setAttribute('aria-invalid','true');el('account-auth-error').hidden=true;}
    else
    if(context.method==='qr'&&['accounts_qr_failed','accounts_qr_expired'].includes(account.error)){el('account-auth-error').hidden=true;expireQr();}
    else{showError(account.error);if(context.method==='qr')expireQr();}

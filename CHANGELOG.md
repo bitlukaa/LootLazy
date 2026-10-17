@@ -1,5 +1,13 @@
 # Release history
 
+## 3.11.1
+
+- Fix QR authentication configuration that immediately rejected mobile confirmation; verify creation and refresh against Steam without approving an account.
+- Prevent stale QR failures from appearing in password/Guard sign-in; clear prior Guard errors when submitting a new code.
+- Bound authentication polling by cancellation and distinguish timeout/unexpected failures from transport errors. Add bounded local diagnostics containing stage, exception type and Steam result only.
+- Read generated dependency notices as UTF-8 on Windows PowerShell.
+
+
 ## 3.11.0
 
 - Promote the standalone SteamKit2 account engine and English interface to Stable.

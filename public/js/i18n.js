@@ -457,3 +457,5 @@ Object.assign(I18N.en,{game_time_badge_note:"Choose a game and start a continuou
 Object.assign(I18N.en,{accounts_save_failed:"Could not save your Steam login on this device. Check available storage and try again."});
 
 Object.assign(I18N.en,{accounts_rate_limited:"Steam temporarily limited sign-ins. Wait before trying again.",accounts_privacy_save_failed:"Could not save this privacy setting on this device.",accounts_hide_username_desc:"Visually blur Steam login names on this device. Hover or focus to reveal."});
+
+Object.assign(I18N.en,{accounts_auth_expired:"This sign-in attempt timed out. Sign in again to get a new code."});

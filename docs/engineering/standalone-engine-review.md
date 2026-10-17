@@ -35,3 +35,9 @@ Privacy remains a device-wide visual blur on the account detail Steam login. Mou
 Regression coverage includes token expiry, retry classification/backoff, login-gate cancellation, session suspension/resumption and Stop while suspended; renderer coverage includes privacy persistence after reload, hover/focus reveal and denied storage. Final release CI and signature/feed verification are required before deleting Beta releases.
 
 Idle background reconnection without play intent does not block installing an update; active authentication, Guard prompts, account drafts and recoverable game sessions still do. The updater shuts down the parent-owned engine before replacement.
+
+## 3.11.1 QR repair and authentication diagnostics
+
+QR now uses no password Guard authenticator: returning false from AcceptDeviceConfirmationAsync caused SteamKit to reject QR sessions because they have no code fallback. A regression invokes the real SteamKit QrAuthSession confirmation selection and reproduces the old failure as a negative control. Anonymous live probes generated two distinct QR challenges, confirmed polling remained pending, and canceled each without scanning or approving any login.
+
+Password authentication retains code-entry callbacks. Renderer coverage verifies stale QR errors cannot leak into the email-code step. Unexpected exceptions are no longer labeled connection failures or incorrect credentials indiscriminately. A bounded auth-diagnostic.log in the engine state directory records only UTC time, fixed stage, exception type and Steam EResult; no exception message/stack, account identifier, password, Guard code, QR payload or token is recorded. A live password/email-code completion failure reported by the user has not been reproduced with a dedicated account; this release must not claim that path is certified.
