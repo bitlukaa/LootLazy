@@ -246,6 +246,25 @@ impl Rotation {
                         .saturating_sub(1)
                 ));
             }
+            "move" => {
+                let target = body["targetId"].as_str().ok_or("Invalid game")?;
+                let items = self.data["items"].as_array().unwrap();
+                let target_index = items
+                    .iter()
+                    .position(|item| item["id"] == target)
+                    .ok_or("Game not found")?;
+                if target == id
+                    || (self.active() && target_index <= self.index())
+                    || items[target_index]["state"] == "completed"
+                {
+                    return Err("Only upcoming games can be edited".into());
+                }
+                let items = self.data["items"].as_array_mut().unwrap();
+                let item = items.remove(index);
+                let position = items.iter().position(|item| item["id"] == target).unwrap()
+                    + usize::from(body["after"] == true);
+                items.insert(position, item);
+            }
             "up" | "down" => {
                 let next = if body["action"] == "up" {
                     index.saturating_sub(1)
@@ -859,6 +878,36 @@ mod tests {
             std::process::id(),
             rand::random::<u64>()
         ))
+    }
+    #[test]
+    fn drag_reorder_preserves_items_and_rejects_current_game_edits() {
+        let file = path();
+        let mut rotation = Rotation::new(file.clone());
+        rotation
+            .replace(vec![
+                item(&json!({"id":"100001","name":"One"}), 5),
+                item(&json!({"id":"100002","name":"Two"}), 5),
+                item(&json!({"id":"100003","name":"Three"}), 5),
+            ])
+            .unwrap();
+        rotation
+            .edit(&json!({"action":"move","id":"100003","targetId":"100001","after":false}))
+            .unwrap();
+        assert_eq!(rotation.data["items"][0]["id"], "100003");
+        assert_eq!(Rotation::new(file.clone()).data["items"][0]["id"], "100003");
+        rotation.prepare().unwrap();
+        rotation.running();
+        let before = rotation.data["items"].clone();
+        assert!(rotation
+            .edit(&json!({"action":"move","id":"100002","targetId":"100003","after":false}))
+            .is_err());
+        assert_eq!(rotation.data["items"], before);
+        rotation
+            .edit(&json!({"action":"move","id":"100002","targetId":"100001","after":false}))
+            .unwrap();
+        assert_eq!(rotation.data["items"][0]["id"], "100003");
+        assert_eq!(rotation.data["items"][1]["id"], "100002");
+        let _ = fs::remove_file(file);
     }
     #[test]
     fn variety_restart_requires_a_new_count_even_after_progress() {

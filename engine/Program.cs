@@ -158,7 +158,13 @@ internal sealed class SteamAccount : IDisposable {
     internal volatile uint PlayingAppId;
     private readonly uint LoginId = NewLoginId();
     private int AuthenticationGeneration;
-    private CancellationTokenSource? AuthenticationCancellation;
+    private CancellationTokenSource? AuthenticationCancellation, QrCancellation;
+    private readonly SemaphoreSlim AuthConnectGate = new(1, 1);
+    private int AuthenticationWinner;
+    internal bool CanParallelAuthentication => Authenticating && Volatile.Read(ref AuthenticationWinner) == 0;
+    internal bool HasCredentialAttempt => AuthenticationCancellation != null;
+    internal void CancelQrAttempt() { var source = Interlocked.Exchange(ref QrCancellation, null); try { source?.Cancel(); } catch (ObjectDisposedException) { } }
+
     private TaskCompletionSource ConnectionReady = NewSignal();
     private TaskCompletionSource? PendingDisconnect;
     private static TaskCompletionSource NewSignal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -254,6 +260,7 @@ internal sealed class SteamAccount : IDisposable {
         if (Authenticating) {
             Program.RecordAuthFailure("connection_lost_during_auth", new IOException());
             try { AuthenticationCancellation?.Cancel(); } catch (ObjectDisposedException) { }
+            CancelQrAttempt();
             return;
         }
         ScheduleConnect(LoginPacer.RetryDelay(++ConnectionFailures));
@@ -368,15 +375,24 @@ internal sealed class SteamAccount : IDisposable {
         if (!qr && string.IsNullOrEmpty(password)) { Start(); return; }
         if (LoginPacer.CoolingDown) throw new InvalidOperationException("accounts_rate_limited");
         if (RunCancellation.IsCancellationRequested) RunCancellation = new CancellationTokenSource();
+        if (!Authenticating) { Interlocked.Increment(ref AuthenticationGeneration); Interlocked.Exchange(ref AuthenticationWinner, 0); }
         Authenticating = true;
         KeepRunning = true;
-        int generation = Interlocked.Increment(ref AuthenticationGeneration);
+        int generation = AuthenticationGeneration;
         var flow = Program.BeginConnection(this);
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(flow.Token, Disposed.Token);
         cancellation.CancelAfter(TimeSpan.FromMinutes(3));
-        AuthenticationCancellation = cancellation;
+        var old = qr ? Interlocked.Exchange(ref QrCancellation, cancellation) : Interlocked.Exchange(ref AuthenticationCancellation, cancellation);
+        try { old?.Cancel(); } catch (ObjectDisposedException) { }
         string? attempt = Program.QrAttemptId(this);
         string authStage = "connect";
+        bool won = false;
+        bool Current() => generation == AuthenticationGeneration && KeepRunning && (!qr || attempt == Program.QrAttemptId(this));
+        bool OtherAttempt() => qr ? AuthenticationCancellation != null : QrCancellation != null;
+        void Failed(string code) {
+            if (qr) Program.QrAuthenticationFailed(this, attempt, code); else Program.AuthenticationFailed(this, code);
+            if (won || !OtherAttempt()) Stop();
+        }
         _ = Task.Run(async () => {
             using (flow)
             using (cancellation) {
@@ -386,10 +402,13 @@ internal sealed class SteamAccount : IDisposable {
                     if (disconnect != null) await disconnect.Task.WaitAsync(token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
                     await LoginPacer.WaitAsync(token).ConfigureAwait(false);
-                    if (!Client.IsConnected) {
-                        Client.Connect();
-                        await ConnectionReady.Task.WaitAsync(token).ConfigureAwait(false);
-                    }
+                    await AuthConnectGate.WaitAsync(token).ConfigureAwait(false);
+                    try {
+                        if (!Client.IsConnected) {
+                            Client.Connect();
+                            await ConnectionReady.Task.WaitAsync(token).ConfigureAwait(false);
+                        }
+                    } finally { AuthConnectGate.Release(); }
                     authStage = "begin";
                     var details = AuthenticationDetails(password, qr, token);
                     AuthPollResult result;
@@ -412,6 +431,10 @@ internal sealed class SteamAccount : IDisposable {
                     if (!string.IsNullOrEmpty(Login) && !result.AccountName.Equals(Login, StringComparison.OrdinalIgnoreCase)) {
                         throw new InvalidOperationException("accounts_qr_mismatch");
                     }
+                    if (!Current() || Interlocked.CompareExchange(ref AuthenticationWinner, 1, 0) != 0) return;
+                    won = true;
+                    var other = qr ? AuthenticationCancellation : QrCancellation;
+                    try { other?.Cancel(); } catch (ObjectDisposedException) { }
                     authStage = "save";
                     Database ??= new BotDatabase(Path.Combine("config", Id + ".db"));
                     try { await Database.StoreLogin(result.RefreshToken, result.NewGuardData).ConfigureAwait(false); }
@@ -424,25 +447,27 @@ internal sealed class SteamAccount : IDisposable {
                     authStage = "logon";
                     LogOnInternal();
                 } catch (OperationCanceledException) {
-                    if (generation == AuthenticationGeneration && KeepRunning) {
+                    if (Current() && (won || Volatile.Read(ref AuthenticationWinner) == 0)) {
                         Program.RecordAuthFailure(authStage, new OperationCanceledException());
-                        Program.AuthenticationFailed(this, LoginPacer.CoolingDown ? "accounts_rate_limited" : qr ? "accounts_qr_expired" : Client.IsConnected ? "accounts_auth_expired" : "accounts_connection_failed");
-                        Stop();
+                        Failed(LoginPacer.CoolingDown ? "accounts_rate_limited" : qr ? "accounts_qr_expired" : Client.IsConnected ? "accounts_auth_expired" : "accounts_connection_failed");
                     }
                 } catch (Exception error) {
-                    if (generation == AuthenticationGeneration) {
+                    if (Current() && (won || Volatile.Read(ref AuthenticationWinner) == 0)) {
                         Program.RecordAuthFailure(authStage, error);
                         if (error is AuthenticationException limited && LoginPacer.IsThrottled(limited.Result)) LoginPacer.Throttled();
                         string code = error is AuthenticationException authError ? LoginPacer.IsThrottled(authError.Result) ? "accounts_rate_limited" : Program.LoginError(authError.Result) ?? "accounts_login_failed"
                             : error is InvalidOperationException && error.Message is "accounts_qr_mismatch" or "accounts_save_failed" ? error.Message
                             : qr ? "accounts_qr_failed" : error is IOException or System.Net.Sockets.SocketException ? "accounts_connection_failed" : "accounts_login_failed";
-                        Program.AuthenticationFailed(this, code);
-                        Stop();
+                        Failed(code);
                     }
                 } finally {
                     password = "";
-                    if (generation == AuthenticationGeneration) Authenticating = false;
-                    Interlocked.CompareExchange(ref AuthenticationCancellation, null, cancellation);
+                    if (qr) Interlocked.CompareExchange(ref QrCancellation, null, cancellation);
+                    else Interlocked.CompareExchange(ref AuthenticationCancellation, null, cancellation);
+                    if (generation == AuthenticationGeneration && Volatile.Read(ref AuthenticationWinner) == 0) {
+                        Authenticating = AuthenticationCancellation != null || QrCancellation != null;
+                        if (!Authenticating && KeepRunning) Stop();
+                    }
                 }
             }
         });
@@ -510,6 +535,7 @@ internal sealed class SteamAccount : IDisposable {
         Interlocked.Increment(ref AuthenticationGeneration);
         var cancellation = Interlocked.Exchange(ref AuthenticationCancellation, null);
         try { cancellation?.Cancel(); } catch (ObjectDisposedException) { }
+        CancelQrAttempt();
         Authenticating = false;
         Program.StopRequested(this);
         if (Client.IsConnected) {
@@ -649,12 +675,12 @@ internal static class Program {
 
     internal static void QrMismatch(SteamAccount account) => AuthErrors[account.Id] = "accounts_qr_mismatch";
 
-    internal static bool QrFailed(SteamAccount account, string? attempt) {
-        if (attempt == null || QrAttemptId(account) != attempt) return false;
-        AuthErrors.TryAdd(account.Id, "accounts_qr_failed");
-        QrLogins.TryRemove(account.Id, out _);
+    private static readonly ConcurrentDictionary<string, string> QrErrors = new(StringComparer.Ordinal);
+    internal static void QrAuthenticationFailed(SteamAccount account, string? attempt, string code) {
+        if (attempt == null || attempt != QrAttemptId(account)) return;
+        QrErrors[account.Id] = code;
         QrCodes.TryRemove(account.Id, out _);
-        return true;
+        QrLogins.TryRemove(account.Id, out _);
     }
 
     private static bool IsBusy() => Drafts.Count > 0 || Challenges.Count > 0 || Sessions.Values.Any(session => session.Games.Length > 0) || AccountsMap.Values.Any(a => a.Authenticating);
@@ -822,7 +848,7 @@ internal static class Program {
         string clean = name.ToString().Trim();
         return clean.Length == 0 ? null : clean;
     }
-    internal static string ResolveProfileLabel(string current, bool custom, string? profile) => custom ? current : CleanProfileName(profile) ?? current;
+    internal static string ResolveProfileLabel(string current, bool custom, string? profile) => CleanProfileName(profile) ?? current;
 
     private static void RefreshProfiles() {
         var changed = new Dictionary<string, Account>();
@@ -867,6 +893,7 @@ internal static class Program {
                 canResume = CanResume(account, client),
                 state,
                 connected,
+                authenticating = client?.Authenticating == true,
                 active = client?.KeepRunning == true,
                 steamId = client?.SSteamID ?? "0",
                 input = input == null ? null : new { id = input.Id, type = input.Type.ToString() },
@@ -924,7 +951,7 @@ internal static class Program {
     }
 
     private static async Task<object> Handle(string command, JsonElement body) {
-        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr", "commit", "disconnect", "presence", "resume", "rename" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
+        if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr", "commit", "disconnect", "presence", "resume", "rename", "reorder" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
         await BindQrIdentities().ConfigureAwait(false);
         RefreshProfiles();
         if (command == "status") return Snapshot();
@@ -947,10 +974,21 @@ internal static class Program {
             Save();
             return Snapshot();
         }
+        if (command == "reorder") {
+            if (!body.TryGetProperty("ids", out var values) || values.ValueKind != JsonValueKind.Array) Fail("accounts_invalid");
+            var ids = values.EnumerateArray().Select(value => value.ValueKind == JsonValueKind.String ? value.GetString()! : "").ToArray();
+            var saved = Accounts.Values.Where(account => !Drafts.Contains(account.Id)).ToArray();
+            if (ids.Length != saved.Length || ids.Distinct(StringComparer.Ordinal).Count() != ids.Length || !ids.ToHashSet(StringComparer.Ordinal).SetEquals(saved.Select(account => account.Id))) Fail("accounts_invalid");
+            var previous = Accounts.Values.ToArray();
+            var ordered = ids.Select(id => Accounts[id]).Concat(previous.Where(account => Drafts.Contains(account.Id))).ToArray();
+            Accounts.Clear(); foreach (var account in ordered) Accounts.Add(account.Id, account);
+            try { Save(); } catch { Accounts.Clear(); foreach (var account in previous) Accounts.Add(account.Id, account); throw; }
+            return Snapshot();
+        }
         var entry = Find(body);
         AccountsMap.TryGetValue(entry.Id, out var selected);
         if (command == "remove") {
-            QrLogins.TryRemove(entry.Id, out _); QrCodes.TryRemove(entry.Id, out _); AuthErrors.TryRemove(entry.Id, out _);
+            QrLogins.TryRemove(entry.Id, out _); QrCodes.TryRemove(entry.Id, out _); AuthErrors.TryRemove(entry.Id, out _); QrErrors.TryRemove(entry.Id, out _);
             if (Challenges.TryRemove(entry.Id, out var pending)) pending.Completion.TrySetResult(null);
             Restoring.TryRemove(entry.Id, out _);
             Sessions.TryRemove(entry.Id, out _);
@@ -1020,7 +1058,7 @@ internal static class Program {
             QrCodes.TryGetValue(entry.Id, out var qr);
             bool pending = WantsQrLogin(selected) && selected.KeepRunning && !selected.IsConnectedAndLoggedOn;
             string[]? rows = pending && qr != null && qr.Attempt == QrAttemptId(selected) ? EncodeQr(qr.Payload) : null;
-            return new { rows, revision = rows == null ? null : qr!.Revision, pending, active = IsBusy() };
+            return new { rows, revision = rows == null ? null : qr!.Revision, pending, error = QrErrors.TryGetValue(entry.Id, out var qrError) ? qrError : null, active = IsBusy() };
         }
         if (command == "library") { if (!selected.IsConnectedAndLoggedOn) { Fail("accounts_not_ready"); return null!; } return LibraryResult(selected, body); }
         if (command == "commit") {
@@ -1045,15 +1083,15 @@ internal static class Program {
             return Snapshot();
         }
         if (command == "signin") {
-            if (selected.KeepRunning) Fail("accounts_stop_first");
-            await WaitConnections(entry.Id).ConfigureAwait(false);
+            bool qr = Text(body, "method") == "qr";
+            if (selected.KeepRunning && !selected.CanParallelAuthentication) Fail("accounts_stop_first");
+            if (!selected.CanParallelAuthentication) await WaitConnections(entry.Id).ConfigureAwait(false);
             Restoring.TryRemove(entry.Id, out _);
-            AuthErrors.TryRemove(entry.Id, out _); QrCodes.TryRemove(entry.Id, out _);
+            if (!qr) AuthErrors.TryRemove(entry.Id, out _);
             Sessions.TryRemove(entry.Id, out _);
             Libraries.TryRemove(entry.Id, out _); LibraryRequests.TryRemove(entry.Id, out _); LibraryErrors.TryRemove(entry.Id, out _);
             string password = Text(body, "password");
             if (password.Length > 256) Fail("accounts_invalid");
-            bool qr = Text(body, "method") == "qr";
             if (!qr && entry.Login.Length == 0) {
                 string login = Text(body, "login").Trim();
                 if (!ValidLogin(login)) Fail("accounts_invalid");
@@ -1061,8 +1099,8 @@ internal static class Program {
                 entry = entry with { Login = login }; WriteConfig(entry); Accounts[entry.Id] = entry; Save();
             }
             if (!qr && !ValidLogin(entry.Login)) Fail("accounts_invalid");
-            if (qr) QrLogins[entry.Id] = DateTimeOffset.UtcNow.AddMinutes(3); else QrLogins.TryRemove(entry.Id, out _);
-            selected.Login = qr && Drafts.Contains(entry.Id) ? "" : entry.Login;
+            if (qr) { QrLogins[entry.Id] = DateTimeOffset.UtcNow.AddMinutes(3); QrCodes.TryRemove(entry.Id, out _); QrErrors.TryRemove(entry.Id, out _); }
+            selected.Login = entry.Login;
             selected.DesiredPersona = Persona(entry.Presence);
             selected.BeginSignIn(password, qr);
         } else if (command == "input") {
@@ -1110,9 +1148,9 @@ internal static class Program {
                 if (pair.Value > DateTimeOffset.UtcNow || (AccountsMap.TryGetValue(pair.Key, out var connectedAccount) && connectedAccount.IsConnectedAndLoggedOn)) continue;
                 if (((ICollection<KeyValuePair<string, DateTimeOffset>>)QrLogins).Remove(pair) && AccountsMap.TryGetValue(pair.Key, out var qrAccount) && !qrAccount.IsConnectedAndLoggedOn) {
                     QrCodes.TryRemove(pair.Key, out _);
-                    AuthErrors[pair.Key] = "accounts_qr_expired";
-                    CancelConnections(pair.Key);
-                    qrAccount.Stop(true);
+                    QrErrors[pair.Key] = "accounts_qr_expired";
+                    qrAccount.CancelQrAttempt();
+                    if (!qrAccount.HasCredentialAttempt) qrAccount.Stop(true);
                 }
             }
             foreach (var pair in Sessions) {
@@ -1226,14 +1264,14 @@ internal static class Program {
             RecordAuthFailure("fixture", new IOException("secret-fixture"));
             if (new FileInfo("auth-diagnostic.log").Length > 1024) return 61;
 
-            if (ResolveProfileLabel("Steam account", false, " Gamer 🎮\n") != "Gamer 🎮" || ResolveProfileLabel("My name", true, "Steam name") != "My name" || ResolveProfileLabel("Steam account", false, null) != "Steam account") return 62;
+            if (ResolveProfileLabel("Steam account", false, " Gamer 🎮\n") != "Gamer 🎮" || ResolveProfileLabel("My name", true, "Steam name") != "Steam name" || ResolveProfileLabel("Steam account", false, null) != "Steam account") return 62;
             if (CleanProfileName(new string('a', 60))?.Length != 48 || CleanProfileName(string.Concat(Enumerable.Repeat("🎮", 40)))?.Length != 48) return 63;
             var automaticProfile = new Account("fixture", "Steam account", "fixture", [], CustomLabel: false);
             var roundTripProfile = JsonSerializer.Deserialize<Account>(JsonSerializer.Serialize(automaticProfile, JsonOptions), JsonOptions)!;
             if (roundTripProfile.CustomLabel || ResolveProfileLabel(roundTripProfile.Label, roundTripProfile.CustomLabel, "Steam profile") != "Steam profile") return 64;
             using (var legacyProfile = JsonDocument.Parse(JsonSerializer.Serialize(new { id = "fixture", label = "Existing name", login = "fixture", games = Array.Empty<uint>() }))) {
                 var restoredProfile = legacyProfile.RootElement.Deserialize<Account>(JsonOptions)!;
-                if (!restoredProfile.CustomLabel || ResolveProfileLabel(restoredProfile.Label, restoredProfile.CustomLabel, "Steam name") != "Existing name") return 65;
+                if (!restoredProfile.CustomLabel || ResolveProfileLabel(restoredProfile.Label, restoredProfile.CustomLabel, "Steam name") != "Steam name") return 65;
             }
 
             var ids = Enumerable.Range(0, 64).Select(_ => SteamAccount.NewLoginId()).ToArray();

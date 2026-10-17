@@ -266,6 +266,7 @@ pub fn request(root: &Path, command: &str, body: Value) -> Result<Value, String>
         "presence",
         "resume",
         "rename",
+        "reorder",
     ]
     .contains(&command)
     {
@@ -342,5 +343,48 @@ mod tests {
             "accounts_invalid"
         );
         assert!(!active());
+    }
+}
+
+pub fn guard_desktop_session() -> Result<(), String> {
+    let Some(id) = crate::steam_client::account_id() else {
+        return Ok(());
+    };
+    let mut guard = ENGINE.lock().map_err(|_| "accounts_engine_failed")?;
+    let Some(engine) = guard.as_mut() else {
+        return Ok(());
+    };
+    let result = engine.request("status", json!({}))?;
+    if desktop_conflict(&result, id) {
+        return Err("steam_multi_account_active".into());
+    }
+    Ok(())
+}
+
+fn desktop_conflict(snapshot: &Value, id: u64) -> bool {
+    let id = id.to_string();
+    snapshot["accounts"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .any(|account| {
+            account["steamId"].as_str() == Some(id.as_str())
+                && (account["runningGameCount"].as_u64().unwrap_or(0) > 0
+                    || account["recovering"] == true)
+        })
+}
+#[cfg(test)]
+mod desktop_guard_tests {
+    use super::*;
+    #[test]
+    fn blocks_only_the_matching_account_with_play_intent() {
+        let snapshot = json!({"accounts":[{"steamId":"76561198000000000","runningGameCount":1},{"steamId":"76561198000000001","runningGameCount":0}]});
+        assert!(desktop_conflict(&snapshot, 76561198000000000));
+        assert!(!desktop_conflict(&snapshot, 76561198000000001));
+        assert!(!desktop_conflict(&snapshot, 76561198000000002));
+        assert!(desktop_conflict(
+            &json!({"accounts":[{"steamId":"76561198000000000","recovering":true}]}),
+            76561198000000000
+        ));
     }
 }

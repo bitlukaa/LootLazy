@@ -1,5 +1,18 @@
 # Release history
 
+## 3.11.3
+
+- Separate QR/password authentication attempts, preserve QR beside Guard input and isolate failures; periodically regenerate expired QR challenges with bounded retries.
+- Restore waiting animations and place Guard validation messages beneath the code field.
+- Replace Variety readiness text with App ID, remove idle time totals, keep the running countdown and offer 1/5/custom minute durations.
+- Persist long-press drag ordering for accounts and game lineups.
+- Pin searched Steam Idle games and prevent a known matching-account conflict with Multi-Account Idle before desktop game starts.
+- Use Steam profile names, remove the local label pencil and place username privacy above the account list.
+- Simplify theme/language/channel controls, separate update indicators from session notification history, label notifications by service, and use the Steam mark without a custom gradient.
+- Add a read-only Report player preparation helper. Report submission remains manual through Steam Community.
+- Investigate SAM library filtering without copying its source or consuming its maintained list.
+
+
 ## 3.11.2
 
 - Show pending password/Guard authentication with progress indicators and prevent duplicate submissions.

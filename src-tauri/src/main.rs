@@ -8,6 +8,7 @@ mod feed;
 mod metadata;
 mod platform_download;
 mod platform_environment;
+mod player_report;
 mod presence;
 mod rotation;
 mod steam_accounts;
@@ -158,6 +159,8 @@ async fn api(
     let result = tauri::async_runtime::spawn_blocking(move || {
         let url =
             url::Url::parse(&format!("http://localhost{route}")).map_err(|e| e.to_string())?;
+        if url.path()=="/api/player-report/preview" {return player_report::preview(body["profile"].as_str().unwrap_or(""));}
+        if url.path()=="/api/player-report/open" {player_report::open(body["profile"].as_str().unwrap_or(""))?;return Ok(serde_json::json!({"opened":true,"submitted":false}));}
         if url.path()=="/api/achievements/games" {let (root,dll,roots,seeds)={let mut backend=state.lock().map_err(|_|"Backend unavailable")?;let (dll,roots,seeds)=backend.achievement_library_context()?;(backend.root.clone(),dll,roots,seeds)};return achievements::library(&root,&dll,&roots,&seeds);}
         if let Some(command) = url.path().strip_prefix("/api/achievements/") {
             let (root, dll) = { let mut backend = state.lock().map_err(|_| "Backend unavailable")?; (backend.root.clone(), backend.achievement_runtime()?) };

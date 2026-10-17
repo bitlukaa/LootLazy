@@ -463,3 +463,9 @@ Object.assign(I18N.en,{accounts_auth_expired:"This sign-in attempt timed out. Si
 Object.assign(I18N.en,{accounts_label:"Profile name",accounts_edit_label:"Edit profile name",accounts_profile_name_hint:"Changes only the name shown in LootLazy."});
 
 Object.assign(I18N.en,{accounts_signing_in:"Signing in…",accounts_checking_code:"Verifying code…"});
+
+Object.assign(I18N.en,{duration_1m:"1 min",theme_mode_hint:"Light / Dark Mode",accounts_reorder:"Hold and drag to reorder accounts",games_reorder:"Hold and drag to reorder games"});
+
+Object.assign(I18N.en,{steam_pin:"Add to Steam Idle library",steam_unpin:"Remove from Steam Idle library",steam_multi_account_active:"This Steam account is running games in Multi-Account Idle. Stop that session before starting Steam Idle."});
+
+Object.assign(I18N.en,{report_player:"Report player",report_intro:"Prepare a suspected cheating report and review the profile before opening Steam.",report_profile:"Steam profile URL or SteamID64",report_review:"Review profile",report_game:"Game",report_games_hint:"Only publicly visible recent games can be listed. Steam may offer a different list in its reporting form.",report_description:"Description",report_copy:"Copy description",report_open:"Open profile in Steam Community",report_manual_note:"Submission happens in Steam: More → Report Player → They are cheating. This helper does not send reports from your LootLazy accounts.",report_default_description:"Suspected cheating. Please review this account.",report_copied:"Description copied. Review it before submitting in Steam.",report_copy_failed:"Could not copy. You can select and copy the description manually.",report_opened:"Profile opened. No report has been submitted by LootLazy.",report_profile_invalid:"Enter a valid Steam Community profile URL or SteamID64.",report_profile_unavailable:"Could not load the public profile. Check the link and try again."});

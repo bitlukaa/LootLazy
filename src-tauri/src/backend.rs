@@ -611,6 +611,7 @@ impl Backend {
         self.refresh_steam_runtime();
         let dll = self.steam_runtime.clone().ok_or("steam_runtime_missing")?;
         self.ensure_steam_client()?;
+        crate::steam_accounts::guard_desktop_session()?;
         self.start_game_process(item)?;
         let mut steam_game = game;
         steam_game["steamId"] = json!(steam_id);
@@ -784,6 +785,7 @@ impl Backend {
             if ["idle_timeout", "variety_completed"].contains(&reason) {
                 self.last_finished = Some(json!({
                     "gameName": session["gameName"],
+                    "service": if !quest.is_empty() { "quests" } else if session["varietySession"] == true { "variety" } else if session["pairedSteamId"].is_string() { "steam" } else { "simulator" },
                     "questId": quest,
                     "steamId": session["pairedSteamId"],
                     "reason": reason,
@@ -1737,6 +1739,19 @@ impl Backend {
             .filter_map(|v| v.as_str().map(PathBuf::from))
             .collect();
         let mut games = crate::rotation::installed_games(&crate::rotation::libraries(&extra));
+        let pinned = storage::read(&self.root.join("data/steam-library.json"), json!([]));
+        for item in pinned.as_array().into_iter().flatten() {
+            let mut game = item.clone();
+            game["pinned"] = json!(true);
+            if let Some(installed) = games
+                .iter_mut()
+                .find(|game| game["steamId"] == item["steamId"])
+            {
+                installed["pinned"] = json!(true);
+            } else {
+                games.push(game);
+            }
+        }
         let mut seen: std::collections::HashSet<String> = games
             .iter()
             .filter_map(|g| g["steamId"].as_str().map(str::to_string))
@@ -1978,6 +1993,31 @@ impl Backend {
             "/api/steam/status" => Ok(
                 json!({"rotation":self.steam_idle.status(),"runtimeReady":self.steam_runtime.is_some()}),
             ),
+            "/api/steam/pin" => {
+                let id = text(&body, "steamId");
+                if !id.parse::<u32>().is_ok_and(|id| id > 0) {
+                    return Err("steam_invalid".into());
+                }
+                let game = self
+                    .steam_games()
+                    .into_iter()
+                    .find(|game| game["steamId"] == id)
+                    .ok_or("Steam game not found")?;
+                let path = self.root.join("data/steam-library.json");
+                let mut saved = storage::read(&path, json!([]))
+                    .as_array()
+                    .cloned()
+                    .unwrap_or_default();
+                saved.retain(|game| game["steamId"] != id);
+                if body["pinned"] != false {
+                    if saved.len() >= 500 {
+                        return Err("steam_session_limit".into());
+                    }
+                    saved.push(json!({"steamId":id,"id":id,"name":game["name"],"installed":false,"pinned":true}));
+                }
+                storage::save(&path, &json!(saved))?;
+                Ok(json!({"ok":true}))
+            }
             "/api/steam/games" => {
                 self.refresh_steam_runtime();
                 let query = get("q").to_lowercase();
@@ -1986,7 +2026,7 @@ impl Backend {
                     .into_iter()
                     .filter(|g| {
                         if query.is_empty() {
-                            g["installed"] == true
+                            g["installed"] == true || g["pinned"] == true
                         } else {
                             text(g, "name").to_lowercase().contains(&query)
                                 || text(g, "steamId") == query
@@ -2039,6 +2079,7 @@ impl Backend {
                 self.refresh_steam_runtime();
                 let dll = self.steam_runtime.clone().ok_or("steam_runtime_missing")?;
                 self.ensure_steam_client()?;
+                crate::steam_accounts::guard_desktop_session()?;
                 let sessions: Vec<(String, u64)> =
                     if let Some(sessions) = body["sessions"].as_array() {
                         if sessions.len() > 32 {
@@ -2759,6 +2800,30 @@ pub fn fetch_catalog(meta: &Value, has_saved_catalog: bool) -> Result<CatalogDow
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn steam_pinned_library_survives_restart_and_does_not_start_games() {
+        let mut f = Fixture::new();
+        f.0.catalog = vec![
+            json!({"id":"123456","name":"Pinned fixture","third_party_skus":[{"distributor":"steam","id":"730"}]}),
+        ];
+        assert!(f
+            .0
+            .route("/api/steam/pin", json!({"steamId":"730","pinned":true}))
+            .is_ok());
+        assert!(f.0.steam_idle.items.is_empty());
+        let saved = Backend::new(f.0.root.clone()).unwrap();
+        assert!(saved
+            .steam_games()
+            .iter()
+            .any(|game| game["steamId"] == "730" && game["pinned"] == true));
+        f.0.route("/api/steam/pin", json!({"steamId":"730","pinned":false}))
+            .unwrap();
+        assert!(!f.0.steam_games().iter().any(|game| game["pinned"] == true));
+        assert!(f
+            .0
+            .route("/api/steam/pin", json!({"steamId":"../../bad"}))
+            .is_err());
+    }
     #[test]
     fn settings_read_and_write_application_files() {
         let f = Fixture::new();

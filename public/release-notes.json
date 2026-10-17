@@ -1,8 +1,9 @@
 {
-  "version": "3.11.2",
+  "version": "3.11.3",
   "en": [
-    "Show sign-in and Steam Guard progress while waiting for Steam, and prevent duplicate submissions.",
-    "Show QR preparation progress before the code is available, without premature refresh prompts.",
-    "Use Steam profile names for new accounts without an extra label step. Existing saved names and local pencil edits are preserved."
+    "Interface refinements, drag ordering and pinned Steam Idle games.",
+    "Independent QR and password attempts with automatic QR refresh and field-level Guard errors.",
+    "Global username privacy, section-labelled notifications, update indicator and simplified preferences.",
+    "Read-only report preparation helper; automatic multi-account reporting is not implemented."
   ]
 }

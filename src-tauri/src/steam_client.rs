@@ -91,3 +91,30 @@ pub fn installed() -> bool {
         .into_iter()
         .any(|root| root.join("steam.exe").is_file())
 }
+
+#[cfg(windows)]
+pub fn account_id() -> Option<u64> {
+    use windows_sys::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_DWORD};
+    let path: Vec<u16> = "Software\\Valve\\Steam\\ActiveProcess\0"
+        .encode_utf16()
+        .collect();
+    let name: Vec<u16> = "ActiveUser\0".encode_utf16().collect();
+    let mut value = 0u32;
+    let mut size = 4u32;
+    let status = unsafe {
+        RegGetValueW(
+            HKEY_CURRENT_USER,
+            path.as_ptr(),
+            name.as_ptr(),
+            RRF_RT_REG_DWORD,
+            std::ptr::null_mut(),
+            (&mut value as *mut u32).cast(),
+            &mut size,
+        )
+    };
+    (status == 0 && value > 0).then_some(76561197960265728u64 + u64::from(value))
+}
+#[cfg(not(windows))]
+pub fn account_id() -> Option<u64> {
+    None
+}
