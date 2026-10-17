@@ -1,5 +1,12 @@
 # Release history
 
+## 3.11.5
+
+- Replace Home statistic tiles and in-page title with desktop app status, connected Steam accounts, saved recent games and available quests with New badges.
+- Keep direct session controls and navigate recent game/quest cards without automatically starting them.
+- Use the original Valve-signed Steam desktop executable icon in its original colours.
+- Check for updates every five minutes and when returning online or to the app; keep a discovered update visible through transient failures.
+
 ## 3.11.4
 
 - Add Home for running and paused sessions with direct stop/resume controls and queue summaries.

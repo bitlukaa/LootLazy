@@ -1,10 +1,24 @@
 // LootLazy interface translations. Keep application logic and comments in English.
 const I18N = {
   "en": {
+    "home_previous_session": "Previous session",
+    "home_continue": "Continue your session",
+    "home_recent": "Recently played",
+    "home_quests": "Available quests",
+    "home_view_quests": "View quests",
+    "home_new_quest": "New",
+    "home_connected_accounts": "Connected Steam accounts",
+    "home_app_open": "Open",
+    "home_app_closed": "Closed",
+    "home_checking": "Checking\u2026",
+    "home_history_failed": "Recent sessions could not be loaded. Reopen Home to retry.",
+    "home_open_game": "Open game",
+    "home_quest_ends": "Ends {date}",
+
     "tab_home": "Home",
     "home_intro": "Your running sessions, together in one place.",
-    "home_empty_title": "Nothing running right now",
-    "home_empty_hint": "Start a session from Discord or Steam Tools.",
+    "home_empty_title": "Start your first session",
+    "home_empty_hint": "Choose a game from Discord or Steam Tools. Your recent games will appear here.",
     "home_running": "Running",
     "home_paused": "Paused",
     "home_pending": "Queued games",

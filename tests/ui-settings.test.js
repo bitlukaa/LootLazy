@@ -72,3 +72,14 @@ test('update discovery cannot race an active download or restart',async()=>{let 
 test('a pending update check cannot replace installer state with a busy error',async()=>{const state={update:{status:'available'}};let renders=0;const fn=run('loadUpdates',{updatesBusy:false,state,$:()=>({}),busy:()=>{},request:async()=>{state.installingUpdate=true;throw Error('updates_busy');},renderUpdates:()=>{renders++;},window:{lootlazyDiagnostic:true}});await fn(true);assert.equal(state.update.status,'available');assert.equal(renders,0);});
 
 test('native errors retain their actionable domain code through diagnostic wrappers',()=>{const fn=run('nativeErrorCode',{I18N:{en:{operation_failed:'Generic',achievements_not_supported:'Runtime',accounts_credentials_invalid:'Credentials'}}});assert.equal(fn('operation_failed: achievements_not_supported: SteamAPI_Init',['achievements_']),'achievements_not_supported');assert.equal(fn(Error('operation_failed: accounts_credentials_invalid'),['accounts_']),'accounts_credentials_invalid');assert.equal(fn('unrecognized private path',['accounts_']),'');});
+test('transient update failures retain an already discovered update',async()=>{
+ for(const failure of ['throw','offline','rate_limited']){
+  const previous={status:'available',latestVersion:'9.9.9',canInstall:true};const context={updatesBusy:false,state:{update:previous},$:()=>({}),busy:()=>{},request:async()=>{if(failure==='throw')throw Error('offline');return {status:failure};},renderUpdates:()=>{},toast:()=>{},t:key=>key,window:{lootlazyDiagnostic:true}};
+  await run('loadUpdates',context)(true,true);assert.equal(context.state.update.status,'available');assert.equal(context.state.update.latestVersion,'9.9.9');assert.ok(context.state.update.checkError);
+ }
+});
+test('automatic update checks run every five minutes and retry on return or reconnect',()=>{
+ const callbacks={},intervals=[],calls=[];let now=0;const document={hidden:false,addEventListener:(name,fn)=>{callbacks['document:'+name]=fn;}},window={addEventListener:(name,fn)=>{callbacks['window:'+name]=fn;}};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../public/js/update-checks.js'),'utf8'),{document,window,Date:{now:()=>now},setInterval:(fn,ms)=>intervals.push({fn,ms}),loadUpdates:(...args)=>calls.push(args)});
+ callbacks['document:DOMContentLoaded']();assert.equal(intervals[0].ms,300000);now=300000;intervals[0].fn();assert.deepEqual(calls,[[true,true]]);callbacks['window:focus']();assert.equal(calls.length,1);now+=61000;callbacks['window:focus']();assert.equal(calls.length,2);document.hidden=true;now+=300000;intervals[0].fn();assert.equal(calls.length,2);document.hidden=false;callbacks['document:visibilitychange']();assert.equal(calls.length,3);callbacks['window:online']();assert.equal(calls.length,4);
+});

@@ -84,6 +84,9 @@ Discord Quests badge
 Source: https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png
 The original mark belongs to Discord Inc. The interface presents the original badge in its accent color. Platform marks remain the property of their respective owners and are not licensed under LootLazy's MIT license. LootLazy is not affiliated with Discord or Valve.
 
+Steam application icon
+Source: the embedded application icon of the Valve Corp. signed Steam desktop executable. Preserved in its original colours. Steam and its marks belong to Valve Corporation.
+
 
 UI component portions
 MIT License
@@ -326,7 +329,7 @@ Steam account engine
 LootLazy Steam account engine - Standalone SteamKit2 client
 Copyright 2026 LootLazy. All rights reserved.
 Private pipe protocol, encrypted DPAPI storage, parent-owned lifecycle.
-Source repository: https://github.com/bitlukaa/LootLazy/tree/v3.11.4
+Source repository: https://github.com/bitlukaa/LootLazy/tree/v3.11.5
 
 --- net.codecrete.qrcodegenerator/3.2.1 ---
 Authors: Manuel Bleichenbacher
