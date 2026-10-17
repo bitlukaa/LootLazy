@@ -1,4 +1,4 @@
-﻿// LootLazy interface translations. Keep application logic and comments in English.
+// LootLazy interface translations. Keep application logic and comments in English.
 const I18N = {
   "en": {
     "updates_unsigned": "A newer version is available, but its required update signature is missing.",
@@ -453,3 +453,5 @@ Object.assign(I18N.en,{achievements_intro:"Manage achievements for the account s
 Object.assign(I18N.en,{session_advanced:"Advanced settings"});
 
 Object.assign(I18N.en,{game_time_badge_note:"Choose a game and start a continuous Discord session. Optional timing and sync are in Advanced settings.",game_variety_badge_note:"Choose how many games to run in order. The session stops after the last game."});
+
+Object.assign(I18N.en,{accounts_save_failed:"Could not save your Steam login on this device. Check available storage and try again."});

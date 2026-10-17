@@ -1,5 +1,14 @@
 # Release history
 
+## 3.10.1 Beta (unpublished)
+
+- Repair standalone Steam credentials and QR login with connected, cancelable authentication and Steam Guard challenges.
+- Persist refresh tokens and remembered Guard data transactionally; report write failures and retain previous saved credentials.
+- Use unique logon identifiers and Steam playing-session callbacks to avoid competing with Steam Desktop, including the same game.
+- Preserve explicit sign-out, recover unreadable saved-login profiles through reauthentication, and allow explicit retry after session conflicts.
+- Keep this engine rewrite on a separate Beta branch; published Stable is unchanged.
+
+
 ## 3.10.0
 
 - Promoted Beta 3.9.4 features to Stable: independent game achievement management, Steam tools with multi-account idling, and refined session controls.

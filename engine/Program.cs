@@ -1,5 +1,5 @@
 // LootLazy standalone Steam micro-client powered by SteamKit2.
-// 100% independent LootLazy implementation.
+// Account lifecycle implemented by LootLazy; Steam protocol provided by SteamKit2.
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -70,6 +70,7 @@ internal sealed class BotDatabase {
         var db = new BotDatabase(path);
         if (File.Exists(path)) {
             try {
+                if (new FileInfo(path).Length > 262144) return null;
                 string raw = await File.ReadAllTextAsync(path).ConfigureAwait(false);
                 string decoded = LootLazyVault.Decode(path, raw);
                 using var doc = JsonDocument.Parse(decoded);
@@ -83,12 +84,21 @@ internal sealed class BotDatabase {
         return db;
     }
 
+    internal async Task StoreLogin(string refreshToken, string? guardData) {
+        if (string.IsNullOrWhiteSpace(refreshToken)) throw new InvalidOperationException("accounts_login_failed");
+        string? oldToken = RefreshToken, oldGuard = SteamGuardData;
+        RefreshToken = refreshToken;
+        SteamGuardData = guardData ?? oldGuard;
+        try { await FlushLootLazyState().ConfigureAwait(false); }
+        catch { RefreshToken = oldToken; SteamGuardData = oldGuard; throw; }
+    }
+
     internal async Task FlushLootLazyState() {
         var payload = JsonSerializer.Serialize(new {
             BackingRefreshToken = RefreshToken,
             BackingSteamGuardData = SteamGuardData
         });
-        await SerializableFile.Write(FilePath, payload).ConfigureAwait(false);
+        if (!await SerializableFile.Write(FilePath, payload).ConfigureAwait(false)) throw new IOException("accounts_save_failed");
     }
 }
 
@@ -112,17 +122,29 @@ internal sealed class SteamAccount : IDisposable {
     internal readonly Player UnifiedPlayerService;
 
     internal BotDatabase? Database;
-    internal bool KeepRunning;
+    internal volatile bool KeepRunning;
     internal bool IsConnectedAndLoggedOn => Client.IsConnected && User.SteamID != null;
     internal bool IsPlayingPossible => IsConnectedAndLoggedOn && !IsOccupied;
-    internal bool IsOccupied;
+    internal volatile bool IsOccupied;
     internal SteamID? SteamID => User.SteamID;
     internal string SSteamID => SteamID?.ConvertToUInt64().ToString(CultureInfo.InvariantCulture) ?? "0";
     internal string? AvatarHash;
     internal EPersonaState DesiredPersona = EPersonaState.Online;
     internal EResult LastLogOnResult = EResult.Invalid;
-    internal string? PendingPassword;
-    internal CancellationTokenSource? QrCancellation;
+    internal volatile bool Authenticating;
+    internal volatile uint PlayingAppId;
+    private readonly uint LoginId = NewLoginId();
+    private int AuthenticationGeneration;
+    private CancellationTokenSource? AuthenticationCancellation;
+    private TaskCompletionSource ConnectionReady = NewSignal();
+    private TaskCompletionSource? PendingDisconnect;
+    private static TaskCompletionSource NewSignal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
+    internal static uint NewLoginId() {
+        uint value;
+        do { value = BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(sizeof(uint))); } while (value == 0);
+        return value;
+    }
+
     private readonly Thread CallbackThread;
     private readonly CancellationTokenSource Disposed = new();
 
@@ -144,6 +166,7 @@ internal sealed class SteamAccount : IDisposable {
         Manager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
         Manager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
         Manager.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
+        Manager.Subscribe<SteamUser.PlayingSessionStateCallback>(OnPlayingSessionState);
 
         CallbackThread = new Thread(() => {
             while (!Disposed.IsCancellationRequested) {
@@ -156,47 +179,58 @@ internal sealed class SteamAccount : IDisposable {
     }
 
     private void LogOnInternal() {
-        if (!KeepRunning) {
-            Client.Disconnect();
+        if (!KeepRunning || Authenticating) return;
+        if (string.IsNullOrEmpty(Database?.RefreshToken)) {
+            Program.AuthenticationFailed(this, "accounts_signin_required");
+            Stop();
             return;
         }
-        if (!string.IsNullOrEmpty(Database?.RefreshToken)) {
-            User.LogOn(new SteamUser.LogOnDetails {
-                Username = Login,
-                AccessToken = Database.RefreshToken,
-                ShouldRememberPassword = true,
-            });
-        } else if (!string.IsNullOrEmpty(PendingPassword)) {
-            User.LogOn(new SteamUser.LogOnDetails {
-                Username = Login,
-                Password = PendingPassword,
-                ShouldRememberPassword = true,
-            });
-        }
+        User.LogOn(new SteamUser.LogOnDetails {
+            Username = Login, AccessToken = Database.RefreshToken,
+            ShouldRememberPassword = true, LoginID = LoginId
+        });
     }
 
-    private void OnConnected(SteamClient.ConnectedCallback callback) => LogOnInternal();
+    private void OnConnected(SteamClient.ConnectedCallback callback) {
+        bool authenticationOwnsConnection = Authenticating;
+        ConnectionReady.TrySetResult();
+        if (!authenticationOwnsConnection) LogOnInternal();
+    }
 
     private void OnDisconnected(SteamClient.DisconnectedCallback callback) {
+        var expected = Interlocked.Exchange(ref PendingDisconnect, null);
+        ConnectionReady.TrySetException(new IOException("accounts_connection_failed"));
+        ConnectionReady = NewSignal();
+        if (expected != null) { expected.TrySetResult(); return; }
+        Program.StopRequested(this);
+        if (Authenticating) {
+            try { AuthenticationCancellation?.Cancel(); } catch (ObjectDisposedException) { }
+            return;
+        }
         if (!KeepRunning) return;
+        // Reconnect transport loss only. Session conflicts and authentication failures stop the account.
         _ = Task.Run(async () => {
-            await Task.Delay(3000).ConfigureAwait(false);
-            if (KeepRunning && !Client.IsConnected) {
-                try { Client.Connect(); } catch { }
-            }
+            try {
+                await Task.Delay(3000, Disposed.Token).ConfigureAwait(false);
+                if (KeepRunning && !Client.IsConnected) Client.Connect();
+            } catch (OperationCanceledException) { }
         });
     }
 
     private async void OnLoggedOn(SteamUser.LoggedOnCallback callback) {
-        LastLogOnResult = callback.Result;
-        Program.LoginResult(this, callback.Result);
-        if (callback.Result == EResult.OK) {
-            Friends.SetPersonaState(DesiredPersona);
-            await Program.ResetGames(this).ConfigureAwait(false);
-        } else {
-            KeepRunning = false;
-            Client.Disconnect();
-        }
+        try {
+            if (!KeepRunning) { Client.Disconnect(); return; }
+            LastLogOnResult = callback.Result;
+            Program.LoginResult(this, callback.Result);
+            if (callback.Result == EResult.OK) {
+                Friends.SetPersonaState(DesiredPersona);
+                await Program.ResetGames(this).ConfigureAwait(false);
+            } else {
+                if (callback.Result is not (EResult.LoggedInElsewhere or EResult.AlreadyLoggedInElsewhere or EResult.LogonSessionReplaced))
+                    Program.AuthenticationFailed(this, Program.LoginError(callback.Result) ?? "accounts_signin_required");
+                Stop();
+            }
+        } catch { Program.AuthenticationFailed(this, "accounts_connection_failed"); Stop(); }
     }
 
     private void OnLoggedOff(SteamUser.LoggedOffCallback callback) {
@@ -204,7 +238,108 @@ internal sealed class SteamAccount : IDisposable {
         Program.LoginResult(this, callback.Result);
         if (callback.Result is EResult.LoggedInElsewhere or EResult.AlreadyLoggedInElsewhere or EResult.LogonSessionReplaced) {
             Program.SessionConflict(this);
+            Stop();
+        } else if (callback.Result != EResult.OK) {
+            Program.AuthenticationFailed(this, "accounts_connection_failed");
+            Stop();
         }
+    }
+
+    internal void ApplyPlayingState(bool blocked, uint appId) {
+        IsOccupied = blocked;
+        PlayingAppId = blocked ? appId : 0;
+        if (blocked) Program.Occupied(this);
+    }
+
+    private void OnPlayingSessionState(SteamUser.PlayingSessionStateCallback callback) =>
+        ApplyPlayingState(callback.PlayingBlocked, callback.PlayingAppID);
+
+    internal sealed class GuardAuthenticator(SteamAccount account, CancellationToken token) : IAuthenticator {
+        public async Task<string> GetDeviceCodeAsync(bool previousCodeWasIncorrect) =>
+            await ReadCode(EUserInputType.TwoFactorAuthentication, previousCodeWasIncorrect).ConfigureAwait(false);
+        public async Task<string> GetEmailCodeAsync(string email, bool previousCodeWasIncorrect) =>
+            await ReadCode(EUserInputType.SteamGuard, previousCodeWasIncorrect).ConfigureAwait(false);
+        private async Task<string> ReadCode(EUserInputType type, bool incorrect) {
+            if (incorrect) Program.AuthenticationFailed(account, "accounts_guard_invalid");
+            string? value = await Program.InputAsync(type, account.Id, token).ConfigureAwait(false);
+            return value ?? throw new OperationCanceledException(token);
+        }
+        public Task<bool> AcceptDeviceConfirmationAsync() => Task.FromResult(false);
+    }
+
+    internal void BeginSignIn(string password, bool qr) {
+        if (!qr && string.IsNullOrEmpty(password)) { Start(); return; }
+        Authenticating = true;
+        KeepRunning = true;
+        int generation = Interlocked.Increment(ref AuthenticationGeneration);
+        var flow = Program.BeginConnection(this);
+        var cancellation = CancellationTokenSource.CreateLinkedTokenSource(flow.Token, Disposed.Token);
+        cancellation.CancelAfter(TimeSpan.FromMinutes(3));
+        AuthenticationCancellation = cancellation;
+        string? attempt = Program.QrAttemptId(this);
+        _ = Task.Run(async () => {
+            using (flow)
+            using (cancellation) {
+                try {
+                    var token = cancellation.Token;
+                    var disconnect = PendingDisconnect;
+                    if (disconnect != null) await disconnect.Task.WaitAsync(token).ConfigureAwait(false);
+                    token.ThrowIfCancellationRequested();
+                    if (!Client.IsConnected) {
+                        Client.Connect();
+                        await ConnectionReady.Task.WaitAsync(token).ConfigureAwait(false);
+                    }
+                    var details = new AuthSessionDetails {
+                        DeviceFriendlyName = "LootLazy", Username = Login, Password = password,
+                        GuardData = Database?.SteamGuardData, IsPersistentSession = true,
+                        Authenticator = new GuardAuthenticator(this, token)
+                    };
+                    AuthPollResult result;
+                    if (qr) {
+                        var auth = await Client.Authentication.BeginAuthSessionViaQRAsync(details).WaitAsync(token).ConfigureAwait(false);
+                        Program.PublishQr(this, attempt, auth.ChallengeURL);
+                        auth.ChallengeURLChanged = () => Program.PublishQr(this, attempt, auth.ChallengeURL);
+                        result = await auth.PollingWaitForResultAsync(token).ConfigureAwait(false);
+                    } else {
+                        var auth = await Client.Authentication.BeginAuthSessionViaCredentialsAsync(details).WaitAsync(token).ConfigureAwait(false);
+                        details.Password = null;
+                        password = "";
+                        result = await auth.PollingWaitForResultAsync(token).ConfigureAwait(false);
+                    }
+                    token.ThrowIfCancellationRequested();
+                    if (generation != AuthenticationGeneration || !KeepRunning) return;
+                    if (!string.IsNullOrEmpty(Login) && !result.AccountName.Equals(Login, StringComparison.OrdinalIgnoreCase)) {
+                        throw new InvalidOperationException("accounts_qr_mismatch");
+                    }
+                    Database ??= new BotDatabase(Path.Combine("config", Id + ".db"));
+                    try { await Database.StoreLogin(result.RefreshToken, result.NewGuardData).ConfigureAwait(false); }
+                    catch (IOException) { throw new InvalidOperationException("accounts_save_failed"); }
+                    token.ThrowIfCancellationRequested();
+                    if (generation != AuthenticationGeneration || !KeepRunning) return;
+                    Login = result.AccountName;
+                    Program.ClearQr(this, attempt);
+                    Authenticating = false;
+                    LogOnInternal();
+                } catch (OperationCanceledException) {
+                    if (generation == AuthenticationGeneration && KeepRunning) {
+                        Program.AuthenticationFailed(this, qr ? "accounts_qr_expired" : "accounts_connection_failed");
+                        Stop();
+                    }
+                } catch (Exception error) {
+                    if (generation == AuthenticationGeneration) {
+                        string code = error is AuthenticationException authError ? Program.LoginError(authError.Result) ?? "accounts_login_failed"
+                            : error is InvalidOperationException && error.Message is "accounts_qr_mismatch" or "accounts_save_failed" ? error.Message
+                            : qr ? "accounts_qr_failed" : "accounts_connection_failed";
+                        Program.AuthenticationFailed(this, code);
+                        Stop();
+                    }
+                } finally {
+                    password = "";
+                    if (generation == AuthenticationGeneration) Authenticating = false;
+                    Interlocked.CompareExchange(ref AuthenticationCancellation, null, cancellation);
+                }
+            }
+        });
     }
 
     private void OnPersonaState(SteamFriends.PersonaStateCallback callback) {
@@ -212,18 +347,13 @@ internal sealed class SteamAccount : IDisposable {
             if (callback.AvatarHash != null && callback.AvatarHash.Length > 0) {
                 AvatarHash = Convert.ToHexString(callback.AvatarHash).ToLowerInvariant();
             }
-            bool occupied = callback.GameAppID != 0 && (Program.Sessions.TryGetValue(Id, out var s) ? !s.Games.Contains((uint)callback.GameAppID) : true);
-            if (occupied && !IsOccupied) {
-                IsOccupied = true;
-                Program.Occupied(this);
-            } else if (!occupied && IsOccupied) {
-                IsOccupied = false;
-            }
+            // Persona is display data. Only PlayingSessionState authorizes sending games.
         }
     }
 
     internal void PlayGames(IReadOnlyCollection<uint> gameIDs) {
-        if (!Client.IsConnected) return;
+        if (!IsConnectedAndLoggedOn) { if (gameIDs.Count == 0) return; throw new InvalidOperationException("accounts_not_ready"); }
+        if (gameIDs.Count > 0 && IsOccupied) throw new InvalidOperationException("accounts_playing_elsewhere");
         var request = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayedWithDataBlob);
         foreach (uint gameID in gameIDs.Where(g => g > 0).Distinct()) {
             request.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed {
@@ -261,6 +391,18 @@ internal sealed class SteamAccount : IDisposable {
 
     internal void Start() {
         KeepRunning = true;
+        var disconnect = PendingDisconnect;
+        if (disconnect != null) {
+            int generation = AuthenticationGeneration;
+            _ = Task.Run(async () => {
+                try {
+                    await disconnect.Task.WaitAsync(TimeSpan.FromSeconds(15), Disposed.Token).ConfigureAwait(false);
+                    if (KeepRunning && generation == AuthenticationGeneration) Start();
+                } catch (OperationCanceledException) { }
+                catch { if (generation == AuthenticationGeneration) { Program.AuthenticationFailed(this, "accounts_connection_failed"); Stop(); } }
+            });
+            return;
+        }
         if (!Client.IsConnected) {
             Client.Connect();
         } else if (!IsConnectedAndLoggedOn) {
@@ -270,10 +412,14 @@ internal sealed class SteamAccount : IDisposable {
 
     internal void Stop(bool force = true) {
         KeepRunning = false;
-        PendingPassword = null;
-        QrCancellation?.Cancel();
+        Interlocked.Increment(ref AuthenticationGeneration);
+        var cancellation = Interlocked.Exchange(ref AuthenticationCancellation, null);
+        try { cancellation?.Cancel(); } catch (ObjectDisposedException) { }
+        Authenticating = false;
+        Program.StopRequested(this);
         if (Client.IsConnected) {
             try { PlayGames(Array.Empty<uint>()); } catch { }
+            Interlocked.CompareExchange(ref PendingDisconnect, NewSignal(), null);
             Client.Disconnect();
         }
     }
@@ -281,7 +427,8 @@ internal sealed class SteamAccount : IDisposable {
     public void Dispose() {
         Stop(true);
         Disposed.Cancel();
-        Disposed.Dispose();
+        // Let the callback loop observe cancellation before disposing its source.
+        if (Thread.CurrentThread != CallbackThread) CallbackThread.Join(TimeSpan.FromSeconds(1));
     }
 }
 
@@ -391,7 +538,7 @@ internal static class Program {
     }
 
     private static readonly ConcurrentDictionary<string, byte> Restoring = new(StringComparer.Ordinal);
-    private static bool CanResume(Account account, SteamAccount? client) => !Drafts.Contains(account.Id) && client?.HasLootLazyLogin == true && !AuthErrors.ContainsKey(account.Id);
+    private static bool CanResume(Account account, SteamAccount? client) => !Drafts.Contains(account.Id) && client?.HasLootLazyLogin == true && (!AuthErrors.TryGetValue(account.Id, out var error) || error == "accounts_session_conflict");
     private static readonly HashSet<string> Drafts = new(StringComparer.Ordinal);
     internal static string? QrAttemptId(SteamAccount account) => QrLogins.TryGetValue(account.Id, out var deadline) ? deadline.Ticks.ToString(CultureInfo.InvariantCulture) : null;
 
@@ -470,17 +617,19 @@ internal static class Program {
         File.WriteAllText(path, JsonSerializer.Serialize(new { Enabled = false, MachineName = "LootLazy", SteamLogin = account.Login, OnlineStatus = (int)Persona(account.Presence), UseLoginKeys = true, FarmingPreferences = 9, RemoteCommunication = 0, BotBehaviour = 64, TradeCheckPeriod = 0, AcceptGifts = false, GamesPlayedWhileIdle = Array.Empty<uint>() }));
     }
 
-    internal static async Task<string?> InputAsync(EUserInputType type, string id) {
+    internal static async Task<string?> InputAsync(EUserInputType type, string id, CancellationToken token = default) {
         if (!ValidId(id) || !AccountsMap.TryGetValue(id, out var inputAccount) || !inputAccount.KeepRunning) return null;
         if (Restoring.ContainsKey(id)) { AuthErrors[id] = "accounts_signin_required"; return null; }
         if (type == EUserInputType.QrCodeLogin) return WantsQrLogin(inputAccount) ? "Y" : "N";
         var challenge = new Challenge(Guid.NewGuid().ToString("N"), type, new(TaskCreationOptions.RunContinuationsAsynchronously));
         if (Challenges.TryRemove(id, out var old)) old.Completion.TrySetResult(null);
         Challenges[id] = challenge;
-        try { return await challenge.Completion.Task.WaitAsync(TimeSpan.FromMinutes(3)).ConfigureAwait(false); }
+        try { return await challenge.Completion.Task.WaitAsync(TimeSpan.FromMinutes(3), token).ConfigureAwait(false); }
         catch (TimeoutException) { return null; }
         finally { if (Challenges.TryGetValue(id, out var current) && current.Id == challenge.Id) Challenges.TryRemove(id, out _); }
     }
+
+    internal static void AuthenticationFailed(SteamAccount account, string error) => AuthErrors[account.Id] = error;
 
     internal static string? LoginError(EResult result) => result switch {
         EResult.InvalidPassword or EResult.AccountNotFound => "accounts_credentials_invalid",
@@ -555,7 +704,7 @@ internal static class Program {
             bool running = connected && client!.IsPlayingPossible && session?.Games.Length > 0;
             string state = input != null ? "input" : running ? "running" : connected && !client!.IsPlayingPossible ? "blocked" : connected ? "ready" : client?.KeepRunning == true ? "connecting" : "offline";
             string? avatarHash = ValidAvatar(client?.AvatarHash) ? client!.AvatarHash : ValidAvatar(account.AvatarHash) ? account.AvatarHash : null;
-            uint playingAppId = connected && !client!.IsPlayingPossible && client.SteamID != null ? client.Friends.GetFriendGamePlayed(client.SteamID).AppID : 0;
+            uint playingAppId = connected && client!.IsOccupied ? client.PlayingAppId : 0;
             string? playingGameName = playingAppId > 0 && client!.SteamID != null ? client.Friends.GetFriendGamePlayedName(client.SteamID) : null;
             return new {
                 avatarUrl = avatarHash == null ? null : "https://avatars.steamstatic.com/" + avatarHash.ToLowerInvariant() + "_medium.jpg",
@@ -710,6 +859,13 @@ internal static class Program {
             }
             return Snapshot();
         }
+        if (!OfflineTest && selected == null && command == "signin") {
+            // Preserve the unreadable database until a new login is successfully persisted.
+            selected = new SteamAccount(entry.Id, entry.Login, Persona(entry.Presence)) {
+                Database = new BotDatabase(Path.Combine("config", entry.Id + ".db"))
+            };
+            AccountsMap[entry.Id] = selected;
+        }
         if (OfflineTest || selected == null) { Fail(OfflineTest ? "accounts_not_ready" : "accounts_restore_failed"); return null!; }
         if (command == "qr") {
             QrCodes.TryGetValue(entry.Id, out var qr);
@@ -759,40 +915,7 @@ internal static class Program {
             if (qr) QrLogins[entry.Id] = DateTimeOffset.UtcNow.AddMinutes(3); else QrLogins.TryRemove(entry.Id, out _);
             selected.Login = qr && Drafts.Contains(entry.Id) ? "" : entry.Login;
             selected.DesiredPersona = Persona(entry.Presence);
-            selected.PendingPassword = password.Length > 0 ? password : null;
-
-            if (qr) {
-                string attempt = QrAttemptId(selected)!;
-                selected.QrCancellation = new CancellationTokenSource();
-                selected.KeepRunning = true;
-                _ = Task.Run(async () => {
-                    using var flow = BeginConnection(selected);
-                    try {
-                        var authSession = await selected.Client.Authentication.BeginAuthSessionViaQRAsync(new AuthSessionDetails {
-                            DeviceFriendlyName = "LootLazy",
-                            GuardData = selected.Database?.SteamGuardData,
-                            IsPersistentSession = true
-                        }).ConfigureAwait(false);
-                        PublishQr(selected, attempt, authSession.ChallengeURL);
-                        authSession.ChallengeURLChanged = () => PublishQr(selected, attempt, authSession.ChallengeURL);
-                        var pollResult = await authSession.PollingWaitForResultAsync(selected.QrCancellation.Token).ConfigureAwait(false);
-                        if (!string.IsNullOrEmpty(selected.Login) && !pollResult.AccountName.Equals(selected.Login, StringComparison.OrdinalIgnoreCase)) {
-                            QrMismatch(selected);
-                            selected.Stop(true);
-                            return;
-                        }
-                        selected.Login = pollResult.AccountName;
-                        if (selected.Database == null) selected.Database = new BotDatabase(Path.Combine("config", selected.Id + ".db"));
-                        selected.Database.RefreshToken = pollResult.RefreshToken;
-                        await selected.Database.FlushLootLazyState().ConfigureAwait(false);
-                        ClearQr(selected, attempt);
-                        selected.Start();
-                    } catch (OperationCanceledException) { }
-                    catch { QrFailed(selected, attempt); selected.Stop(true); }
-                });
-            } else {
-                selected.Start();
-            }
+            selected.BeginSignIn(password, qr);
         } else if (command == "input") {
             if (!Challenges.TryGetValue(entry.Id, out var challenge) || challenge.Id != Text(body, "challengeId") || challenge.Completion.Task.IsCompleted) Fail("accounts_input_expired");
             string value = Text(body, "value");
@@ -923,6 +1046,44 @@ internal static class Program {
             if (sentGames.Length != 0 || Sessions.ContainsKey("live-fixture")) return 22;
             await UpdateSessionGames("live-fixture", [730], () => throw new InvalidOperationException("Stopped session restarted")).ConfigureAwait(false);
 
+            var ids = Enumerable.Range(0, 64).Select(_ => SteamAccount.NewLoginId()).ToArray();
+            if (ids.Any(id => id == 0) || ids.Distinct().Count() != ids.Length) return 33;
+            string authId = "ll_" + new string('a', 32);
+            using (var guardAccount = new SteamAccount(authId, "fixture", EPersonaState.Online)) {
+                AccountsMap[authId] = guardAccount;
+                guardAccount.Database = new BotDatabase("ll_unused.db") { RefreshToken = "fixture-saved-token" };
+                var savedAccount = new Account(authId, "Fixture", "fixture", []);
+                SessionConflict(authId);
+                if (!CanResume(savedAccount, guardAccount)) return 46;
+                AuthenticationFailed(guardAccount, "accounts_credentials_invalid");
+                if (CanResume(savedAccount, guardAccount)) return 47;
+                AuthErrors.TryRemove(authId, out _);
+                guardAccount.KeepRunning = true;
+                using var guardCancellation = new CancellationTokenSource();
+                var authenticator = new SteamAccount.GuardAuthenticator(guardAccount, guardCancellation.Token);
+                var device = authenticator.GetDeviceCodeAsync(false);
+                if (!Challenges.TryGetValue(authId, out var challenge) || challenge.Type != EUserInputType.TwoFactorAuthentication) return 34;
+                challenge.Completion.TrySetResult("12345");
+                if (await device.ConfigureAwait(false) != "12345") return 35;
+                var email = authenticator.GetEmailCodeAsync("masked", true);
+                if (!Challenges.TryGetValue(authId, out challenge) || challenge.Type != EUserInputType.SteamGuard || AuthErrors[authId] != "accounts_guard_invalid") return 36;
+                challenge.Completion.TrySetResult("ABCDE");
+                if (await email.ConfigureAwait(false) != "ABCDE") return 37;
+                var canceled = authenticator.GetDeviceCodeAsync(false);
+                guardCancellation.Cancel();
+                try { await canceled.ConfigureAwait(false); return 38; } catch (OperationCanceledException) { }
+                if (Challenges.ContainsKey(authId)) return 39;
+                Sessions[authId] = new Session { Games = [730] };
+                guardAccount.ApplyPlayingState(true, 730);
+                if (!guardAccount.IsOccupied || guardAccount.PlayingAppId != 730 || Sessions[authId].Games.Length != 0) return 40;
+                guardAccount.ApplyPlayingState(false, 0);
+                if (guardAccount.IsOccupied || guardAccount.PlayingAppId != 0) return 41;
+                try { guardAccount.PlayGames([730]); return 42; } catch (InvalidOperationException) { }
+                AccountsMap.TryRemove(authId, out _);
+                Sessions.TryRemove(authId, out _);
+                AuthErrors.TryRemove(authId, out _);
+            }
+
             const string secret = "{\"BackingRefreshToken\":\"fixture-refresh-token\",\"BackingSteamGuardData\":\"fixture-guard-secret\"}";
             string encrypted = LootLazyVault.Encode("ll_test.db", secret);
             if (encrypted.Contains("fixture", StringComparison.Ordinal) || LootLazyVault.Decode("ll_test.db", encrypted) != secret) return 2;
@@ -943,9 +1104,19 @@ internal static class Program {
                 if (persisted.Contains("rotated-fixture-token", StringComparison.Ordinal) || !LootLazyVault.Decode(database, persisted).Contains("rotated-fixture-token", StringComparison.Ordinal)) return 12;
                 var reloaded = await BotDatabase.CreateOrLoad(database).ConfigureAwait(false);
                 if (reloaded?.RefreshToken != "rotated-fixture-token") return 13;
+                Directory.CreateDirectory(database + ".new");
+                try {
+                    await reloaded.StoreLogin("must-not-replace-token", "must-not-replace-guard").ConfigureAwait(false);
+                    return 43;
+                } catch (IOException) { }
+                if (reloaded.RefreshToken != "rotated-fixture-token" || (await File.ReadAllTextAsync(database).ConfigureAwait(false)) != persisted) return 44;
+                Directory.Delete(database + ".new");
+                await reloaded.StoreLogin("new-fixture-token", "remembered-guard").ConfigureAwait(false);
+                reloaded = await BotDatabase.CreateOrLoad(database).ConfigureAwait(false);
+                if (reloaded?.RefreshToken != "new-fixture-token" || reloaded.SteamGuardData != "remembered-guard") return 45;
             } finally { Directory.Delete(fixture, true); }
 
-            await output.WriteLineAsync("Vault round-trip, actual database persistence, plaintext rejection and secret-absence tests passed.").ConfigureAwait(false);
+            await output.WriteLineAsync("Guard challenges/cancellation, unique login IDs, playing-session blocking, transactional token persistence and vault regressions passed.").ConfigureAwait(false);
             return 0;
         }
 

@@ -1244,7 +1244,8 @@ impl Backend {
                 let mut item_saved = session.clone();
                 item_saved["elapsedBeforeSegment"] = json!(elapsed);
                 let _ = self.stop_process("preempted_by_quest");
-                self.preempted = Some(json!({"type":"single", "item": item_saved, "elapsed": elapsed}));
+                self.preempted =
+                    Some(json!({"type":"single", "item": item_saved, "elapsed": elapsed}));
             }
         }
         let allowed: std::collections::HashSet<String> = self.quests["quests"]
@@ -1305,7 +1306,8 @@ impl Backend {
                     let mut item_saved = session.clone();
                     item_saved["elapsedBeforeSegment"] = json!(elapsed);
                     let _ = self.stop_process("preempted_by_quest");
-                    self.preempted = Some(json!({"type":"single", "item": item_saved, "elapsed": elapsed}));
+                    self.preempted =
+                        Some(json!({"type":"single", "item": item_saved, "elapsed": elapsed}));
                 }
             }
             let ids = self
@@ -1893,13 +1895,7 @@ impl Backend {
             parsed.query_pairs().into_owned().collect();
         let get = |key: &str| query.get(key).map(String::as_str).unwrap_or("");
         let post = !body.is_null();
-        if self.variety.active()
-            && [
-                "/api/play",
-                "/api/queue/start",
-            ]
-            .contains(&parsed.path())
-        {
+        if self.variety.active() && ["/api/play", "/api/queue/start"].contains(&parsed.path()) {
             return Err("A game is already running".into());
         }
         if self.variety.active() && ["/api/stop-current", "/api/stop"].contains(&parsed.path()) {
