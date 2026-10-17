@@ -1,5 +1,12 @@
 # Release history
 
+## 3.11.4
+
+- Add Home for running and paused sessions with direct stop/resume controls and queue summaries.
+- Use blue Steam branding, compact global username privacy and additional Steam artwork sources.
+- Match Game Variety session cards to Game Time, keep App ID separate from status and remove its Pause control.
+- Repair pointer drag ordering, preserve rows during status updates and add drag grips.
+
 ## 3.11.3
 
 - Separate QR/password authentication attempts, preserve QR beside Guard input and isolate failures; periodically regenerate expired QR challenges with bounded retries.

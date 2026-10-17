@@ -147,10 +147,10 @@
  }
  function render(){
   if(!el('accounts-list'))return;
-  renderActive();renderAuth();
+  renderActive();renderAuth();window.lootlazyHome?.render();
   const accounts=model.accounts.filter(account=>!account.draft),signature=JSON.stringify([accounts.map(({elapsedSeconds,gameElapsedSeconds,...account})=>account),model.selected,currentLang,model.busy]);
   if(el('steam-account-summary'))el('steam-account-summary').textContent=t('platform_accounts_connected',{count:number(accounts.filter(account=>account.connected).length)});
-  if(signature!==model.signature){
+  if(signature!==model.signature&&el('accounts-list').dataset.reordering!=='true'){
    model.signature=signature;const list=document.createDocumentFragment();
    for(const account of accounts){
     const row=document.createElement('div');row.dataset.reorderable='true';row.dataset.accountId=account.id;row.className='account-row'+(account.id===model.selected?' selected':'');row.dataset.account=account.id;
@@ -159,7 +159,7 @@
     if(account.connected){const badge=document.createElement('span');badge.className='account-state ready';badge.textContent=t('accounts_connected');actions.append(badge);}
     else{const signin=button(t(account.active&&!account.input?'accounts_reconnecting':account.input?'accounts_continue':'accounts_signin'),null,()=>selectAccount(account),'account-state offline account-signin-action');signin.disabled=model.busy;actions.append(signin);}
     if((account.state==='running'||account.recovering)||account.state==='blocked'){const activity=document.createElement('span');activity.className='account-activity'+(account.state==='blocked'?' elsewhere':'');const count=account.runningGameCount??account.games?.length??0;activity.innerHTML=getIcon('gamepad');if((account.state==='running'||account.recovering)){const n=document.createElement('span');n.textContent=number(count);activity.append(n);}activity.title=t((account.state==='running'||account.recovering)?'accounts_running_count':'accounts_state_blocked',{count:number(count)});activity.setAttribute('aria-label',activity.title);select.append(activity);}
-    const remove=button(t('accounts_remove')+': '+account.label,'x',()=>confirmRemoval(account),'icon-button');remove.classList.add('account-remove-control');remove.dataset.removeAccount=account.id;remove.disabled=model.busy;actions.append(remove);row.append(select,actions);list.append(row);
+    const remove=button(t('accounts_remove')+': '+account.label,'x',()=>confirmRemoval(account),'icon-button');remove.classList.add('account-remove-control');remove.dataset.removeAccount=account.id;remove.disabled=model.busy;actions.append(remove);const grip=document.createElement('span');grip.className='reorder-handle';grip.innerHTML=getIcon('grip-vertical');grip.title=t('reorder_hint');grip.setAttribute('aria-hidden','true');row.append(grip,select,actions);list.append(row);
    }
    el('accounts-list').replaceChildren(list);el('accounts-empty').hidden=accounts.length>0;
   }
@@ -268,5 +268,5 @@
   el('account-refresh-library').onclick=()=>search(true);el('account-refresh-library').innerHTML=getIcon('refresh');el('account-search-icon').innerHTML=getIcon('search');
   setInterval(poll,1500);
  });
- window.lootlazySteamAccounts={open,translate(){model.signature='';render();},async stopAll(){return bulkRun('stop');},activeCount:()=>model.accounts.filter(account=>!account.draft&&(account.state==='running'||account.recovering)).length};
+ window.lootlazySteamAccounts={open,snapshot:()=>({loaded:model.loaded,accounts:model.accounts.filter(a=>!a.draft),names:{...model.names}}),stop:id=>call('stop',{id}),translate(){model.signature='';render();},async stopAll(){return bulkRun('stop');},activeCount:()=>model.accounts.filter(account=>!account.draft&&(account.state==='running'||account.recovering)).length};
 })();

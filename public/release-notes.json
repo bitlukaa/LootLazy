@@ -1,9 +1,1 @@
-{
-  "version": "3.11.3",
-  "en": [
-    "Interface refinements, drag ordering and pinned Steam Idle games.",
-    "Independent QR and password attempts with automatic QR refresh and field-level Guard errors.",
-    "Global username privacy, section-labelled notifications, update indicator and simplified preferences.",
-    "Read-only report preparation helper; automatic multi-account reporting is not implemented."
-  ]
-}
+{"version":"3.11.4","en":["Home brings running sessions and direct controls together.","Improve Steam artwork fallbacks, blue Steam branding and compact global username privacy.","Match Game Variety session layout to Game Time and repair pointer drag ordering."]}

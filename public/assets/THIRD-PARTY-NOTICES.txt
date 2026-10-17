@@ -326,7 +326,7 @@ Steam account engine
 LootLazy Steam account engine - Standalone SteamKit2 client
 Copyright 2026 LootLazy. All rights reserved.
 Private pipe protocol, encrypted DPAPI storage, parent-owned lifecycle.
-Source repository: https://github.com/bitlukaa/LootLazy/tree/v3.11.3
+Source repository: https://github.com/bitlukaa/LootLazy/tree/v3.11.4
 
 --- net.codecrete.qrcodegenerator/3.2.1 ---
 Authors: Manuel Bleichenbacher

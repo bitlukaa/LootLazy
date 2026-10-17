@@ -1,6 +1,21 @@
 // LootLazy interface translations. Keep application logic and comments in English.
 const I18N = {
   "en": {
+    "tab_home": "Home",
+    "home_intro": "Your running sessions, together in one place.",
+    "home_empty_title": "Nothing running right now",
+    "home_empty_hint": "Start a session from Discord or Steam Tools.",
+    "home_running": "Running",
+    "home_paused": "Paused",
+    "home_pending": "Queued games",
+    "home_details": "Open details",
+    "home_loading": "Checking saved accounts\u2026",
+    "home_accounts_failed": "Saved accounts could not be loaded. Open Steam Accounts to retry.",
+    "reorder_hint": "Drag to reorder, or focus and use Alt + arrow keys",
+    "home_up_next": "Up next",
+    "home_continuous": "Continuous",
+    "home_stopping": "Stopping\u2026",
+
     "updates_unsigned": "A newer version is available, but its required update signature is missing.",
     "steam_runtime_untrusted": "Steam runtime verification failed. Verify your installed game files in Steam.",
     "updates_signature_failed": "The update signature could not be verified. Installation was stopped.",
