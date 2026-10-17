@@ -91,6 +91,7 @@ pub struct Backend {
     pub steam_idle: crate::rotation::SteamIdle,
     steam_runtime: Option<PathBuf>,
     steam_search: Vec<Value>,
+    pub preempted: Option<Value>,
 }
 impl Backend {
     pub fn new(root: PathBuf) -> Result<Self, String> {
@@ -237,6 +238,7 @@ impl Backend {
             cache_cleanup_at: Instant::now(),
             last_finished: None,
             discord_mock: None,
+            preempted: None,
         };
         backend.prune_quest_cache(&[]);
         Ok(backend)
@@ -872,6 +874,9 @@ impl Backend {
             q.phase = "completed".into();
             q.waiting = None;
             q.wait_deadline = None;
+            if quest {
+                self.resume_preempted();
+            }
             return;
         }
         q.index = next;
@@ -880,6 +885,32 @@ impl Backend {
         let seconds = rand::random_range(5..=10);
         q.waiting = Some(Utc::now().timestamp_millis() + seconds * 1000);
         q.wait_deadline = Some(Instant::now() + Duration::from_secs(seconds as u64));
+    }
+    fn resume_preempted(&mut self) {
+        if self.quest_queue.active() || self.session.is_some() {
+            return;
+        }
+        if let Some(preempted) = self.preempted.take() {
+            match preempted["type"].as_str() {
+                Some("variety") => {
+                    let _ = self.start_variety();
+                }
+                Some("queue") => {
+                    let _ = self.launch(false);
+                }
+                Some("single") => {
+                    let item = preempted["item"].clone();
+                    let elapsed = preempted["elapsed"].as_i64().unwrap_or(0);
+                    if self.start_process(&item).is_ok() {
+                        if let Some(s) = self.session.as_mut() {
+                            s["elapsedBeforeSegment"] = json!(elapsed);
+                        }
+                        self.started_at = Some(Instant::now());
+                    }
+                }
+                _ => {}
+            }
+        }
     }
     fn finish_current(&mut self, reason: &str) -> Result<(), String> {
         let quest = self.quest_queue.phase == "running";
@@ -930,6 +961,9 @@ impl Backend {
                 q.phase = "completed".into();
                 q.waiting = None;
                 q.wait_deadline = None;
+                if quest {
+                    self.resume_preempted();
+                }
             } else {
                 q.phase = "waiting".into();
                 q.items[0]["state"] = json!("waiting");
@@ -1027,11 +1061,11 @@ impl Backend {
                 if is_quest {
                     match self.warmup_deadline {
                         None => {
-                            self.warmup_deadline = Some(Instant::now() + Duration::from_secs(10));
+                            self.warmup_deadline = Some(Instant::now() + Duration::from_secs(20));
                             if let Some(s) = self.session.as_mut() {
                                 s["timerWaiting"] = json!(false);
                                 s["timerWarmup"] = json!(true);
-                                s["warmupSeconds"] = json!(10);
+                                s["warmupSeconds"] = json!(20);
                             }
                         }
                         Some(deadline) if Instant::now() < deadline => {
@@ -1139,6 +1173,9 @@ impl Backend {
                 let _ = self.launch(quest);
             }
         }
+        if !self.quest_queue.active() && self.session.is_none() && self.preempted.is_some() {
+            self.resume_preempted();
+        }
     }
     pub fn tick(&mut self) {
         let before = (
@@ -1191,8 +1228,24 @@ impl Backend {
         Ok(self.action_status())
     }
     fn resume_quest_queue(&mut self) -> Result<Value, String> {
-        if self.session.is_some() || self.queue.active() || self.quest_queue.active() {
-            return Err("A game is already running".into());
+        if self.quest_queue.active() {
+            return Err("Quest queue is already running".into());
+        }
+        if self.variety.active() {
+            let _ = self.variety.pause();
+            let _ = self.stop_process("preempted_by_quest");
+            self.preempted = Some(json!({"type":"variety"}));
+        } else if self.queue.active() {
+            let _ = self.pause_game_queue();
+            self.preempted = Some(json!({"type":"queue"}));
+        } else if let Some(session) = self.session.clone() {
+            if session["questId"].as_str().is_none() {
+                let elapsed = self.elapsed_seconds(&session);
+                let mut item_saved = session.clone();
+                item_saved["elapsedBeforeSegment"] = json!(elapsed);
+                let _ = self.stop_process("preempted_by_quest");
+                self.preempted = Some(json!({"type":"single", "item": item_saved, "elapsed": elapsed}));
+            }
         }
         let allowed: std::collections::HashSet<String> = self.quests["quests"]
             .as_array()
@@ -1235,12 +1288,25 @@ impl Backend {
     }
     fn append(&mut self, item: Value, quest: bool) -> Result<Value, String> {
         let item = validated_item(item)?;
-        if (quest && self.queue.active()) || (!quest && self.quest_queue.active()) {
+        if !quest && (self.quest_queue.active() || self.preempted.is_some()) {
             return Err("Another queue is running".into());
         }
         if quest && !self.quest_queue.active() {
-            if self.session.is_some() {
-                return Err("Stop the current session first".into());
+            if self.variety.active() {
+                let _ = self.variety.pause();
+                let _ = self.stop_process("preempted_by_quest");
+                self.preempted = Some(json!({"type":"variety"}));
+            } else if self.queue.active() {
+                let _ = self.pause_game_queue();
+                self.preempted = Some(json!({"type":"queue"}));
+            } else if let Some(session) = self.session.clone() {
+                if session["questId"].as_str().is_none() {
+                    let elapsed = self.elapsed_seconds(&session);
+                    let mut item_saved = session.clone();
+                    item_saved["elapsedBeforeSegment"] = json!(elapsed);
+                    let _ = self.stop_process("preempted_by_quest");
+                    self.preempted = Some(json!({"type":"single", "item": item_saved, "elapsed": elapsed}));
+                }
             }
             let ids = self
                 .available_quest(&text(&item, "questId"))
@@ -1347,6 +1413,9 @@ impl Backend {
             saved = self.save_queue();
         }
         stopped?;
+        if quest {
+            self.resume_preempted();
+        }
         saved
     }
     fn start_variety(&mut self) -> Result<(), String> {
@@ -1827,8 +1896,6 @@ impl Backend {
         if self.variety.active()
             && [
                 "/api/play",
-                "/api/quests/start",
-                "/api/quests/resume-queue",
                 "/api/queue/start",
             ]
             .contains(&parsed.path())
@@ -2212,6 +2279,7 @@ impl Backend {
                 Ok(json!({"success":true,"resolution":self.resolve(&game)}))
             }
             "/api/play" => {
+                self.preempted = None;
                 if self.quest_queue.active() {
                     return Err("Stop the quest session first".into());
                 }
@@ -2243,6 +2311,7 @@ impl Backend {
                 Ok(self.action_status())
             }
             "/api/stop" => {
+                self.preempted = None;
                 self.cancel_queue(false)?;
                 self.cancel_queue(true)?;
                 self.stop_process("user_requested")?;
@@ -3523,5 +3592,34 @@ mod tests {
             .iter()
             .all(|item| item["state"] == "queued" && item["elapsedSeconds"] == 0));
         assert_eq!(f.0.variety.data["defaultMinutes"], 5);
+    }
+    #[test]
+    fn quest_preempts_running_game_and_auto_resumes_on_completion() {
+        let mut f = Fixture::new();
+        prepare_quest_fixture(&mut f.0);
+        f.0.catalog = vec![
+            json!({"id":"123456","name":"First","executables":[{"os":"win32","name":"audit-first.exe"}]}),
+        ];
+        f.0.discord_mock = Some(true);
+        f.0.route(
+            "/api/play",
+            json!({"appId":"123456","executableName":"audit-first.exe","durationMinutes":30}),
+        )
+        .unwrap();
+        assert!(f.0.session.is_some());
+        assert!(f.0.session.as_ref().unwrap()["questId"].is_null());
+
+        f.0.route("/api/quests/start", json!({"questId":"123456"}))
+            .unwrap();
+        assert!(f.0.quest_queue.active());
+        assert_eq!(f.0.session.as_ref().unwrap()["questId"], "123456");
+        assert!(f.0.preempted.is_some());
+
+        f.0.route("/api/quests/cancel", json!({"questId":"123456"}))
+            .unwrap();
+        assert!(!f.0.quest_queue.active());
+        assert!(f.0.preempted.is_none());
+        assert!(f.0.session.is_some());
+        assert!(f.0.session.as_ref().unwrap()["questId"].is_null());
     }
 }

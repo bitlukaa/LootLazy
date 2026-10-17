@@ -1,1 +1,5 @@
-third_party/ArchiSteamFarm/** linguist-vendored
+# LootLazy repository attributes
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh text eol=lf

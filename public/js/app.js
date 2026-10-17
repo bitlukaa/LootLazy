@@ -4,7 +4,7 @@ const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;'
 const clock=seconds=>[Math.floor(seconds/3600),Math.floor(seconds%3600/60),Math.floor(seconds%60)].map(n=>String(n).padStart(2,'0')).join(':');
 const hm=minutes=>[Math.floor(minutes/60),Math.round(minutes%60)].map(n=>String(n).padStart(2,'0')).join(':');
 function humanTime(seconds){const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=Math.floor(seconds%60);return [[h,'hours_unit'],[m,'minutes_unit'],[s,'seconds_unit']].filter(([n])=>n>0).map(([n,key])=>number(n)+' '+t(key)).join(' ');}
-function dateText(value,withTime=false){const date=new Date(value);if(!Number.isFinite(date.getTime()))return '—';return new Intl.DateTimeFormat(currentLang==='ar'?'ar-EG':'en-US',withTime?{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}:{month:'short',day:'numeric'}).format(date);}
+function dateText(value,withTime=false){const date=new Date(value);if(!Number.isFinite(date.getTime()))return '—';return new Intl.DateTimeFormat('en-US',withTime?{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}:{month:'short',day:'numeric'}).format(date);}
 function actionLabel(button,icon,label){const markup=getIcon(icon)+'<span>'+escapeHtml(label)+'</span>';if(button.dataset.actionMarkup===markup&&button.firstElementChild)return;button.innerHTML=markup;button.dataset.actionMarkup=markup;}
 function setSlot(id,icon){if($(id))$(id).innerHTML=getIcon(icon);}
 function errorText(error,fallback='start_error'){
@@ -19,7 +19,7 @@ async function request(url,body){if(!window.lootlazyRequest)throw new Error('Nat
 
 function busy(button,on){clearTimeout(button._busyTimer);const label=button.querySelector('[data-i18n]');if(on){button._busyStarted=performance.now();button.disabled=true;button.setAttribute('aria-busy','true');if(button.querySelector('.refresh-icon'))button.classList.add('is-refreshing');if(label){if(label.dataset.i18n!=='refreshing')button.dataset.normalLabel=label.dataset.i18n;label.dataset.i18n='refreshing';label.textContent=t('refreshing');}}else{const finish=()=>{button.disabled=false;button.setAttribute('aria-busy','false');button.classList.remove('is-refreshing');if(label&&button.dataset.normalLabel){label.dataset.i18n=button.dataset.normalLabel;label.textContent=t(label.dataset.i18n);}};const delay=button.querySelector('.refresh-icon')?Math.max(0,600-(performance.now()-button._busyStarted)):0;if(delay)button._busyTimer=setTimeout(finish,delay);else finish();}}
 function toast(message,type='info'){const item=document.createElement('div');item.className='toast '+type;const icon=document.createElement('span');icon.innerHTML=getIcon(type==='error'?'x':type==='success'?'check':'sparkles');const text=document.createElement('span');text.textContent=message;item.append(icon,text);const platform=message===t('discord_not_installed')?'discord':message===t('steam_not_installed')?'steam':null;if(platform){const link=document.createElement('button');link.type='button';link.className='button button-secondary';link.textContent=t('download_'+platform);link.onclick=()=>request('/api/platforms/download',{platform}).catch(()=>toast(t('download_open_failed'),'error'));item.appendChild(link);}$('toast-container').appendChild(item);while($('toast-container').children.length>3)$('toast-container').firstElementChild.remove();setTimeout(()=>{item.classList.add('out');setTimeout(()=>item.remove(),250);},platform?12000:3500);}
-function setLanguage(lang){currentLang=lang==='en'?'en':'ar';localStorage.setItem('lootlazy_lang',currentLang);document.documentElement.lang=currentLang;document.documentElement.dir=currentLang==='ar'?'rtl':'ltr';$('toast-container').replaceChildren();translate();renderGames();renderSelected(false);renderSession();renderQueue(true);renderQuests();renderStats();renderUpdates();renderCryptoSupport();window.lootlazyRotations?.translate();window.lootlazySteamAccounts?.translate();window.lootlazyNotifications?.render();}
+function setLanguage(lang){currentLang='en';localStorage.setItem('lootlazy_lang','en');document.documentElement.lang='en';document.documentElement.dir='ltr';$('toast-container').replaceChildren();translate();renderGames();renderSelected(false);renderSession();renderQueue(true);renderQuests();renderStats();renderUpdates();renderCryptoSupport();window.lootlazyRotations?.translate();window.lootlazySteamAccounts?.translate();window.lootlazyNotifications?.render();}
 function updateSteamIndicator(running,connected){const badge=$('steam-indicator');if(badge){badge.classList.toggle('connected',!!running);badge.classList.toggle('disconnected',!running);badge.classList.remove('client-open');$('steam-status-text').textContent='Steam Desktop: '+t(running?'discord_running':'discord_not_running');const label='Steam: '+t(running?'discord_running':'discord_not_running');badge.title=label;badge.setAttribute('aria-label',label);}}
 function updateDiscordIndicator(connected){const el=$('discord-indicator');if(el){el.classList.toggle('connected',!!connected);el.classList.toggle('disconnected',!connected);const text=$('discord-status-text');if(text)text.textContent='Discord Desktop: '+t(connected?'discord_running':'discord_not_running');const label='Discord: '+t(connected?'discord_running':'discord_not_running');el.title=label;el.setAttribute('aria-label',label);}}
 
@@ -92,7 +92,7 @@ async function loadQuests(refresh=false,silent=false){
  finally{questsBusy=false;busy(button,false);}
 }
 async function playQuest(quest){
- if(questActionBusy||state.queue?.active)return;questActionBusy=true;updateQuestSessions();
+ if(questActionBusy)return;questActionBusy=true;updateQuestSessions();
  try{await request('/api/quests/start',{questId:quest.id});acknowledgeQuest(quest);}
  catch(error){toast(errorText(error),'error');}
  finally{await pollStatus();await loadQuests(false,true);questActionBusy=false;updateQuestSessions();}
@@ -201,14 +201,14 @@ function updateQuestSessions(){
   renderQuests();
   return;
  }
- setFlag($('btn-resume-quest-queue'),'hidden',!saved.length||queue.active);setFlag($('btn-resume-quest-queue'),'disabled',questActionBusy||!!state.session||!!state.queue?.active);
+ setFlag($('btn-resume-quest-queue'),'hidden',!saved.length||queue.active);setFlag($('btn-resume-quest-queue'),'disabled',questActionBusy);
  setFlag($('quest-save-warning'),'hidden',!state.storageWarning);setText($('quest-save-warning'),state.storageWarning?errorText(state.storageWarning):'');
 
  for(const quest of state.quests){const card=document.querySelector('[data-quest-id="'+quest.id+'"]');if(!card)continue;
   const badge=card.querySelector('.quest-new');setText(badge,t('quest_new'));setFlag(badge,'hidden',!questIds(quest).some(id=>newQuestIds.has(id))||!!quest.localFinished);
   const item=queue.items?.findLast(item=>questMatches(quest,item.questId)),waiting=item&&['queued','waiting','starting'].includes(item.state)&&queue.active,active=questMatches(quest,state.session?.questId),paused=!active&&!quest.localFinished&&(quest.resumeElapsedSeconds>0||item?.state==='paused'),button=card.querySelector('.quest-play'),errText=card.querySelector('.quest-error-text'),progress=card.querySelector('.quest-progress');
 
-  setFlag(button,'disabled',questActionBusy||active||!!waiting||!!state.queue?.active||(!active&&(!quest.game?.id||quest.localFinished)));
+  setFlag(button,'disabled',questActionBusy||active||!!waiting||(!active&&(!quest.game?.id||quest.localFinished)));
   let btnText=t('quest_play');
   if(active){
    if(state.session.timerWaiting)btnText=t('quest_wait_discord');

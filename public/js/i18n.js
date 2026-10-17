@@ -1,323 +1,5 @@
-// LootLazy interface translations. Keep application logic and comments in English.
+﻿// LootLazy interface translations. Keep application logic and comments in English.
 const I18N = {
-  "ar": {
-    "updates_unsigned": "توجد نسخة أحدث، لكن توقيع التحديث المطلوب غير موجود.",
-    "updates_signature_failed": "تعذر التحقق من توقيع التحديث، لذلك تم إيقاف التثبيت.",
-    "steam_runtime_untrusted": "تعذر التحقق من مكتبة Steam. تحقّق من ملفات اللعبة المثبتة من داخل Steam.",
-    "crypto_currency": "العملة",
-    "crypto_network": "الشبكة",
-    "crypto_address": "عنوان التبرع",
-    "crypto_copy": "نسخ العنوان",
-    "crypto_copied": "تم نسخ العنوان",
-    "crypto_copy_failed": "تعذر النسخ. حدّد العنوان وانسخه يدويًا.",
-    "crypto_network_note": "تأكد أن شبكة الإرسال مطابقة للشبكة المختارة.",
-    "game_time_empty_title": "اضبط وقت لعبتك",
-    "game_time_empty_body": "اختَر لعبة وحدّد مدة تشغيل نشاطها.",
-    "steam_empty_title": "ابدأ جلسة ستيم",
-    "steam_empty_body": "اختَر لعبة تملكها، أو حدّد عدة ألعاب لتشغيلها معًا.",
-    "variety_empty_title": "جهّز قائمة ألعابك",
-    "settings_intro": "خصّص المظهر واللغة وتفضيلات التطبيق.",
-    "donation_intro": "ادعم LootLazy وساهم في تطوير المميزات القادمة.",
-    "install_update": "تنزيل وتثبيت",
-    "updates_downloading": "جارٍ التنزيل…",
-    "updates_restarting": "جارٍ إعادة التشغيل…",
-    "updates_stop_sessions": "أوقف كل الجلسات النشطة قبل تثبيت التحديث.",
-    "updates_busy": "تحديث البرنامج جاري بالفعل.",
-    "updates_download_failed": "تعذر تنزيل التحديث. حاول لاحقًا.",
-    "updates_checksum_failed": "تعذر التحقق من التحديث. نسختك الحالية لم تتغير.",
-    "updates_save_failed": "تعذر حفظ التحديث في مجلد التطبيق.",
-    "updates_install_failed": "تعذر بدء تثبيت التحديث.",
-    "steam_search_hint": "مش لاقي لعبة؟ ابحث عنها بالأعلى لإضافتها وتشغيلها، حتى لو مش مثبتة على جهازك. لازم تكون موجودة في مكتبة حسابك على ستيم.",
-    "game_time_badge_note": "اختَر لعبة، حدّد وقتها، وشغّل جلسة واحدة أو قائمة ألعاب محفوظة.",
-    "game_variety_badge_note": "جهّز قائمة ألعاب، اختَر مدة موحّدة، وشغّل ألعابك بالترتيب.",
-    "sync_discord": "تشغيل على ديسكورد أيضًا",
-    "discord_sync_unavailable": "اللعبة غير مرتبطة بعنوان في قاعدة ديسكورد.",
-    "tab_donation": "الدعم",
-    "recommended_5m": "الموصى به: ٥ دقائق",
-    "duration_5m": "٥ دقائق",
-    "duration_10m": "١٠ دقائق",
-    "duration_20m": "٢٠ دقيقة",
-    "support_title": "دعم LootLazy",
-    "support_intro": "عجبك البرنامج؟ تقدر تساهم في تطويره.",
-    "support_back": "العودة للإعدادات",
-    "support_headline": "دعم بسيط يفرق كثير.",
-    "support_body": "لو البرنامج ساعدك، تقدر تساهم في تطويره. كل مساهمة تساعدنا نخصص وقت للتحسينات وإصلاح المشاكل وإضافة مميزات جديدة.",
-    "support_optional": "الدعم اختياري تمامًا؛ استخدامك للبرنامج ومشاركة ملاحظاتك لهما قيمة كبيرة أيضًا.",
-    "support_crypto": "دعم بالعملات الرقمية",
-    "support_crypto_desc": "ساهم في التطوير باستخدام USDT أو ETH أو BNB على الشبكات الموضحة أدناه.",
-    "support_thanks": "شكرًا لأنك جزء من LootLazy.",
-    "total_played": "إجمالي وقت التشغيل",
-    "discord_sessions": "جلسات ديسكورد",
-    "steam_sessions": "جلسات ستيم",
-    "local_playtime_note": "وقت مسجل داخل البرنامج. تُحسب الجلسات المتزامنة بشكل مستقل.",
-    "sync_steam": "تشغيل على ستيم أيضًا",
-    "steam_sync_unavailable": "اللعبة غير مرتبطة بعنوان على ستيم.",
-    "steam_sync_already_running": "اللعبة تعمل بالفعل في جلسة ستيم مستقلة. أوقفها أولًا أو شغّل بدون المزامنة.",
-    "language": "اللغة",
-    "navigation": "أقسام البرنامج",
-    "language_ar": "العربية",
-    "language_en": "الإنجليزية",
-    "theme": "تغيير المظهر",
-    "window_minimize": "تصغير",
-    "window_maximize": "تكبير / استعادة",
-    "window_close": "إغلاق",
-    "tab_simulator": "وقت اللعب",
-    "tab_quests": "المهام",
-    "tab_settings": "الإعدادات",
-    "workspace": "مساحة التشغيل",
-    "refreshing": "جاري التنفيذ…",
-    "active_sim_for": "قيد التشغيل · {game}",
-    "sim_intro": "اختر لعبة، حدد المدة، وابدأ.",
-    "games": "الألعاب",
-    "category": "التصنيف",
-    "search_placeholder": "ابحث عن لعبة…",
-    "cat_all": "كل الألعاب",
-    "cat_shooter": "تصويب",
-    "cat_action": "أكشن",
-    "cat_rpg": "تقمص أدوار",
-    "cat_strategy": "استراتيجية",
-    "load_more": "عرض المزيد",
-    "selected_game": "اللعبة المختارة",
-    "pick_game": "اختر لعبة من القائمة للبدء",
-    "idle_sim": "متوقف",
-    "active_sim": "قيد التشغيل",
-    "elapsed": "وقت التشغيل",
-    "remaining": "المتبقي",
-    "duration": "مدة التشغيل",
-    "idle_continuous": "مستمر",
-    "idle_15m": "15 دقيقة",
-    "idle_30m": "30 دقيقة",
-    "idle_1h": "ساعة",
-    "idle_custom": "مخصص",
-    "hours": "ساعات",
-    "minutes": "دقائق",
-    "start_sim": "بدء الجلسة",
-    "stop_sim": "إيقاف المحاكاة",
-    "queue_add": "إضافة للطابور",
-    "advanced_settings": "إعدادات متقدمة",
-    "target_exe": "ملف التشغيل",
-    "custom_override": "اسم ملف مخصص",
-    "save_apply": "حفظ",
-    "cancel": "إلغاء",
-    "queue_title": "الطابور",
-    "queue_automatic": "انتقال تلقائي",
-    "queue_next": "ابدأ التالية",
-    "queue_start": "بدء الطابور",
-    "queue_cancel": "إيقاف",
-    "queue_clear": "مسح",
-    "queue_idle": "جاهز",
-    "queue_starting": "جاري البدء",
-    "queue_running": "قيد التشغيل",
-    "queue_waiting": "انتظار",
-    "queue_ready_next": "جاهز للتالية",
-    "queue_stopping": "جاري الإيقاف",
-    "queue_cancelled": "متوقف",
-    "queue_completed": "انتهت المدة",
-    "queue_queued": "في الطابور",
-    "queue_failed": "يحتاج مراجعة",
-    "queue_empty": "ابدأ لعبة، ثم اختر أخرى واضغط تشغيل بعدها. ستظهر ألعابك المختارة هنا.",
-    "queue_up": "تحريك لأعلى",
-    "queue_down": "تحريك لأسفل",
-    "queue_remove": "إزالة",
-    "edit_duration": "تعديل المدة",
-    "queue_wait": "التالي بعد {seconds} ثوانٍ: {game}",
-    "queue_wait_manual": "التالي متاح بعد {seconds} ثوانٍ: {game}",
-    "queue_next_ready": "اضغط «ابدأ التالية» للمتابعة مع {game}.",
-    "queue_progress": "{current} / {total} · {game}",
-    "queue_finished": "انتهت جميع المؤقتات.",
-    "queue_failure": "توقفت العملية بشكل غير متوقع. الطابور يحتاج مراجعة.",
-    "queue_requires_stop": "أوقف المحاكاة الحالية لبدء الطابور.",
-    "quests_eyebrow": "المتاح حاليًا",
-    "clear_quests": "مسح المهام",
-    "refresh_quests": "تحديث المهام",
-    "quests_note": "مهام لعب سطح المكتب لمدة 15 دقيقة. تحديث كل 5 دقائق.",
-    "quests_empty": "لا توجد مهام محمّلة",
-    "quests_empty_hint": "اضغط تحديث لجلب المهام المتاحة حاليًا.",
-    "quests_load_error": "تعذّر تحميل المهام. جرّب التحديث.",
-    "quests_refresh_error": "تعذّر تحديث المهام. احتفظنا بالقائمة السابقة.",
-    "quests_cleared": "تم مسح قائمة المهام.",
-    "quests_refreshed": "تم تحميل {count} مهام متاحة.",
-    "quests_current": "قائمة المهام محدثة بالفعل.",
-    "quests_new_found": "تم العثور على {count} مهام جديدة.",
-    "quest_choose": "اختر اللعبة",
-    "quest_missing_game": "اللعبة غير متاحة",
-    "quest_video": "مشاهدة داخل Discord",
-    "quest_stream": "بث داخل Discord",
-    "quest_activity": "مهمة داخل اللعبة",
-    "kind_play": "لعب",
-    "kind_stream": "بث",
-    "kind_video": "فيديو",
-    "kind_activity": "نشاط",
-    "task_play": "العب لمدة {time}",
-    "task_stream": "ابث لمدة {time}",
-    "task_video": "شاهد لمدة {time}",
-    "task_activity": "أكمل النشاط المطلوب داخل اللعبة",
-    "expires": "تنتهي {date}",
-    "preferences": "التفضيلات",
-    "catalog_total": "لعبة",
-    "refresh_catalog": "تحديث",
-    "last_updated": "آخر تحديث",
-    "animations": "حركة الواجهة",
-    "animations_hint": "انتقالات ناعمة بين الصفحات والثيم.",
-    "steam_folder": "مجلد Steam (اختياري)",
-    "steam_folder_hint": "يساعد في معرفة أسماء ملفات الألعاب المثبتة عند غيابها من القائمة.",
-    "steam_folder_error": "اختر مجلدًا يحتوي على steamapps.",
-    "setting_reset": "استعادة أسماء الملفات",
-    "setting_reset_desc": "مسح الأسماء المخصصة فقط.",
-    "reset_btn": "استعادة",
-    "reset_confirm": "استعادة جميع أسماء ملفات التشغيل المخصصة؟",
-    "catalog_source": "الألعاب: سجل Discord العام",
-    "quest_source": "المهام: Discord Quest Community",
-    "games_count": "{count} لعبة",
-    "no_games": "لا توجد ألعاب مطابقة",
-    "games_error": "تعذّر تحميل الألعاب. حاول مجددًا.",
-    "need_exe": "لا يوجد اسم ملف Windows معروف. اختر أو احفظ الاسم الصحيح من الإعدادات المتقدمة.",
-    "select_exe": "اختر ملف تشغيل…",
-    "official_source": "الاسم من سجل اللعبة",
-    "local_source": "اسم مكتشف في تثبيت Steam",
-    "custom_source": "اسم مخصص",
-    "candidate_source": "اقتراحات غير مؤكدة: اختر فقط اسمًا تعرف أنه صحيح.",
-    "no_source": "اسم ملف التشغيل غير متاح",
-    "session_pid": "العملية {pid} · {exe}",
-    "invalid_duration": "اختر من 0 إلى 24 ساعة ومن 0 إلى 59 دقيقة، بحد أقصى 24 ساعة.",
-    "queue_duration": "حدد مدة دقيقة واحدة على الأقل.",
-    "queue_busy": "أوقف الطابور قبل تعديله.",
-    "queue_error": "تعذّر تعديل الطابور. راجع اللعبة والملف والمدة.",
-    "start_error": "تعذّر بدء العملية. راجع الإعدادات المتقدمة.",
-    "stop_error": "تعذّر إيقاف العملية.",
-    "save_error": "تعذّر حفظ اسم الملف.",
-    "saved": "تم الحفظ.",
-    "started": "بدأت المحاكاة.",
-    "stopped": "توقفت المحاكاة.",
-    "queue_added": "أضيفت للطابور.",
-    "catalog_updated": "تم تحديث القائمة: {count} لعبة.",
-    "catalog_error": "تعذّر تحديث القائمة. القائمة المحفوظة ما زالت متاحة.",
-    "settings_error": "تعذّر حفظ الإعدادات.",
-    "reset_done": "تمت استعادة الأسماء الافتراضية.",
-    "connection_error": "تعذّر الوصول إلى محرك البرنامج.",
-    "filename_needed": "اسم الملف مطلوب",
-    "file_invalid": "استخدم اسم ملف أو مسارًا نسبيًا ينتهي بـ .exe أو .bin.",
-    "minutes_unit": "د",
-    "hours_unit": "س",
-    "seconds_unit": "ث",
-    "source_error": "مصدر المهام العام غير متاح.",
-    "quest_new": "جديد",
-    "simulation_mode": "وضع الجلسة",
-    "select_from_list": "تصفح الألعاب",
-    "custom_process": "جلسة يدوية",
-    "selected_games": "الطابور",
-    "select_game": "اختر لعبة",
-    "play_next": "تشغيل بعدها",
-    "scheduled": "مجدولة",
-    "quest_stop": "إيقاف",
-    "game_configuration": "إعداد الجلسة",
-    "game_configuration_hint": "حدّد مدة التشغيل وابدأ اللعبة.",
-    "presence_only": "وضع النشاط",
-    "presence_only_hint": "ملف اللعبة غير موجود بالقائمة. متاح تشغيل نشاط Discord مباشرة.",
-    "presence_idle": "",
-    "presence_connecting": "جارٍ إرسال النشاط إلى Discord…",
-    "presence_unavailable": "اتصال النشاط غير متاح. افتح تطبيق Discord على الجهاز.",
-    "presence_rejected": "Discord لم يقبل النشاط. جارٍ إعادة المحاولة…",
-    "presence_disconnected": "انقطع اتصال النشاط. جارٍ إعادة الاتصال…",
-    "quest_reopen": "إعادة المهمة",
-    "quest_reopen_error": "تعذر إعادة تشغيل المهمة. حدّث المهام المتاحة وحاول مجددًا.",
-    "quest_cancel": "إلغاء المهمة",
-    "quest_closed": "مُغلقة",
-    "quest_active": "قيد التشغيل",
-    "quest_cancelled_hint": "تم إلغاؤها محليًا.",
-    "quest_queued": "في الانتظار",
-    "quest_waiting": "في الانتظار · أمامك {position}",
-    "quest_gap": "تبدأ خلال {seconds} ث",
-    "quest_play": "بدء المهمة",
-    "quest_local_finished": "انتهت الجلسة",
-    "quest_local_finished_hint": "انتهى المؤقت المحلي. راجع التقدم في Discord.",
-    "quest_running": "قيد التشغيل · المتبقي {time}",
-    "missing_executable": "لا يوجد اسم ملف تشغيل ويندوز لهذه اللعبة. حدّث القائمة أو أدخل اسم ملف التشغيل.",
-    "appearance": "المظهر",
-    "theme_light": "فاتح",
-    "theme_dark": "داكن",
-    "startup_title": "التشغيل مع بدء تشغيل الجهاز",
-    "startup_desc": "تشغيل LootLazy تلقائياً عند فتح نظام Windows",
-    "start_minimized_title": "بدء التشغيل مصغراً",
-    "start_minimized_desc": "بدء تشغيل البرنامج في شريط المهام دون فتح النافذة",
-    "minimize_to_tray_title": "التصغير لشريط المهام عند الإغلاق",
-    "minimize_to_tray_desc": "إخفاء النافذة في شريط المهام بدلاً من إنهاء البرنامج عند الضغط على إغلاق",
-    "active_steam_library_title": "مكتبة Steam المعتمدة",
-    "active_steam_library_desc": "المسار المعتمد لتسجيل الألعاب وإنشاء ملفات Steam",
-    "desktop_notifications_title": "إشعارات سطح المكتب",
-    "desktop_notifications_desc": "تنبيه عند انتهاء وقت اللعب أو اكتمال المهمة",
-    "discord_activity_title": "نشاط Discord",
-    "discord_activity_desc": "ربط جلسات الألعاب بتطبيق ديسكورد على الجهاز. إيقافه يعطل اتصال النشاط المحلي.",
-    "discord_connected": "متصل بـ Discord",
-    "discord_disconnected": "غير متصل بـ Discord",
-    "discord_status_title": "حالة اتصال تطبيق Discord",
-    "session_completed": "اكتمل وقت اللعب لـ {game}.",
-    "quest_completed_notification": "اكتمل وقت المهمة لـ {quest}. راجع ديسكورد لتأكيد الجائزة.",
-    "enabled": "مفعّل",
-    "disabled": "معطّل",
-    "updates_title": "التحديثات",
-    "check_updates": "فحص التحديثات",
-    "last_checked": "آخر فحص",
-    "update_available": "تحديث جديد",
-    "update_available_version": "الإصدار {version} متاح.",
-    "update_channel": "قناة التحديثات",
-    "channel_stable": "Stable — مستقرة",
-    "channel_beta": "Beta — تجريبية",
-    "channel_help": "التجريبية تستقبل المميزات أولًا. اختر Stable للخروج منها. إعداداتك محفوظة.",
-    "channel_join_title": "الانضمام إلى Beta",
-    "channel_leave_title": "العودة إلى Stable",
-    "channel_join_action": "الانضمام إلى Beta",
-    "channel_leave_action": "العودة إلى Stable",
-    "channel_join_confirm": "الانضمام للتجريبية؟ قد تحتوي على مشاكل. اضغط الانضمام إلى Beta، ثم ثبّت التحديث المتاح.",
-    "channel_leave_confirm": "العودة للمستقرة؟ قد يثبت إصدار أقدم وتتوقف المميزات التجريبية. إعداداتك محفوظة. اضغط العودة إلى Stable، ثم ثبّت التحديث المتاح.",
-    "updates_current": "تستخدم أحدث إصدار.",
-    "updates_unavailable": "تعذر فحص التحديثات حاليًا. حاول لاحقًا.",
-    "updates_ready": "تحقق من وجود إصدار جديد.",
-    "whats_new": "الجديد في الإصدار",
-    "download_catalog": "تنزيل قائمة الألعاب",
-    "search_more_games": "معروض {count} لعبة. ابحث بالأعلى للوصول لباقي الألعاب.",
-    "edit_executable": "تعديل ملف التشغيل",
-    "games_current": "قائمة الألعاب محدثة بالفعل.",
-    "quest_duration_range": "اختر مدة من دقيقة إلى ساعة.",
-    "quests_desktop_note": "اقبل المهمة في Discord واختر Desktop، ثم ابدأ تشغيلها من هنا.",
-    "quest_resume": "استكمال المهمة",
-    "quest_wait_discord": "في انتظار Discord…",
-    "quest_paused_remaining": "متوقفة مؤقتًا · المتبقي {time}",
-    "discord_launch_failed": "افتح Discord على الكمبيوتر أو ثبّته، ثم حاول مجددًا.",
-    "quest_pause": "إيقاف مؤقت",
-    "resume_quest_queue": "استكمال القائمة",
-    "quest_queue_saved": "المهام المختارة محفوظة. استكملها عندما تكون جاهزًا.",
-    "quest_saved_in_queue": "محفوظة في القائمة",
-    "error_file_access": "تعذر إنشاء ملف اللعبة. تحقق من صلاحية الكتابة في مجلد البرنامج.",
-    "error_invalid_executable": "أدخل اسم ملف تشغيل Windows صالح.",
-    "error_quest_unavailable": "المهمة لم تعد متاحة. حدّث قائمة المهام.",
-    "error_quest_closed": "أعد فتح المهمة قبل تشغيلها.",
-    "error_queue_full": "القائمة تستوعب حتى 30 لعبة.",
-    "error_game_busy": "أوقف اللعبة الحالية أو أوقفها مؤقتًا أولًا.",
-    "error_process_ended": "توقفت اللعبة مبكرًا. يمكنك استكمال المهمة.",
-    "error_launch_failed": "تعذر بدء اللعبة. تحقق من صلاحيات المجلد أو اختر ملف تشغيل آخر.",
-    "error_save_failed": "تعذر حفظ التقدم. تحقق من صلاحية الكتابة في مجلد LootLazy.",
-    "error_network": "تعذر الاتصال. بياناتك المحفوظة ما زالت متاحة.",
-    "error_discord_connection": "Discord غير جاهز. افتح تطبيقه على الكمبيوتر وانتظر اكتمال تشغيله.",
-    "error_discord_rejected": "Discord رفض النشاط. جرّب اسم ملف تشغيل آخر.",
-    "search_quests": "البحث في المهام...",
-    "filter_all": "الكل",
-    "filter_running": "النشطة",
-    "filter_active": "المتاحة",
-    "filter_completed": "المكتملة",
-    "no_matching_quests": "لا توجد مهام مطابقة لبحثك.",
-    "clear_search": "مسح البحث",
-    "total_playtime": "إجمالي وقت اللعب",
-    "total_playtime_desc": "إجمالي الوقت المقضي في تشغيل الألعاب والمهام",
-    "seconds": "ثوانٍ",
-    "quest_duration_title": "مدة تشغيل المهام",
-    "quest_duration_desc": "تحديد وقت تشغيل مهام ديسكورد",
-    "played_label": "وقت اللعب:",
-    "quest_preparing": "جارٍ التجهيز…",
-    "section_active_queue": "قيد التشغيل والطابور",
-    "section_available": "المهام المتاحة",
-    "section_completed": "المهام المكتملة"
-  },
   "en": {
     "updates_unsigned": "A newer version is available, but its required update signature is missing.",
     "steam_runtime_untrusted": "Steam runtime verification failed. Verify your installed game files in Steam.",
@@ -675,44 +357,6 @@ Object.assign(I18N.en,{
   "rotation_game_count": "{count} games",
   "steam_catalog_only": "Ownership is checked at session start."
 });
-Object.assign(I18N.ar,{
-  "tab_variety": "تنويع الألعاب",
-  "tab_steam": "خمول Steam",
-  "variety_count": "عدد الألعاب",
-  "rotation_default_time": "الوقت الافتراضي لكل لعبة",
-  "rotation_apply_all": "تطبيق على الكل",
-  "variety_recommended": "المقترح: 10 دقائق",
-  "variety_shuffle": "تغيير الألعاب",
-  "rotation_start": "بدء",
-  "rotation_resume": "استكمال",
-  "rotation_summary": "{count} لعبة · {time}",
-  "rotation_empty": "اختر الألعاب لبناء الطابور.",
-  "rotation_duration": "وقت اللعبة",
-  "rotation_running": "قيد التشغيل",
-  "rotation_paused": "متوقف مؤقتًا · تم حفظ التقدم",
-  "rotation_idle": "جاهز",
-  "rotation_completed": "اكتمل الطابور",
-  "rotation_starting": "جارٍ الاتصال…",
-  "rotation_edit_locked": "يمكن تعديل الألعاب القادمة فقط.",
-  "rotation_count_invalid": "اختر عددًا من 1 إلى 500 لعبة.",
-  "rotation_duration_invalid": "اختر مدة من 1 إلى 1440 دقيقة.",
-  "rotation_error": "تعذر تحديث الجلسة. حاول مرة أخرى.",
-  "steam_library": "ألعاب Steam",
-  "steam_add": "اختيار للطابور",
-  "steam_ownership_note": "يجب فتح Steam وتسجيل الدخول. يمكن بدء الألعاب التي يمتلكها الحساب الحالي فقط.",
-  "steam_initialization_failed": "تعذر بدء الجلسة عبر Steam. تأكد من ملكية اللعبة وحاول مرة أخرى.",
-  "steam_runtime_ready": "مكتبة التشغيل متاحة",
-  "steam_runtime_unavailable": "مكتبة التشغيل غير متاحة",
-  "steam_runtime_missing": "لم يتم العثور على مكتبة Steam متوافقة داخل الألعاب المثبتة.",
-  "steam_runtime_incompatible": "مكتبة Steam المثبتة غير متوافقة. جرّب لعبة مثبتة أحدث.",
-  "steam_not_ready": "افتح Steam وسجّل الدخول، ثم حاول مرة أخرى.",
-  "steam_not_owned": "حساب Steam الحالي لا يمتلك هذه اللعبة.",
-  "steam_connection_lost": "انتهى اتصال Steam. تم حفظ التقدم.",
-  "steam_selected": "تم الاختيار",
-  "steam_catalog_hint": "ابحث لعرض المزيد من ألعاب Steam.",
-  "rotation_game_count": "{count} لعبة",
-  "steam_catalog_only": "يتم التحقق من ملكية اللعبة عند بدء الجلسة."
-});
 Object.assign(I18N.en,{
   "variety_time": "Time per game",
   "steam_library": "Steam library",
@@ -727,21 +371,6 @@ Object.assign(I18N.en,{
   "steam_library_empty_hint": "Search to select a game you own, even if it is not installed.",
   "steam_game_select": "Select {game}",
   "steam_library_hint": "Installed games · Search for other titles"
-});
-Object.assign(I18N.ar,{
-  "variety_time": "وقت كل لعبة",
-  "steam_library": "مكتبة Steam",
-  "steam_start_selected": "تشغيل المحدد",
-  "steam_selected_count": "تم تحديد {count}",
-  "steam_active_sessions": "الجلسات النشطة",
-  "steam_pause_all": "إيقاف الكل مؤقتًا",
-  "steam_stop_all": "إيقاف الكل",
-  "steam_apply_duration": "تطبيق الوقت",
-  "steam_session_limit": "يمكن تشغيل حتى 32 جلسة Steam معًا.",
-  "steam_library_empty": "لم يتم العثور على ألعاب Steam مثبتة.",
-  "steam_library_empty_hint": "ابحث لاختيار لعبة تمتلكها حتى لو لم تكن مثبتة.",
-  "steam_game_select": "تحديد {game}",
-  "steam_library_hint": "الألعاب المثبتة · ابحث عن ألعاب أخرى"
 });
 Object.assign(I18N.en,{
   "steam_sub_mode": "Steam mode",
@@ -771,113 +400,56 @@ Object.assign(I18N.en,{
   "status_connected": "Connected",
   "status_disconnected": "Disconnected"
 });
-Object.assign(I18N.ar,{
-  "steam_sub_mode": "وضع ستيم",
-  "steam_mode_library": "مكتبة ستيم",
-  "steam_mode_active": "الجلسات النشطة",
-  "steam_no_active_sessions": "لا توجد جلسات نشطة",
-  "steam_no_active_hint": "اختر لعبة من مكتبة ستيم لبدء تشغيلها هنا.",
-  "steam_status_title": "حالة تطبيق Steam واتصال الجلسة",
-  "steam_connected": "Steam متصل",
-  "steam_open": "Steam مفتوح",
-  "steam_disconnected": "Steam غير متصل",
-  "steam_launch_failed": "تعذر فتح Steam. تأكد من تثبيت التطبيق على جهازك.",
-  "steam_library_reminder": "تأكد إن اللعبة موجودة في مكتبة Steam عندك، ثم شغّلها من هنا. مش لازم تكون مثبتة على الجهاز.",
-  "connections_privacy_title": "الربط والخصوصية",
-  "connections_privacy_desc": "توضيح لكيفية تواصل LootLazy مع البرامج والمنصات الخارجية وحدود صلاحياتها.",
-  "download_discord": "تحميل Discord",
-  "download_steam": "تحميل Steam",
-  "download_open_failed": "تعذّر فتح صفحة التحميل. حاول مجددًا.",
-  "discord_not_installed": "تطبيق Discord المكتبي غير مثبت. ثبّته ثم حاول مجددًا.",
-  "steam_not_installed": "Steam غير مثبت. ثبّته ثم حاول مجددًا.",
-  "discord_running": "قيد التشغيل",
-  "discord_not_running": "غير مشغّل",
-  "connection_discord_title": "تطبيق ديسكورد (Discord)",
-  "connection_discord_desc": "يتحقق LootLazy من تشغيل تطبيق Discord المكتبي قبل بدء جلسة المهمة. لا يتطلب ربط حساب ديسكورد أو تسجيل الدخول أو OAuth أو توكنات الحساب.",
-  "connection_steam_title": "عميل ستيم (وقت اللعب والمحاكاة)",
-  "connection_steam_desc": "يتواصل البرنامج محلياً مع عميل ستيم المشغّل على جهاز الكمبيوتر لتسجيل ساعات اللعب ومحاكاة الجلسات. لا يتطلب تسجيل الدخول بحساب ستيم أو إدخال كلمة المرور.",
-  "status_connected": "متصل",
-  "status_disconnected": "غير متصل"
-});
 Object.assign(I18N.en,{"tab_steam":"Steam Idle","variety_choose_count":"Choose your game count","variety_choose_hint":"Select 10, 50, 100, or 200 games to build your Discord lineup.","notifications_title":"Notifications","notifications_empty":"No notifications yet.","game_time_badge_note":"Choose a game and manage its Discord activity with a timed session or queue.","game_variety_badge_note":"Choose a game count, set one duration, and run your Discord activities in order.","custom_process":"Manual session","manual_session_hint":"Use an executable name to create a custom Discord activity when the game is not in the catalog."});
-Object.assign(I18N.ar,{"tab_steam":"Steam Idle","variety_choose_count":"اختر عدد الألعاب","variety_choose_hint":"اختر 10 أو 50 أو 100 أو 200 لعبة لتجهيز قائمة نشاط Discord.","notifications_title":"الإشعارات","notifications_empty":"لا توجد إشعارات بعد.","game_time_badge_note":"اختر لعبة وأدر نشاطها على Discord بجلسة محددة المدة أو قائمة ألعاب.","game_variety_badge_note":"اختر عدد الألعاب ومدة موحدة لتشغيل أنشطة Discord بالترتيب.","custom_process":"جلسة يدوية","manual_session_hint":"استخدم اسم ملف تنفيذي لإنشاء نشاط Discord مخصص للعبة غير موجودة في القائمة."});
 Object.assign(I18N.en,{"notifications_view_all":"View all notifications","notification_session_title":"Session completed","notification_update_title":"New update","catalog_error":"Could not refresh games. Your saved library is still available."});
-Object.assign(I18N.ar,{"notifications_view_all":"عرض جميع الإشعارات","notification_session_title":"انتهت الجلسة","notification_update_title":"تحديث جديد","catalog_error":"تعذّر تحديث الألعاب. مكتبتك المحفوظة ما زالت متاحة."});
 Object.assign(I18N.en,{notifications_mark_read:"Mark as read"});
-Object.assign(I18N.ar,{notifications_mark_read:"تحديد كمقروءة"});
 Object.assign(I18N.en,{"accounts_title":"Steam Accounts","accounts_intro":"Run your Steam accounts independently. The Steam desktop app is not required.","accounts_add":"Add account","accounts_empty":"Add your first Steam account.","accounts_select":"Select an account to manage its games.","accounts_label":"Account label","accounts_login":"Steam login name","accounts_password":"Password","accounts_password_hint":"Leave blank to use a saved login","accounts_signin":"Sign in","accounts_continue":"Continue","accounts_security":"Login sessions are saved securely for this Windows user. Your password is not saved.","accounts_games":"Selected games","accounts_owned_hint":"Choose games owned by this account.","accounts_games_locked":"Stop the session before changing games.","accounts_choose_games":"Choose at least one game.","accounts_remove":"Remove account","accounts_remove_game":"Remove game","accounts_remove_warning":"Disconnect this account and delete its saved login session from this device?","accounts_retry":"Retry account manager","accounts_loading":"Starting account manager…","accounts_no_results":"No matching games.","accounts_state_offline":"Signed out","accounts_state_connecting":"Signing in","accounts_state_input":"Needs your attention","accounts_state_running":"Running","accounts_state_ready":"Ready","accounts_state_blocked":"Playing elsewhere","accounts_input_Login":"Steam login name","accounts_input_Password":"Steam password","accounts_input_SteamGuard":"Code from Steam email","accounts_input_TwoFactorAuthentication":"Steam Guard code","accounts_input_SteamParentalCode":"Steam Family PIN","accounts_input_DeviceConfirmation":"Approve in the Steam mobile app, then enter Y","accounts_input_QrCodeLogin":"Enter N to use password login","accounts_failed":"Could not complete this action. Try again.","accounts_storage":"Could not access account data safely. Check the application folder.","accounts_invalid":"Check the account details or selected games.","accounts_duplicate":"This Steam login has already been added.","accounts_missing":"This account no longer exists.","accounts_remove_failed":"Could not remove all account data. Stop it and try again.","accounts_stop_first":"Stop this session before changing its settings.","accounts_not_ready":"Sign in and wait until the account is ready.","accounts_input_expired":"This login prompt has expired. Sign in again.","accounts_playing_elsewhere":"This account is playing elsewhere. Stop that game before starting here.","accounts_not_owned":"Game ownership is not confirmed yet. Check that this account owns every selected game, wait for its library to load, then retry.","accounts_engine_missing":"Account support is not included in this development build.","accounts_engine_failed":"Could not start the account manager. Retry without closing your other sessions.","accounts_protocol":"The account manager is incompatible with this build.","accounts_login_failed":"Steam could not sign in. Check your details and try again."});
-Object.assign(I18N.ar,{"accounts_title":"حسابات Steam","accounts_intro":"شغّل حسابات Steam بشكل مستقل، من غير الحاجة لفتح تطبيق Steam المكتبي.","accounts_add":"إضافة حساب","accounts_empty":"أضف أول حساب Steam.","accounts_select":"اختر حسابًا لإدارة ألعابه.","accounts_label":"اسم الحساب في البرنامج","accounts_login":"اسم تسجيل دخول Steam","accounts_password":"كلمة المرور","accounts_password_hint":"اتركها فارغة لاستخدام جلسة محفوظة","accounts_signin":"تسجيل الدخول","accounts_continue":"متابعة","accounts_security":"تُحفظ جلسات الدخول بأمان لمستخدم Windows الحالي. لا نحفظ كلمة المرور.","accounts_games":"الألعاب المختارة","accounts_owned_hint":"اختر ألعابًا يمتلكها هذا الحساب.","accounts_games_locked":"أوقف الجلسة قبل تغيير الألعاب.","accounts_choose_games":"اختر لعبة واحدة على الأقل.","accounts_remove":"إزالة الحساب","accounts_remove_game":"إزالة اللعبة","accounts_remove_warning":"هل تريد فصل هذا الحساب وحذف جلسة دخوله المحفوظة من هذا الجهاز؟","accounts_retry":"إعادة محاولة فتح مدير الحسابات","accounts_loading":"جارٍ تشغيل مدير الحسابات…","accounts_no_results":"لا توجد ألعاب مطابقة.","accounts_state_offline":"غير مسجل","accounts_state_connecting":"جارٍ تسجيل الدخول","accounts_state_input":"يحتاج تأكيدك","accounts_state_running":"قيد التشغيل","accounts_state_ready":"جاهز","accounts_state_blocked":"يلعب في مكان آخر","accounts_input_Login":"اسم تسجيل دخول Steam","accounts_input_Password":"كلمة مرور Steam","accounts_input_SteamGuard":"الكود المرسل لبريد Steam","accounts_input_TwoFactorAuthentication":"كود Steam Guard","accounts_input_SteamParentalCode":"رمز Steam Family","accounts_input_DeviceConfirmation":"وافق من تطبيق Steam على الهاتف ثم أدخل Y","accounts_input_QrCodeLogin":"أدخل N لاستخدام كلمة المرور","accounts_failed":"تعذّر تنفيذ العملية. حاول مجددًا.","accounts_storage":"تعذّر الوصول بأمان لبيانات الحسابات. راجع مجلد التطبيق.","accounts_invalid":"راجع بيانات الحساب أو الألعاب المختارة.","accounts_duplicate":"حساب Steam ده مضاف بالفعل.","accounts_missing":"الحساب لم يعد موجودًا.","accounts_remove_failed":"تعذّر حذف كل بيانات الحساب. أوقفه وحاول مجددًا.","accounts_stop_first":"أوقف الجلسة قبل تغيير إعداداتها.","accounts_not_ready":"سجّل الدخول وانتظر حتى يصبح الحساب جاهزًا.","accounts_input_expired":"انتهت صلاحية طلب التأكيد. سجّل الدخول مجددًا.","accounts_playing_elsewhere":"الحساب يشغّل لعبة في مكان آخر. أوقفها قبل بدء الجلسة هنا.","accounts_not_owned":"لم يتم تأكيد ملكية الألعاب بعد. تأكد أن الحساب يمتلك كل الألعاب المختارة وانتظر تحميل مكتبته ثم حاول مجددًا.","accounts_engine_missing":"هذه النسخة التجريبية لا تحتوي على محرك الحسابات.","accounts_engine_failed":"تعذّر تشغيل مدير الحسابات. أعد المحاولة.","accounts_protocol":"مدير الحسابات غير متوافق مع هذه النسخة.","accounts_login_failed":"تعذّر تسجيل الدخول إلى Steam. راجع البيانات وحاول مجددًا."});
 Object.assign(I18N.en,{connection_steam_title:"Steam",connection_steam_desc:"Steam Library uses your running desktop client. Steam Accounts supports separate logins for several accounts without the desktop client."});
-Object.assign(I18N.ar,{connection_steam_title:"Steam",connection_steam_desc:"مكتبة Steam تستخدم الحساب المفتوح في تطبيق Steam المكتبي. تبويب حسابات Steam يدعم تسجيل عدة حسابات بشكل مستقل من غير الحاجة للتطبيق المكتبي."});
 Object.assign(I18N.en,{steam_pause_all:"Pause library sessions"});
-Object.assign(I18N.ar,{steam_pause_all:"إيقاف جلسات المكتبة مؤقتًا"});
 Object.assign(I18N.en,{accounts_restore_failed:"Saved login could not be restored. Remove this account and add it again."});
-Object.assign(I18N.ar,{accounts_restore_failed:"تعذّر استعادة جلسة الدخول المحفوظة. أزل الحساب وأضفه مرة أخرى."});
 Object.assign(I18N.en,{accounts_library_loading:"Loading this account’s games…",accounts_library_failed:"Could not load this account’s Steam library. Use refresh to retry.",accounts_owned_hint:"Sign in to browse and search this account’s games."});
-Object.assign(I18N.ar,{accounts_library_loading:"جارٍ تحميل ألعاب الحساب…",accounts_library_failed:"تعذّر تحميل مكتبة الحساب. اضغط تحديث للمحاولة مجددًا.",accounts_owned_hint:"سجّل الدخول لتصفح ألعاب هذا الحساب والبحث فيها."});
 Object.assign(I18N.en,{feature_new:"New"});
-Object.assign(I18N.ar,{feature_new:"جديد"});
 Object.assign(I18N.en,{"accounts_verify": "Verify sign-in", "accounts_password_private": "Your password is used only to sign in and is not saved.", "accounts_add_signin": "Add & sign in", "accounts_quick_picks": "Quick picks from your library"});
-Object.assign(I18N.ar,{"accounts_verify": "تأكيد تسجيل الدخول", "accounts_password_private": "تُستخدم كلمة المرور لتسجيل الدخول فقط ولا يتم حفظها.", "accounts_add_signin": "إضافة وتسجيل الدخول", "accounts_quick_picks": "اختيارات سريعة من مكتبتك"});
 Object.assign(I18N.en,{accounts_library_ready_hint:"Choose games from this account’s library."});
-Object.assign(I18N.ar,{accounts_library_ready_hint:"اختر الألعاب من مكتبة هذا الحساب."});
 Object.assign(I18N.en,{accounts_library_empty:"No games are available in this account’s library yet."});
-Object.assign(I18N.ar,{accounts_library_empty:"لا توجد ألعاب متاحة في مكتبة هذا الحساب حتى الآن."});
-let currentLang = localStorage.getItem('lootlazy_lang') === 'ar' ? 'ar' : 'en';
+I18N.ar = I18N.en;
+let currentLang = 'en';
 function t(key,values={}){const text=I18N[currentLang][key]||I18N.en[key]||key;return text.replace(/\{(\w+)\}/g,(match,name)=>values[name]===undefined?match:String(values[name]));}
 
-function number(value){return Number(value).toLocaleString(currentLang==='ar'?'ar-EG':'en-US');}
+function number(value){return Number(value).toLocaleString('en-US');}
 
 Object.assign(I18N.en,{"accounts_method":"Sign-in method","accounts_qr_signin":"Sign in with QR","accounts_password_signin":"Use password","accounts_qr_hint":"Open Steam on your phone, scan this code and approve the sign-in.","accounts_qr_loading":"Preparing a secure code…","accounts_qr_wait":"Waiting for approval in Steam…","accounts_qr_expired":"This sign-in has ended. Close this window and try again."});
-Object.assign(I18N.ar,{"accounts_method":"طريقة تسجيل الدخول","accounts_qr_signin":"الدخول باستخدام QR","accounts_password_signin":"استخدام كلمة المرور","accounts_qr_hint":"افتح Steam على هاتفك، وامسح الرمز ثم وافق على تسجيل الدخول.","accounts_qr_loading":"جارٍ تجهيز رمز آمن…","accounts_qr_wait":"بانتظار الموافقة من Steam…","accounts_qr_expired":"انتهت محاولة الدخول. أغلق النافذة وحاول مرة أخرى."});
 
 Object.assign(I18N.en,{"accounts_label_hint":"e.g. Main account","accounts_pending_label":"Steam account","accounts_password_heading":"Use your Steam account","accounts_qr_heading":"Or scan with Steam","accounts_qr_refresh":"New code","accounts_auth_pending":"Complete the sign-in on the left or in Steam Mobile.","accounts_signout":"Sign out","accounts_remove_named":"Remove “{label}” and delete its saved sign-in from this device?","accounts_qr_hint":"Open Steam Mobile → Steam Guard to scan and approve.","accounts_qr_failed":"Steam could not complete this QR sign-in. Refresh the QR code or use your password.","accounts_qr_mismatch":"Approve the Steam account saved under this label, or add a different account.","accounts_qr_expired":"This code has expired. Refresh the QR code to try again.","accounts_state_offline":"Sign in"});
-Object.assign(I18N.ar,{"accounts_label_hint":"مثل الحساب الرئيسي","accounts_pending_label":"حساب Steam","accounts_password_heading":"استخدم حساب Steam","accounts_qr_heading":"أو امسح الرمز من Steam","accounts_qr_refresh":"رمز جديد","accounts_auth_pending":"أكمل تسجيل الدخول أو الموافقة من Steam على الهاتف.","accounts_signout":"تسجيل الخروج","accounts_remove_named":"هل تريد إزالة «{label}» وحذف جلسة دخوله المحفوظة من هذا الجهاز؟","accounts_qr_hint":"افتح Steam على الهاتف ← Steam Guard للمسح والموافقة.","accounts_qr_failed":"لم يكتمل الدخول بالرمز. اطلب رمزًا جديدًا أو استخدم كلمة المرور.","accounts_qr_mismatch":"وافق من حساب Steam المحفوظ بهذا الاسم، أو أضف حسابًا آخر.","accounts_qr_expired":"انتهت صلاحية الرمز. اختر رمزًا جديدًا للمحاولة.","accounts_state_offline":"تسجيل الدخول"});
 
 Object.assign(I18N.en,{accounts_auth_busy:"The previous sign-in is still closing. Please try again in a moment."});
-Object.assign(I18N.ar,{accounts_auth_busy:"جارٍ إغلاق محاولة الدخول السابقة. حاول مجددًا بعد لحظات."});
 
 Object.assign(I18N.en,{accounts_state_ready:"Signed in",accounts_appear_as:"Status",accounts_presence_online:"Online",accounts_presence_away:"Away",accounts_presence_invisible:"Invisible",accounts_presence_offline:"Offline",accounts_elapsed:"Elapsed",accounts_remaining:"Remaining",accounts_game_selected:"Selected"});
-Object.assign(I18N.ar,{accounts_state_ready:"مسجل الدخول",accounts_appear_as:"الحالة",accounts_presence_online:"متصل",accounts_presence_away:"بعيد",accounts_presence_invisible:"متخفي",accounts_presence_offline:"غير متصل",accounts_elapsed:"الوقت المنقضي",accounts_remaining:"الوقت المتبقي",accounts_game_selected:"مختارة"});
 
 Object.assign(I18N.en,{accounts_qr_tap_refresh:"Refresh QR code",accounts_qr_expired_short:"Refresh the code to continue.",accounts_signin_required:"Your saved Steam login needs to be renewed. Sign in to continue."});
-Object.assign(I18N.ar,{accounts_qr_tap_refresh:"تجديد رمز QR",accounts_qr_expired_short:"جدّد الرمز للمتابعة.",accounts_signin_required:"جلسة Steam المحفوظة تحتاج تجديدًا. سجّل الدخول للمتابعة."});
 
-Object.assign(I18N.en,{platform_plans:'Plans',platform_signin:'Sign in',platform_services:'Platform services',platform_donation_hint:'Support LootLazy.',platform_donation_open:'View donation options',platform_back_settings:'Back to Settings',accounts_edit:'Edit',accounts_edit_label:'Edit account label',accounts_start_all:'Start all',accounts_connected:'Connected',accounts_reconnecting:'Reconnecting',platform_login_title:'Welcome to LootLazy',platform_login_hint:'Sign in to use LootLazy.',platform_login_google:'Continue with Google',platform_login_discord:'Continue with Discord',platform_login_steam:'Continue with Steam',platform_auth_unconfigured:'Account service is not configured yet.',platform_auth_wait:'Complete sign-in in your browser.',platform_auth_retry:'Retry',platform_auth_error:'Could not sign in. Please try again.',platform_signout:'Sign out of LootLazy',platform_plan_free:'Free',platform_plan_note:'Paid plans are not available yet.',platform_search_store:'Search all Steam games',accounts_not_owned_action:'View in Steam',accounts_bulk_skipped:'Accounts that are offline, already running or have no games are skipped.'});
-Object.assign(I18N.ar,{platform_plans:'الباقات',platform_signin:'تسجيل الدخول',platform_services:'خدمات المنصة',platform_donation_hint:'ادعم LootLazy.',platform_donation_open:'عرض خيارات التبرع',platform_back_settings:'العودة للإعدادات',accounts_edit:'تعديل',accounts_edit_label:'تعديل اسم الحساب',accounts_start_all:'تشغيل الكل',accounts_connected:'متصل',accounts_reconnecting:'إعادة الاتصال',platform_login_title:'مرحبًا بك في LootLazy',platform_login_hint:'سجّل الدخول لاستخدام LootLazy.',platform_login_google:'المتابعة باستخدام Google',platform_login_discord:'المتابعة باستخدام Discord',platform_login_steam:'المتابعة باستخدام Steam',platform_auth_unconfigured:'خدمة الحسابات لم يتم إعدادها بعد.',platform_auth_wait:'أكمل تسجيل الدخول في المتصفح.',platform_auth_retry:'إعادة المحاولة',platform_auth_error:'تعذر تسجيل الدخول. حاول مجددًا.',platform_signout:'تسجيل الخروج من LootLazy',platform_plan_free:'مجاني',platform_plan_note:'الباقات المدفوعة غير متاحة حاليًا.',platform_search_store:'البحث في كل ألعاب Steam',accounts_not_owned_action:'عرض في Steam',accounts_bulk_skipped:'يتم تجاوز الحسابات غير المتصلة أو التي تعمل بالفعل أو ليس بها ألعاب.'});
+Object.assign(I18N.en,{platform_plans:'Plans',platform_signin:'Sign in',platform_services:'Platform services',platform_donation_hint:'Support LootLazy.',platform_donation_open:'View donation options',platform_back_settings:'Back to Settings',accounts_edit:'Edit',accounts_edit_label:'Edit account label',accounts_privacy_toggle:'Hide or show Steam username',accounts_hide_username_title:'Hide Steam username',accounts_hide_username_desc:'Blur your Steam login name on this device for privacy',accounts_start_all:'Start all',accounts_connected:'Connected',accounts_reconnecting:'Reconnecting',platform_login_title:'Welcome to LootLazy',platform_login_hint:'Sign in to use LootLazy.',platform_login_google:'Continue with Google',platform_login_discord:'Continue with Discord',platform_login_steam:'Continue with Steam',platform_auth_unconfigured:'Account service is not configured yet.',platform_auth_wait:'Complete sign-in in your browser.',platform_auth_retry:'Retry',platform_auth_error:'Could not sign in. Please try again.',platform_signout:'Sign out of LootLazy',platform_plan_free:'Free',platform_plan_note:'Paid plans are not available yet.',platform_search_store:'Search all Steam games',accounts_not_owned_action:'View in Steam',accounts_bulk_skipped:'Accounts that are offline, already running or have no games are skipped.'});
 
 Object.assign(I18N.en,{platform_auth_unavailable:'Account service is unavailable. Please retry.',platform_auth_preview:'Account sign-in is being prepared.',platform_auth_busy:'A sign-in is already in progress.',platform_auth_storage:'Could not save this sign-in securely.',platform_auth_timeout:'Sign-in expired. Please try again.',platform_auth_cancelled:'Sign-in was cancelled.',platform_auth_required:'Sign in to continue.',platform_accounts_connected:'Connected accounts: {count}'});
-Object.assign(I18N.ar,{platform_auth_unavailable:'خدمة الحسابات غير متاحة حاليًا. أعد المحاولة.',platform_auth_preview:'تسجيل دخول المنصة قيد التجهيز.',platform_auth_busy:'توجد محاولة دخول جارية بالفعل.',platform_auth_storage:'تعذر حفظ تسجيل الدخول بأمان.',platform_auth_timeout:'انتهت مهلة الدخول. حاول مجددًا.',platform_auth_cancelled:'تم إلغاء تسجيل الدخول.',platform_auth_required:'سجّل الدخول للمتابعة.',platform_accounts_connected:'{count} حسابات متصلة'});
 
 Object.assign(I18N.en,{accounts_bulk_failed:'Could not complete the action for: {accounts}'});
-Object.assign(I18N.ar,{accounts_bulk_failed:'تعذر إكمال العملية للحسابات: {accounts}'});
 
 Object.assign(I18N.en,{auto_open_platforms_title:'Open required apps automatically',auto_open_platforms_desc:'Open Steam or Discord only when a service needs it. When off, open the required app yourself.',discord_open_required:'Open Discord Desktop, then try again. Automatic app opening is off in Settings.',steam_open_required:'Open Steam, then try again. Automatic app opening is off in Settings.'});
-Object.assign(I18N.ar,{auto_open_platforms_title:'فتح التطبيقات المطلوبة تلقائيًا',auto_open_platforms_desc:'افتح Steam أو Discord فقط عند بدء خدمة تحتاجه. عند إيقاف الخيار، افتح التطبيق المطلوب يدويًا.',discord_open_required:'افتح Discord على الكمبيوتر ثم حاول مجددًا. الفتح التلقائي مقفول في الإعدادات.',steam_open_required:'افتح Steam ثم حاول مجددًا. الفتح التلقائي مقفول في الإعدادات.'});
 
 Object.assign(I18N.en,{platform_free:'Free',platform_donate:'Donate',accounts_running_count:'Running {count} games',accounts_elsewhere_note:'This account is playing on another Steam session. Steam has locked play for this account; stop that session to start here. Other accounts are unaffected.'});
-Object.assign(I18N.ar,{platform_free:'مجاني',platform_donate:'تبرّع',accounts_running_count:'يشغّل {count} لعبة',accounts_elsewhere_note:'هذا الحساب يلعب من جلسة Steam أخرى. Steam يمنع تشغيل هذا الحساب حاليًا؛ أوقف اللعب في الجلسة الأخرى للبدء هنا. الحسابات الأخرى لا تتأثر.'});
 
 Object.assign(I18N.en,{"steam_service_idle":"Steam Idle","steam_service_accounts":"Multi-Account Idle","steam_service_achievements":"Achievements","accounts_list_title":"Accounts","accounts_all":"All accounts","accounts_set_status":"Set status","previous":"Previous","load_more":"Load more","accounts_credentials_invalid":"Incorrect Steam login name or password. Check your details and try again.","accounts_guard_invalid":"That Steam Guard code is invalid or expired. Enter a new code.","accounts_connection_failed":"Could not connect to Steam. Check your connection and retry.","accounts_games":"Games","accounts_library_hint":"Choose from your library or search the Steam catalog.","steam_mode_library":"Library","achievements_intro":"Manage achievements for the account signed in to Steam Desktop. Review changes before applying them. Some games restrict changes.","achievements_choose_game":"Choose a game to load its achievements.","achievements_search":"Search achievements…","achievements_all":"All","achievements_locked":"Locked","achievements_unlocked":"Unlocked","achievements_discard":"Discard","achievements_apply":"Apply changes","achievements_review":"Review changes","achievements_loading":"Loading achievements from Steam…","achievements_summary":"{unlocked} of {total} unlocked","achievements_pending":"{count} pending changes","achievements_confirm":"Apply {count} changes to {game}?","achievements_saved":"Steam confirmed your changes.","achievements_failed":"Steam could not complete this request. Refresh and try again.","achievements_invalid":"The requested changes are invalid.","achievements_busy":"An achievement request is already running.","achievements_timeout":"Steam did not confirm this request in time. Refresh to check the current state before retrying.","achievements_conflict":"Achievement data changed. Discard changes and refresh before trying again.","achievements_account_changed":"The Steam account changed. Refresh before applying changes.","achievements_read_failed":"Steam could not load achievements for this game.","achievements_store_failed":"Steam did not accept these changes. Refresh to check the current state.","achievements_pending_first":"Apply or discard your pending changes before choosing another game.","achievements_no_results":"No matching achievements.","achievements_none":"This game has no available achievements.","achievements_backup_failed":"Could not save the original achievement state. No changes were sent.","achievements_not_supported":"This Steam runtime does not support achievement management. Try another installed game runtime."});
-Object.assign(I18N.ar,{"steam_service_idle":"خمول Steam","steam_service_accounts":"خمول عدة حسابات","steam_service_achievements":"الإنجازات","accounts_list_title":"الحسابات","accounts_all":"كل الحسابات","accounts_set_status":"تغيير الحالة","previous":"السابق","load_more":"عرض المزيد","accounts_credentials_invalid":"اسم دخول Steam أو كلمة المرور غير صحيحة. راجع البيانات وحاول مجددًا.","accounts_guard_invalid":"رمز Steam Guard غير صحيح أو انتهت صلاحيته. أدخل رمزًا جديدًا.","accounts_connection_failed":"تعذر الاتصال بـSteam. تحقق من اتصالك وحاول مجددًا.","accounts_games":"الألعاب","accounts_library_hint":"اختر من مكتبتك أو ابحث في ألعاب Steam.","steam_mode_library":"المكتبة","achievements_intro":"أدر إنجازات الحساب المفتوح في Steam على الكمبيوتر. راجع التغييرات قبل تطبيقها. بعض الألعاب تقيد التعديلات.","achievements_choose_game":"اختر لعبة لتحميل إنجازاتها.","achievements_search":"ابحث عن إنجاز…","achievements_all":"الكل","achievements_locked":"مقفول","achievements_unlocked":"مفتوح","achievements_discard":"تجاهل","achievements_apply":"تطبيق التغييرات","achievements_review":"مراجعة التغييرات","achievements_loading":"جارٍ تحميل الإنجازات من Steam…","achievements_summary":"{unlocked} من {total} مفتوح","achievements_pending":"{count} تغييرات معلقة","achievements_confirm":"تطبيق {count} تغييرات على {game}؟","achievements_saved":"أكد Steam حفظ التغييرات.","achievements_failed":"تعذر إكمال الطلب. حدّث البيانات وحاول مجددًا.","achievements_invalid":"التغييرات المطلوبة غير صالحة.","achievements_busy":"يوجد طلب إنجازات جارٍ بالفعل.","achievements_timeout":"لم يؤكد Steam الطلب في الوقت المحدد. حدّث البيانات للتحقق من الحالة قبل إعادة المحاولة.","achievements_conflict":"تغيرت بيانات الإنجازات. تجاهل التعديلات وحدّث البيانات قبل المحاولة.","achievements_account_changed":"تغير حساب Steam. حدّث البيانات قبل تطبيق التغييرات.","achievements_read_failed":"تعذر تحميل إنجازات هذه اللعبة من Steam.","achievements_store_failed":"لم يقبل Steam هذه التغييرات. حدّث البيانات للتحقق من الحالة.","achievements_pending_first":"طبّق التغييرات المعلقة أو تجاهلها قبل اختيار لعبة أخرى.","achievements_no_results":"لا توجد إنجازات مطابقة.","achievements_none":"لا توجد إنجازات متاحة لهذه اللعبة.","achievements_backup_failed":"تعذر حفظ حالة الإنجازات الأصلية. لم يتم إرسال أي تغييرات.","achievements_not_supported":"مكتبة Steam الحالية لا تدعم إدارة الإنجازات. جرّب مكتبة لعبة مثبتة أخرى."});
 
 Object.assign(I18N.en,{"accounts_list_title":"Steam Accounts","accounts_set_status":"Set Status","achievements_library_invalid":"Steam library metadata could not be read. Refresh the library in Steam and try again.","achievements_library_unavailable":"Open your Steam library once to sync its game metadata, then refresh here."});
-Object.assign(I18N.ar,{"accounts_list_title":"حسابات Steam","accounts_set_status":"تغيير الحالة","achievements_library_invalid":"تعذر قراءة بيانات مكتبة Steam. حدّث المكتبة في Steam وحاول مجددًا.","achievements_library_unavailable":"افتح مكتبة Steam مرة لتحميل بيانات ألعابك، ثم حدّث القائمة هنا."});
 
 Object.assign(I18N.en,{"accounts_set_status": "Set Status", "achievements_select_all": "Select all games",  "achievements_clear_selection": "Clear selection", "achievements_unlock_all": "Unlock all", "achievements_lock_all": "Lock all", "achievements_game_count": "{total} games \u00b7 {selected} selected", "achievements_no_stats": "Steam reports no published stats for this game.", "achievements_stats_unavailable": "Steam cannot provide stats for this game right now. Try again after opening it in Steam.", "achievements_access_denied": "Steam denied access to this game\u2019s achievement data.", "achievements_read_failed": "Steam could not read this game\u2019s achievement data. Refresh to retry."});
-Object.assign(I18N.ar,{"accounts_set_status": "تعيين الحالة", "achievements_select_all": "تحديد كل الألعاب",  "achievements_clear_selection": "إلغاء التحديد", "achievements_unlock_all": "فتح الكل", "achievements_lock_all": "قفل الكل", "achievements_game_count": "{total} لعبة · تم تحديد {selected}", "achievements_no_stats": "ستيم لا يعرض إحصاءات منشورة لهذه اللعبة.", "achievements_stats_unavailable": "إحصاءات اللعبة غير متاحة حاليًا. جرّب فتحها في ستيم ثم أعد المحاولة.", "achievements_access_denied": "ستيم رفض الوصول إلى بيانات إنجازات هذه اللعبة.", "achievements_read_failed": "تعذر قراءة بيانات إنجازات اللعبة من ستيم. حدّث لإعادة المحاولة."});
 
 Object.assign(I18N.en,{accounts_session_conflict:"Steam reported another session. Automatic reconnection is paused; your saved login is kept. Sign in again when ready."});
-Object.assign(I18N.ar,{accounts_session_conflict:"ستيم أبلغ عن جلسة أخرى. تم إيقاف إعادة الاتصال التلقائي مع الاحتفاظ بتسجيل الدخول المحفوظ. سجّل الدخول مجددًا عندما تكون جاهزًا."});
 
 Object.assign(I18N.en,{achievements_cancel_loading:"Stop loading",achievements_loading_games:"Loading game {current} of {total}…",achievements_some_unavailable:"Achievement data was unavailable for {count} games. Those games were skipped:"});
-Object.assign(I18N.ar,{achievements_cancel_loading:"إيقاف التحميل",achievements_loading_games:"تحميل اللعبة {current} من {total}…",achievements_some_unavailable:"بيانات الإنجازات غير متاحة لعدد {count} من الألعاب. تم تخطيها:"});
 
 Object.assign(I18N.en,{achievements_intro:"Manage achievements for the account signed in to Steam Desktop. Choose a game to get started.",achievements_back:"Back to games",achievements_commit:"Commit changes",achievements_library_count:"{shown} of {total} games",achievements_selected_games:"{count} games selected",achievements_select_game:"Select {game}",achievements_loading_library:"Loading your Steam library…",achievements_no_games:"No matching games.",achievements_unlocked_at:"Unlocked at",achievements_unsaved:"Unsaved changes",achievements_leave_warning:"Your achievement changes have not been committed. Discard them and return to your games?",achievements_keep_editing:"Keep editing",achievements_discard_back:"Discard and go back"});
-Object.assign(I18N.ar,{achievements_intro:"إدارة إنجازات الحساب المفتوح في Steam Desktop. اختر لعبة للبدء.",achievements_back:"العودة للألعاب",achievements_commit:"حفظ التغييرات",achievements_library_count:"{shown} من {total} لعبة",achievements_selected_games:"تم تحديد {count} لعبة",achievements_select_game:"تحديد {game}",achievements_loading_library:"جارٍ تحميل مكتبة Steam…",achievements_no_games:"لا توجد ألعاب مطابقة.",achievements_unlocked_at:"تاريخ الفتح",achievements_unsaved:"تغييرات غير محفوظة",achievements_leave_warning:"لم يتم حفظ تغييرات الإنجازات. هل تريد تجاهلها والعودة للألعاب؟",achievements_keep_editing:"متابعة التعديل",achievements_discard_back:"تجاهل والعودة"});
 
 Object.assign(I18N.en,{session_advanced:"Advanced settings"});
-Object.assign(I18N.ar,{session_advanced:"إعدادات متقدمة"});
 
 Object.assign(I18N.en,{game_time_badge_note:"Choose a game and start a continuous Discord session. Optional timing and sync are in Advanced settings.",game_variety_badge_note:"Choose how many games to run in order. The session stops after the last game."});
-Object.assign(I18N.ar,{game_time_badge_note:"اختر لعبة وابدأ جلسة Discord مستمرة. المدة والمزامنة الاختيارية داخل الإعدادات المتقدمة.",game_variety_badge_note:"اختر عدد الألعاب لتشغيلها بالترتيب. تتوقف الجلسة بعد آخر لعبة."});

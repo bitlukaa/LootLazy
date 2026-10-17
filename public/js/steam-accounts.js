@@ -2,6 +2,8 @@
  const el=id=>document.getElementById(id);
  const model={accounts:[],selected:null,loaded:false,busy:false,pending:0,epoch:0,polling:false,commands:Promise.resolve(),searchSequence:0,searchTimer:null,names:{},signature:'',libraryFor:null,libraryLoading:false};
  let auth=null,removalTarget=null,editTarget=null,bulkBusy=false;
+ const PRIVACY_KEY='lootlazy_privacy_blur';let privacyBlurred=localStorage.getItem(PRIVACY_KEY)==='true';
+ function syncPrivacy(){const login=el('account-login');if(login)login.classList.toggle('privacy-blurred',privacyBlurred);const toggle=el('account-edit-privacy-toggle');if(toggle)toggle.setAttribute('aria-checked',String(privacyBlurred));}
  try{model.names=JSON.parse(localStorage.getItem('lootlazy_account_games')||'{}');model.selected=localStorage.getItem('lootlazy_selected_account');}catch{model.names={};}
  const message=error=>{const key=nativeErrorCode(error,['accounts_']);return t(key.startsWith('accounts_')&&I18N.en[key]?key:'accounts_failed');};
  function showError(error){const credential=auth?.method==='password'&&['accounts_credentials_invalid','accounts_login_failed'].includes(nativeErrorCode(error,['accounts_']));const target=el(credential?'account-credentials-error':auth?'account-auth-error':'accounts-error');target.textContent=message(error);target.hidden=false;if(credential){el('account-auth-error').hidden=true;for(const id of ['account-auth-login','account-auth-password'])el(id).setAttribute('aria-invalid','true');}}
@@ -154,7 +156,7 @@
   const account=selected(),ready=!!account?.connected;
   el('account-session-panel').hidden=!ready;el('account-setup').hidden=!ready;el('accounts-workspace').classList.toggle('has-session',ready);
   if(!ready){model.libraryFor=null;model.libraryLoading=false;if(account?.error&&!auth){showError(account.error);}return;}
-  text('account-title',account.label);text('account-login',account.login);
+  text('account-title',account.label);text('account-login',account.login);syncPrivacy();
   el('account-edit').disabled=model.busy;el('account-signout').disabled=model.busy;el('account-presence').value=account.presence||'online';for(const choice of document.querySelectorAll('[data-account-presence]')){choice.disabled=model.busy;choice.setAttribute('aria-pressed',String(choice.dataset.accountPresence===(account.presence||'online')));}
   const running=account.state==='running',blocked=account.state==='blocked',editable=true;
   el('account-elsewhere-note').hidden=!blocked;el('account-elsewhere-note').textContent=t('accounts_elsewhere_note');
@@ -232,8 +234,28 @@
    if(auth===context)await call('signin',{id:context.id,method:'password',login,password});
   };
   el('account-guard-form').onsubmit=async event=>{event.preventDefault();const context=auth;if(!context||model.busy)return;const value=el('account-guard-code').value;el('account-guard-code').value='';el('account-auth-error').hidden=true;await call('input',{id:context.id,challengeId:context.challenge,value});};
-  el('account-edit-icon').innerHTML=getIcon('edit');el('account-edit-close').innerHTML=getIcon('x');el('account-edit-close').onclick=()=>el('account-edit-dialog').close();
-  el('account-edit').onclick=()=>{const account=selected();if(!account||model.busy)return;editTarget=account.id;el('account-edit-label').value=account.label;el('account-edit-error').hidden=true;el('account-edit-dialog').showModal();el('account-edit-label').focus();};
+  el('account-edit-icon').innerHTML=getIcon('edit');
+  const editPrivacyToggle=el('account-edit-privacy-toggle');
+  if(editPrivacyToggle){
+   editPrivacyToggle.onclick=()=>{
+    privacyBlurred=!privacyBlurred;
+    try{localStorage.setItem(PRIVACY_KEY,String(privacyBlurred));}catch{}
+    syncPrivacy();
+   };
+  }
+  syncPrivacy();
+  el('account-edit-close').innerHTML=getIcon('x');
+  el('account-edit-close').onclick=()=>el('account-edit-dialog').close();
+  el('account-edit').onclick=()=>{
+   const account=selected();
+   if(!account||model.busy)return;
+   editTarget=account.id;
+   el('account-edit-label').value=account.label;
+   el('account-edit-error').hidden=true;
+   syncPrivacy();
+   el('account-edit-dialog').showModal();
+   el('account-edit-label').focus();
+  };
   el('account-edit-form').onsubmit=async event=>{event.preventDefault();const label=el('account-edit-label').value.trim(),id=editTarget;if(!label||!id||model.busy)return;el('account-edit-save').disabled=true;try{if(await call('rename',{id,label}))el('account-edit-dialog').close();else{el('account-edit-error').textContent=el('accounts-error').textContent;el('account-edit-error').hidden=false;}}finally{el('account-edit-save').disabled=false;}};
   el('accounts-start-all').onclick=()=>bulkRun('start');
   for(const control of document.querySelectorAll('[data-accounts-presence-all]'))control.onclick=()=>{el('accounts-status-menu').hidden=true;el('accounts-status-trigger').setAttribute('aria-expanded','false');bulkRun('presence',control.dataset.accountsPresenceAll);};

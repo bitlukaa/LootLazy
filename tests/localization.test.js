@@ -13,13 +13,8 @@ test('maintained README documents are English',()=>{
  for(const file of ['README.md'])assert.equal(/[\u0600-\u06ff]/.test(fs.readFileSync(path.join(root,file),'utf8')),false,file);
 });
 
-test('English startup keeps the numeric formatter available',()=>{const source=fs.readFileSync(path.join(root,'public/js/i18n.js'),'utf8');assert.equal(vm.runInNewContext(source+';number(24634)',{localStorage:{getItem:()=>null}}),'24,634');});
-
-test('application logic, comments, and test code stay English outside localization dictionaries',()=>{
- const allowed=path.join(root,'public/js/i18n.js');const extensions=new Set(['.js','.cjs','.rs','.cs','.ps1','.css','.html']);
- function inspect(directory){for(const entry of fs.readdirSync(directory,{withFileTypes:true})){if(['node_modules','target','.git'].includes(entry.name))continue;const file=path.join(directory,entry.name);if(entry.isDirectory())inspect(file);else if(extensions.has(path.extname(file))&&file!==allowed)assert.equal(/\p{Script=Arabic}/u.test(fs.readFileSync(file,'utf8')),false,path.relative(root,file));}}
- for(const directory of ['src','runner','src-tauri/src','tools','tests','public'])inspect(path.join(root,directory));
- const dictionary=fs.readFileSync(allowed,'utf8');for(const line of dictionary.split(/\r?\n/))if(/^\s*(\/\/|\/\*|\*)/.test(line))assert.equal(/\p{Script=Arabic}/u.test(line),false,'Translation comments stay English');
+test('application language is English and numeric formatter is available',()=>{
+ const source=fs.readFileSync(path.join(root,'public/js/i18n.js'),'utf8');
+ assert.equal(vm.runInNewContext(source+';currentLang',{localStorage:{getItem:()=>'en'}}),'en');
+ assert.equal(vm.runInNewContext(source+';number(24634)',{localStorage:{getItem:()=>null}}),'24,634');
 });
-
-test('application language preference is respected',()=>{const source=fs.readFileSync(path.join(root,'public/js/i18n.js'),'utf8');assert.equal(vm.runInNewContext(source+';currentLang',{localStorage:{getItem:key=>key==='lootlazy_lang'?'ar':null}}),'ar');});

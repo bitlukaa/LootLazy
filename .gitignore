@@ -27,3 +27,7 @@ AGENTS.md
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+# .NET Engine build artifacts
+engine/bin/
+engine/obj/

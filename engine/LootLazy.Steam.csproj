@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>LootLazy.Steam</AssemblyName>
+    <RootNamespace>LootLazy.Steam</RootNamespace>
+    <StartupObject>LootLazy.Steam.Program</StartupObject>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>true</PublishTrimmed>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <_DefaultValueAttributeSupport>true</_DefaultValueAttributeSupport>
+    <TrimMode>partial</TrimMode>
+    <NoWarn>IL2026;CA1416</NoWarn>
+    <ApplicationIcon>../LootLazy.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SteamKit2" Version="3.4.0" />
+    <PackageReference Include="Net.Codecrete.QrCodeGenerator" Version="3.2.1" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="SteamKit2" />
+    <TrimmerRootAssembly Include="protobuf-net" />
+    <TrimmerRootAssembly Include="protobuf-net.Core" />
+  </ItemGroup>
+</Project>

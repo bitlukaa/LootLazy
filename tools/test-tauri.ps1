@@ -1,5 +1,9 @@
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path -Parent $PSScriptRoot
+$rootItem = Get-Item -LiteralPath $projectRoot
+if ($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+    if ($rootItem.Target) { $projectRoot = $rootItem.Target[0] }
+}
 $env:CARGO_TARGET_DIR=Join-Path $projectRoot 'data/.tauri-build'
 $env:TEMP=Join-Path $projectRoot 'data/.test-temp'
 $env:TMP=$env:TEMP

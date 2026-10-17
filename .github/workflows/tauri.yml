@@ -31,7 +31,7 @@ jobs:
         run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 9.0.x
       - name: Build integrated Steam engine
         run: ./tools/build-steam-engine.ps1
       - name: Account engine regressions
