@@ -33,3 +33,5 @@ Temporary disconnection preserves requested games and freezes elapsed time until
 Privacy remains a device-wide visual blur on the account detail Steam login. Mouse hover and keyboard focus reveal it. The plaintext remains in application state/DOM; this is not a security boundary. Storage read failure defaults to masking; storage write failure keeps the prior choice and shows an error.
 
 Regression coverage includes token expiry, retry classification/backoff, login-gate cancellation, session suspension/resumption and Stop while suspended; renderer coverage includes privacy persistence after reload, hover/focus reveal and denied storage. Final release CI and signature/feed verification are required before deleting Beta releases.
+
+Idle background reconnection without play intent does not block installing an update; active authentication, Guard prompts, account drafts and recoverable game sessions still do. The updater shuts down the parent-owned engine before replacement.

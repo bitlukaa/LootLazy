@@ -640,7 +640,7 @@ internal static class Program {
         return true;
     }
 
-    private static bool IsBusy() => Drafts.Count > 0 || Challenges.Count > 0 || Sessions.Values.Any(session => session.Games.Length > 0) || AccountsMap.Values.Any(a => a.KeepRunning && !a.IsConnectedAndLoggedOn);
+    private static bool IsBusy() => Drafts.Count > 0 || Challenges.Count > 0 || Sessions.Values.Any(session => session.Games.Length > 0) || AccountsMap.Values.Any(a => a.Authenticating);
 
     private static async Task EndSession(string id, Func<Task> send, Session? expected = null) {
         if (expected != null) {
@@ -1181,6 +1181,10 @@ internal static class Program {
                 if (CanResume(savedAccount, guardAccount)) return 47;
                 AuthErrors.TryRemove(authId, out _);
                 guardAccount.KeepRunning = true;
+                if (IsBusy()) return 55; // Idle reconnect alone must not prevent an update.
+                guardAccount.Authenticating = true;
+                if (!IsBusy()) return 56;
+                guardAccount.Authenticating = false;
                 using var guardCancellation = new CancellationTokenSource();
                 var authenticator = new SteamAccount.GuardAuthenticator(guardAccount, guardCancellation.Token);
                 var device = authenticator.GetDeviceCodeAsync(false);
