@@ -151,6 +151,7 @@ internal sealed class SteamAccount : IDisposable {
     internal SteamID? SteamID => User.SteamID;
     internal string SSteamID => SteamID?.ConvertToUInt64().ToString(CultureInfo.InvariantCulture) ?? "0";
     internal string? AvatarHash;
+    internal string? ProfileName;
     internal EPersonaState DesiredPersona = EPersonaState.Online;
     internal EResult LastLogOnResult = EResult.Invalid;
     internal volatile bool Authenticating;
@@ -305,6 +306,7 @@ internal sealed class SteamAccount : IDisposable {
                 ConnectionFailures = 0;
                 IsOccupied = LibraryLocked = false;
                 Friends.SetPersonaState(DesiredPersona);
+                Friends.RequestFriendInfo(User.SteamID!, EClientPersonaStateFlag.PlayerName | EClientPersonaStateFlag.Presence);
                 await Program.ResetGames(this).ConfigureAwait(false);
             } else if (LoginPacer.IsTransient(callback.Result) || LoginPacer.IsThrottled(callback.Result)) {
                 if (LoginPacer.IsThrottled(callback.Result)) LoginPacer.Throttled();
@@ -448,6 +450,7 @@ internal sealed class SteamAccount : IDisposable {
 
     private void OnPersonaState(SteamFriends.PersonaStateCallback callback) {
         if (callback.FriendID == User.SteamID) {
+            ProfileName = Program.CleanProfileName(callback.Name) ?? ProfileName;
             if (callback.AvatarHash != null && callback.AvatarHash.Length > 0) {
                 AvatarHash = Convert.ToHexString(callback.AvatarHash).ToLowerInvariant();
             }
@@ -542,7 +545,7 @@ internal static class Program {
         }
     }
 
-    private sealed record Account(string Id, string Label, string Login, uint[] Games, string Presence = "online", bool RememberLogin = true, string? AvatarHash = null);
+    private sealed record Account(string Id, string Label, string Login, uint[] Games, string Presence = "online", bool RememberLogin = true, string? AvatarHash = null, bool CustomLabel = true);
 
     private static EPersonaState Persona(string presence) => presence switch {
         "online" => EPersonaState.Online, "away" => EPersonaState.Away,
@@ -808,12 +811,28 @@ internal static class Program {
 
     private static bool ValidAvatar(string? hash) => hash?.Length == 40 && hash.All(Uri.IsHexDigit);
 
-    private static void RefreshAvatars() {
+    internal static string? CleanProfileName(string? value) {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var name = new StringBuilder();
+        foreach (var rune in value.EnumerateRunes()) {
+            if (Rune.IsControl(rune)) continue;
+            if (name.Length + rune.Utf16SequenceLength > 48) break;
+            name.Append(rune.ToString());
+        }
+        string clean = name.ToString().Trim();
+        return clean.Length == 0 ? null : clean;
+    }
+    internal static string ResolveProfileLabel(string current, bool custom, string? profile) => custom ? current : CleanProfileName(profile) ?? current;
+
+    private static void RefreshProfiles() {
         var changed = new Dictionary<string, Account>();
         foreach (var account in Accounts.Values.ToArray()) {
-            if (!AccountsMap.TryGetValue(account.Id, out var client) || !client.IsConnectedAndLoggedOn || !ValidAvatar(client.AvatarHash) || account.AvatarHash == client.AvatarHash) continue;
+            if (!AccountsMap.TryGetValue(account.Id, out var client) || !client.IsConnectedAndLoggedOn) continue;
+            string? avatar = ValidAvatar(client.AvatarHash) ? client.AvatarHash : account.AvatarHash;
+            string label = ResolveProfileLabel(account.Label, account.CustomLabel, client.ProfileName);
+            if (avatar == account.AvatarHash && label == account.Label) continue;
             changed[account.Id] = account;
-            Accounts[account.Id] = account with { AvatarHash = client.AvatarHash };
+            Accounts[account.Id] = account with { AvatarHash = avatar, Label = label };
         }
         if (changed.Count == 0) return;
         try { Save(); } catch { foreach (var entry in changed) Accounts[entry.Key] = entry.Value; }
@@ -907,13 +926,16 @@ internal static class Program {
     private static async Task<object> Handle(string command, JsonElement body) {
         if (!new[] { "status", "add", "remove", "games", "signin", "input", "start", "stop", "library", "qr", "commit", "disconnect", "presence", "resume", "rename" }.Contains(command, StringComparer.Ordinal)) Fail("accounts_invalid");
         await BindQrIdentities().ConfigureAwait(false);
-        RefreshAvatars();
+        RefreshProfiles();
         if (command == "status") return Snapshot();
         if (command == "add") {
             string label = Text(body, "label").Trim(), login = Text(body, "login").Trim();
+            bool draftAccount = body.TryGetProperty("draft", out var requestedDraft) && requestedDraft.ValueKind == JsonValueKind.True;
+            bool customLabel = label.Length > 0;
+            if (!customLabel && draftAccount) label = "Steam account";
             if (Accounts.Count >= 20 || label.Length is < 1 or > 48 || label.Any(char.IsControl) || (!ValidLogin(login) && !(login.Length == 0 && Text(body, "method") == "qr"))) Fail("accounts_invalid");
             if (login.Length > 0 && Accounts.Values.Any(account => account.Login.Equals(login, StringComparison.OrdinalIgnoreCase))) Fail("accounts_duplicate");
-            var account = new Account("ll_" + Guid.NewGuid().ToString("N"), label, login, [], RememberLogin: false);
+            var account = new Account("ll_" + Guid.NewGuid().ToString("N"), label, login, [], RememberLogin: false, CustomLabel: customLabel);
             WriteConfig(account);
             if (!OfflineTest) {
                 var client = new SteamAccount(account.Id, account.Login, Persona(account.Presence));
@@ -954,7 +976,7 @@ internal static class Program {
         if (command == "rename") {
             string label = Text(body, "label").Trim();
             if (Drafts.Contains(entry.Id) || label.Length is < 1 or > 48 || label.Any(char.IsControl)) Fail("accounts_invalid");
-            Accounts[entry.Id] = entry with { Label = label };
+            Accounts[entry.Id] = entry with { Label = label, CustomLabel = true };
             try { Save(); } catch { Accounts[entry.Id] = entry; throw; }
             return Snapshot();
         }
@@ -1003,7 +1025,7 @@ internal static class Program {
         if (command == "library") { if (!selected.IsConnectedAndLoggedOn) { Fail("accounts_not_ready"); return null!; } return LibraryResult(selected, body); }
         if (command == "commit") {
             if (!selected.IsConnectedAndLoggedOn || !ValidLogin(entry.Login)) Fail("accounts_not_ready");
-            string label = Drafts.Contains(entry.Id) ? Text(body, "label").Trim() : entry.Label;
+            string label = ResolveProfileLabel(entry.Label, entry.CustomLabel, selected.ProfileName);
             if (label.Length is < 1 or > 48 || label.Any(char.IsControl)) Fail("accounts_invalid");
             await selected.FlushLootLazyLogin().ConfigureAwait(false);
             bool draft = Drafts.Remove(entry.Id);
@@ -1203,6 +1225,16 @@ internal static class Program {
             File.WriteAllText("auth-diagnostic.log", new string('x', 17000));
             RecordAuthFailure("fixture", new IOException("secret-fixture"));
             if (new FileInfo("auth-diagnostic.log").Length > 1024) return 61;
+
+            if (ResolveProfileLabel("Steam account", false, " Gamer 🎮\n") != "Gamer 🎮" || ResolveProfileLabel("My name", true, "Steam name") != "My name" || ResolveProfileLabel("Steam account", false, null) != "Steam account") return 62;
+            if (CleanProfileName(new string('a', 60))?.Length != 48 || CleanProfileName(string.Concat(Enumerable.Repeat("🎮", 40)))?.Length != 48) return 63;
+            var automaticProfile = new Account("fixture", "Steam account", "fixture", [], CustomLabel: false);
+            var roundTripProfile = JsonSerializer.Deserialize<Account>(JsonSerializer.Serialize(automaticProfile, JsonOptions), JsonOptions)!;
+            if (roundTripProfile.CustomLabel || ResolveProfileLabel(roundTripProfile.Label, roundTripProfile.CustomLabel, "Steam profile") != "Steam profile") return 64;
+            using (var legacyProfile = JsonDocument.Parse(JsonSerializer.Serialize(new { id = "fixture", label = "Existing name", login = "fixture", games = Array.Empty<uint>() }))) {
+                var restoredProfile = legacyProfile.RootElement.Deserialize<Account>(JsonOptions)!;
+                if (!restoredProfile.CustomLabel || ResolveProfileLabel(restoredProfile.Label, restoredProfile.CustomLabel, "Steam name") != "Existing name") return 65;
+            }
 
             var ids = Enumerable.Range(0, 64).Select(_ => SteamAccount.NewLoginId()).ToArray();
             if (ids.Any(id => id == 0) || ids.Distinct().Count() != ids.Length) return 33;

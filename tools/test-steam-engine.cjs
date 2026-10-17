@@ -32,6 +32,7 @@ async function launch(parentId=process.pid){
  assert.equal((await run.call('signin',{id,password:'fixture-password-never-store'})).error,'accounts_not_ready');
  assert.ok(!fs.readFileSync(path.join(fixture,'accounts.json'),'utf8').includes('fixture-password'));
  assert.ok(!fs.readFileSync(path.join(fixture,'config',id+'.json'),'utf8').includes('SteamPassword'));
+ const automatic=await run.call('add',{login:'',method:'qr',draft:true});assert.equal(automatic.ok,true,'QR drafts do not require a label');const automaticAccount=automatic.result.accounts.find(a=>a.id!==id);assert.equal(automaticAccount.label,'Steam account');assert.equal(JSON.parse(fs.readFileSync(path.join(fixture,'accounts.json'),'utf8')).some(a=>a.id===automaticAccount.id),false,'An unsigned-in draft is not a saved account');await run.call('remove',{id:automaticAccount.id});
  const config=JSON.parse(fs.readFileSync(path.join(fixture,'config',id+'.json'),'utf8'));assert.equal(config.Enabled,false);assert.equal(config.RemoteCommunication,0);assert.equal(config.TradeCheckPeriod,0);assert.equal(config.FarmingPreferences,9);
  await run.close();run=await launch();result=await run.call('status');assert.deepEqual(result.result.accounts[0].games,[570,730]);assert.equal(result.result.active,false);assert.equal(result.result.accounts[0].presence,'offline','Appearance is saved across restart');assert.equal(result.result.accounts[0].rememberLogin,false,'Explicit saved-login preference survives restart');
  // Older account files have no presence field; they retain the original Online default.

@@ -26,18 +26,18 @@
   });
   model.commands=operation.catch(()=>{});return operation;
  }
- function clearQr(){el('account-qr-code').replaceChildren();el('account-qr-frame').classList.remove('expired');el('account-qr-retry').hidden=true;if(auth)auth.qrRevision=null;}
- function expireQr(){el('account-qr-frame').classList.add('expired');el('account-qr-retry').hidden=false;el('account-qr-status').textContent=t('accounts_qr_expired_short');if(auth)auth.qrRevision=null;}
+ function clearQr(){el('account-qr-loading').hidden=true;el('account-qr-code').replaceChildren();el('account-qr-frame').classList.remove('expired');el('account-qr-retry').hidden=true;if(auth)auth.qrRevision=null;}
+ function expireQr(){el('account-qr-loading').hidden=true;el('account-qr-frame').classList.add('expired');el('account-qr-retry').hidden=false;el('account-qr-status').textContent=t('accounts_qr_expired_short');if(auth)auth.qrRevision=null;}
  function closeAuth(cancel=true){
   const context=auth;if(!context)return Promise.resolve(true);auth=null;context.closed=true;++context.sequence;
-  el('account-auth-password').value='';el('account-guard-code').value='';el('account-auth-login').value='';el('account-auth-label').value='';el('account-qr-code').replaceChildren();
+  el('account-auth-password').value='';el('account-guard-code').value='';el('account-auth-login').value='';el('account-qr-code').replaceChildren();
   if(el('account-auth-dialog').open)el('account-auth-dialog').close();clearQr();
   if(cancel&&context.id)return call(context.draft?'remove':'disconnect',{id:context.id});return Promise.resolve(true);
  }
  async function ensureDraft(context){
   if(context.id)return auth===context;
   const before=new Set(model.accounts.map(account=>account.id));
-  if(!await call('add',{label:t('accounts_pending_label'),login:'',method:'qr',draft:true}))return false;
+  if(!await call('add',{login:'',method:'qr',draft:true}))return false;
   context.id=model.accounts.find(account=>!before.has(account.id)&&account.draft)?.id;
   if(auth!==context){if(context.id)await call('remove',{id:context.id});return false;}
   return !!context.id;
@@ -48,15 +48,19 @@
   return auth===context;
  }
  async function startQr(context){
-  if(auth!==context)return;context.method='qr';++context.sequence;el('account-credentials-error').hidden=true;for(const id of ['account-auth-login','account-auth-password'])el(id).removeAttribute('aria-invalid');clearQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_qr_loading');
-  if(!await ensureDraft(context)||!await disconnectAttempt(context)){if(auth===context)expireQr();return;}
-  const sequence=context.sequence;
-  if(await call('signin',{id:context.id,method:'qr'})){
-   if(auth===context&&sequence===context.sequence)readQr(context);
-  }else if(auth===context)expireQr();
+  if(auth!==context||context.preparingQr)return;
+  context.method='qr';context.preparingQr=true;context.guardPending=false;const sequence=++context.sequence;
+  el('account-credentials-error').hidden=true;for(const id of ['account-auth-login','account-auth-password'])el(id).removeAttribute('aria-invalid');clearQr();el('account-auth-error').hidden=true;el('account-qr-loading').hidden=false;el('account-qr-status').textContent=t('accounts_qr_loading');
+  let started=false;
+  try{
+   if(await ensureDraft(context)&&await disconnectAttempt(context))started=await call('signin',{id:context.id,method:'qr'});
+  }finally{
+   if(auth===context&&sequence===context.sequence){context.preparingQr=false;if(!started)expireQr();renderAuth();}
+  }
+  if(started&&auth===context&&sequence===context.sequence)readQr(context);
  }
  async function readQr(context){
-  if(auth!==context||context.method!=='qr'||context.reading||model.busy)return;
+  if(auth!==context||context.method!=='qr'||!context.id||context.preparingQr||context.reading||model.busy)return;
   const sequence=context.sequence;context.reading=true;
   try{
    const result=await request('/api/steam-accounts/qr',{id:context.id});
@@ -71,8 +75,8 @@
      background.setAttribute('width',String(size));background.setAttribute('height',String(size));background.setAttribute('fill','#fff');
      let d='';rows.forEach((row,y)=>[...row].forEach((bit,x)=>{if(bit==='1')d+='M'+(x+4)+' '+(y+4)+'h1v1h-1z';}));path.setAttribute('d',d);path.setAttribute('fill','#000');svg.append(background,path);el('account-qr-code').replaceChildren(svg);context.qrRevision=revision;
     }
-    el('account-auth-error').hidden=true;el('account-qr-frame').classList.remove('expired');el('account-qr-retry').hidden=true;el('account-qr-status').textContent=t('accounts_qr_wait');
-   }else if(result.pending){el('account-qr-status').textContent=t('accounts_qr_loading');}else expireQr();
+    el('account-qr-loading').hidden=true;el('account-auth-error').hidden=true;el('account-qr-frame').classList.remove('expired');el('account-qr-retry').hidden=true;el('account-qr-status').textContent=t('accounts_qr_wait');
+   }else if(result.pending){el('account-qr-frame').classList.remove('expired');el('account-qr-retry').hidden=true;el('account-qr-loading').hidden=false;el('account-qr-status').textContent=t('accounts_qr_loading');}else expireQr();
   }catch(error){if(auth===context&&sequence===context.sequence){expireQr();el('account-qr-status').textContent=message(error);}}
   finally{context.reading=false;}
  }
@@ -81,41 +85,46 @@
   const context=auth={id:account?.id||null,draft:!account,method:account?.active?'existing':'qr',sequence:0,reading:false,finishing:false};
   el('account-auth-form').reset();for(const id of ['account-auth-login','account-auth-password'])el(id).removeAttribute('aria-invalid');el('account-guard-form').reset();el('account-auth-error').hidden=true;el('account-credentials-error').hidden=true;clearQr();
   el('account-auth-title').textContent=t(account?'accounts_signin':'accounts_add');
-  el('account-auth-label').value=account?.label||'';el('account-auth-label').readOnly=!!account;el('account-auth-label').closest('label').hidden=!!account;
   el('account-auth-login').value=account?.login||'';el('account-auth-login').readOnly=!!account?.login;
   el('account-auth-password').required=true;el('account-auth-password').placeholder='';
   el('account-qr-status').textContent=t(account?.active?'accounts_auth_pending':'accounts_qr_loading');
-  el('account-auth-dialog').showModal();el(account?'account-auth-password':'account-auth-label').focus();renderAuth();if(!account?.active)startQr(context);
+  el('account-auth-dialog').showModal();el(account?'account-auth-password':'account-auth-login').focus();renderAuth();if(!account?.active)startQr(context);
  }
  async function finishAuth(context){
   if(auth!==context||context.finishing)return;
-  const field=el('account-auth-label'),label=field.value.trim();
-  if(context.draft&&!field.checkValidity()){if(!context.needsLabel)field.reportValidity();context.needsLabel=true;return;}
-  context.needsLabel=false;context.finishing=true;renderAuth();
-  if(!await call('commit',{id:context.id,label})){context.finishing=false;return;}
+  context.finishing=true;renderAuth();
+  if(!await call('commit',{id:context.id})){context.finishing=false;return;}
   if(auth!==context)return;
   rememberSelection(context.id);model.libraryFor=null;await closeAuth(false);render();
  }
  function renderAuth(){
   const context=auth;if(!context)return;
   const account=model.accounts.find(item=>item.id===context.id);
-  const input=account?.input;
-  el('account-auth-login').required=!account?.connected;el('account-auth-password').required=!account?.connected;text('account-auth-submit',t(account?.connected?'accounts_continue':'accounts_signin'));
-  el('account-auth-form').hidden=!!input;el('account-guard-form').hidden=!input;
-  for(const id of ['account-auth-submit','account-guard-submit','account-qr-retry'])el(id).disabled=model.busy||context.finishing||(id==='account-qr-retry'&&!!account?.connected);
+  const input=context.preparingQr?null:account?.input;
+  const staleQrError=context.method==='password'&&['accounts_qr_failed','accounts_qr_expired','accounts_qr_mismatch'].includes(account?.error);
+  if(context.guardPending&&(account?.connected||(account?.error&&!staleQrError)||(input&&input.id!==context.submittedChallenge)))context.guardPending=false;
+  const passwordPending=context.method==='password'&&(context.passwordStarting||(account?.active&&!account.connected&&!input))&&(!account?.error||staleQrError);
+  el('account-auth-login').required=!account?.connected;el('account-auth-password').required=!account?.connected;
+  text('account-auth-submit',t(passwordPending?'accounts_signing_in':account?.connected?'accounts_continue':'accounts_signin'));
+  text('account-guard-submit',t(context.guardPending?'accounts_checking_code':'accounts_continue'));
+  el('account-auth-submit').setAttribute('aria-busy',String(!!passwordPending));el('account-guard-submit').setAttribute('aria-busy',String(!!context.guardPending));
+  el('account-auth-form').hidden=!!input||!!context.guardPending;el('account-guard-form').hidden=!input&&!context.guardPending;
+  el('account-auth-submit').disabled=model.busy||context.finishing||!!passwordPending;
+  el('account-guard-submit').disabled=model.busy||context.finishing||!!context.guardPending;
+  el('account-guard-code').disabled=model.busy||!!context.guardPending;
+  el('account-qr-retry').disabled=model.busy||context.finishing||context.preparingQr||!!account?.connected;
   if(input){
    text('account-guard-label',t('accounts_input_'+input.type));el('account-guard-code').type=['Password','SteamParentalCode'].includes(input.type)?'password':'text';
    if(context.challenge!==input.id){context.challenge=input.id;el('account-guard-code').value='';el('account-guard-code').focus();}
    clearQr();expireQr();el('account-qr-status').textContent=t('accounts_auth_pending');
   }
-  const staleQrError=context.method==='password'&&['accounts_qr_failed','accounts_qr_expired','accounts_qr_mismatch'].includes(account?.error);
-  if(account?.error&&!staleQrError){
+  if(account?.error&&!staleQrError&&!context.preparingQr){
    if(['accounts_credentials_invalid'].includes(account.error)&&context.method!=='qr'){el('account-credentials-error').textContent=t('accounts_credentials_invalid');el('account-credentials-error').hidden=false;el('account-auth-login').setAttribute('aria-invalid','true');el('account-auth-password').setAttribute('aria-invalid','true');el('account-auth-error').hidden=true;}
    else
    if(context.method==='qr'&&['accounts_qr_failed','accounts_qr_expired'].includes(account.error)){el('account-auth-error').hidden=true;expireQr();}
    else{showError(account.error);if(context.method==='qr')expireQr();}
   }
-  if(account?.connected&&!context.finishing&&!context.needsLabel)queueMicrotask(()=>finishAuth(context));
+  if(account?.connected&&!context.finishing)queueMicrotask(()=>finishAuth(context));
  }
  async function poll(){
   if(!model.loaded||model.busy||model.polling||document.hidden)return;
@@ -225,16 +234,20 @@
   el('account-auth-dialog').addEventListener('cancel',event=>{event.preventDefault();closeAuth();});
   el('account-qr-retry').onclick=()=>{if(auth)startQr(auth);};el('account-qr-retry').querySelector('.refresh-icon').innerHTML=getIcon('refresh');
   el('account-auth-form').onsubmit=async event=>{
-   event.preventDefault();const context=auth;if(!context||model.busy)return;
+   event.preventDefault();const context=auth;if(!context||model.busy||context.passwordStarting)return;
    if(model.accounts.find(account=>account.id===context.id)?.connected){await finishAuth(context);return;}
    const login=el('account-auth-login').value.trim(),password=el('account-auth-password').value;el('account-auth-password').value='';
-   el('account-credentials-error').hidden=true;el('account-auth-login').removeAttribute('aria-invalid');el('account-auth-password').removeAttribute('aria-invalid');context.method='password';++context.sequence;clearQr();expireQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_auth_pending');
+   el('account-credentials-error').hidden=true;el('account-auth-login').removeAttribute('aria-invalid');el('account-auth-password').removeAttribute('aria-invalid');context.method='password';context.preparingQr=false;++context.sequence;clearQr();expireQr();el('account-auth-error').hidden=true;el('account-qr-status').textContent=t('accounts_auth_pending');
+   const previous=model.accounts.find(item=>item.id===context.id);if(previous)previous.error=null;context.passwordStarting=true;renderAuth();
+   try{
    if(!await ensureDraft(context)||!await disconnectAttempt(context))return;
    const account=model.accounts.find(item=>item.id===context.id);
    if(context.draft&&account.login&&account.login!==login){if(!await call('remove',{id:context.id}))return;context.id=null;if(!await ensureDraft(context))return;}
    if(auth===context)await call('signin',{id:context.id,method:'password',login,password});
+
+   }finally{if(auth===context){context.passwordStarting=false;renderAuth();}}
   };
-  el('account-guard-form').onsubmit=async event=>{event.preventDefault();const context=auth;if(!context||model.busy)return;const value=el('account-guard-code').value;el('account-guard-code').value='';el('account-auth-error').hidden=true;await call('input',{id:context.id,challengeId:context.challenge,value});};
+  el('account-guard-form').onsubmit=async event=>{event.preventDefault();const context=auth;if(!context||model.busy||context.guardPending)return;const value=el('account-guard-code').value;el('account-guard-code').value='';el('account-auth-error').hidden=true;const previous=model.accounts.find(item=>item.id===context.id);if(previous)previous.error=null;context.guardPending=true;context.submittedChallenge=context.challenge;renderAuth();if(!await call('input',{id:context.id,challengeId:context.challenge,value})&&auth===context){context.guardPending=false;renderAuth();}};
   el('account-edit-icon').innerHTML=getIcon('edit');
   const editPrivacyToggle=el('account-edit-privacy-toggle');
   if(editPrivacyToggle){

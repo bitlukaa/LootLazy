@@ -378,7 +378,7 @@ html[data-theme=light]{--bg:#F7F8FC;--surface:#FFFFFF;--surface-2:#F0F2F8;--line
 .account-credentials .muted{font-size:10px;line-height:1.7;margin-top:12px}.account-credentials form>.button{width:100%;margin-top:20px}
 #account-auth-error{margin:14px 0 0;font-size:11px;padding:10px;line-height:1.6}
 .account-qr-column{text-align:center}.account-qr-code{display:grid;place-items:center;width:216px;height:216px;background:#fff;border:1px solid var(--line);border-radius:10px;margin:0 auto;direction:ltr}
-.account-qr-code:empty::before{content:'…';font-size:28px;color:#77809a}.account-qr-code svg{display:block;flex-shrink:0;max-width:none;transform:none;direction:ltr;stroke:none;image-rendering:pixelated}.account-qr-code svg path{fill:#000;stroke:none}.account-qr-code svg rect{fill:#fff;stroke:none}
+.account-qr-code svg{display:block;flex-shrink:0;max-width:none;transform:none;direction:ltr;stroke:none;image-rendering:pixelated}.account-qr-code svg path{fill:#000;stroke:none}.account-qr-code svg rect{fill:#fff;stroke:none}
 .account-auth-columns input:focus{outline:none;box-shadow:0 0 0 2px var(--selected);border-color:var(--accent)}
 .account-qr-column p{font-size:10px;line-height:1.7;margin:10px 0 0}.account-qr-column .button{font-size:11px;min-height:28px;margin-top:9px;padding:4px 7px}.account-qr-column .button svg{width:12px;height:12px}
 #account-remove-dialog p{line-height:1.7;margin-top:14px;font-size:12px}
@@ -456,3 +456,5 @@ select{appearance:none!important;background-color:var(--surface-2)!important;col
 .executable-inline>.exe-dropdown{margin:0!important}
 
 .session-advanced>summary::after{content:none!important}.session-advanced>summary::before{content:none!important}
+
+.account-qr-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:12px;text-align:center}.account-qr-loading[hidden]{display:none}.account-loading-ring,#account-auth-submit[aria-busy=true]::before,#account-guard-submit[aria-busy=true]::before{content:"";display:inline-block;width:16px;height:16px;flex:0 0 16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:account-loading-spin .8s linear infinite}.account-loading-ring{width:23px;height:23px;flex-basis:23px;color:var(--accent)}@keyframes account-loading-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.account-loading-ring,#account-auth-submit[aria-busy=true]::before,#account-guard-submit[aria-busy=true]::before{animation:none}}

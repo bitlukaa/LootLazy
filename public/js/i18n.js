@@ -459,3 +459,7 @@ Object.assign(I18N.en,{accounts_save_failed:"Could not save your Steam login on 
 Object.assign(I18N.en,{accounts_rate_limited:"Steam temporarily limited sign-ins. Wait before trying again.",accounts_privacy_save_failed:"Could not save this privacy setting on this device.",accounts_hide_username_desc:"Visually blur Steam login names on this device. Hover or focus to reveal."});
 
 Object.assign(I18N.en,{accounts_auth_expired:"This sign-in attempt timed out. Sign in again to get a new code."});
+
+Object.assign(I18N.en,{accounts_label:"Profile name",accounts_edit_label:"Edit profile name",accounts_profile_name_hint:"Changes only the name shown in LootLazy."});
+
+Object.assign(I18N.en,{accounts_signing_in:"Signing in…",accounts_checking_code:"Verifying code…"});

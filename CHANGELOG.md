@@ -1,5 +1,15 @@
 # Release history
 
+## 3.11.2
+
+- Show pending password/Guard authentication with progress indicators and prevent duplicate submissions.
+- Keep QR preparation visibly loading and do not expire a code before its sign-in attempt starts.
+
+- Add Steam accounts without a separate label step; use their Steam profile names automatically.
+- Keep existing saved account names and locally edited profile names; the pencil changes only LootLazy display names.
+- Research player reporting integration; no automatic report submission is implemented.
+
+
 ## 3.11.1
 
 - Fix QR authentication configuration that immediately rejected mobile confirmation; verify creation and refresh against Steam without approving an account.

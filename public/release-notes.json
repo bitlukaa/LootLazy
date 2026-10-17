@@ -1,8 +1,8 @@
 {
-  "version": "3.11.1",
+  "version": "3.11.2",
   "en": [
-    "Fix QR sign-in ending before phone approval and restore QR code refresh.",
-    "Keep QR errors separate from password and Steam Guard sign-in.",
-    "Distinguish sign-in timeouts and unexpected failures from connection errors; collect minimal local failure diagnostics without credentials or tokens."
+    "Show sign-in and Steam Guard progress while waiting for Steam, and prevent duplicate submissions.",
+    "Show QR preparation progress before the code is available, without premature refresh prompts.",
+    "Use Steam profile names for new accounts without an extra label step. Existing saved names and local pencil edits are preserved."
   ]
 }
