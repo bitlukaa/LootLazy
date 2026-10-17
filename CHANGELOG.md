@@ -1,5 +1,14 @@
 # Release history
 
+## 3.11.0
+
+- Promote the standalone SteamKit2 account engine and English interface to Stable.
+- Restore games after temporary transport loss without counting offline time; Stop cancels pending recovery.
+- Pace logins across accounts, back off repeated connection failures, observe Steam sign-in throttling and bound saved-login connection attempts.
+- Check saved-token expiry and shared-library lock state in addition to playing-session blocks.
+- Harden Steam username visual privacy persistence; add keyboard reveal and visible storage errors. This is visual masking, not encryption.
+
+
 ## 3.10.1 Beta (unpublished)
 
 - Repair standalone Steam credentials and QR login with connected, cancelable authentication and Steam Guard challenges.

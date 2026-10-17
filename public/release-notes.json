@@ -1,7 +1,9 @@
 {
-  "version": "3.10.1",
+  "version": "3.11.0",
   "en": [
-    "Beta: repair Steam Guard and QR authentication, secure login persistence and independent Steam sessions.",
-    "Use authoritative playing-session blocking to avoid interrupting Steam Desktop."
+    "Standalone Steam account engine powered by SteamKit2, with repaired password, Steam Guard and QR login.",
+    "Reconnects preserve selected games and pause elapsed time while offline. Login attempts are paced with bounded backoff and server-throttle cooldowns.",
+    "Protected saved logins, expired-token checks and playing/library-lock protection.",
+    "Steam username visual privacy setting persists on this device, supports keyboard reveal and reports save failures."
   ]
 }

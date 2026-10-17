@@ -455,3 +455,5 @@ Object.assign(I18N.en,{session_advanced:"Advanced settings"});
 Object.assign(I18N.en,{game_time_badge_note:"Choose a game and start a continuous Discord session. Optional timing and sync are in Advanced settings.",game_variety_badge_note:"Choose how many games to run in order. The session stops after the last game."});
 
 Object.assign(I18N.en,{accounts_save_failed:"Could not save your Steam login on this device. Check available storage and try again."});
+
+Object.assign(I18N.en,{accounts_rate_limited:"Steam temporarily limited sign-ins. Wait before trying again.",accounts_privacy_save_failed:"Could not save this privacy setting on this device.",accounts_hide_username_desc:"Visually blur Steam login names on this device. Hover or focus to reveal."});

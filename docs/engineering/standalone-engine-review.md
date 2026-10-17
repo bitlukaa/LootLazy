@@ -22,6 +22,14 @@ The standalone engine continues to depend on SteamKit2 for the Steam protocol an
 
 ## Limits
 
-Live QR approval, live password/Guard authentication and transport/session behavior against Steam still require a dedicated test account. Synthetic tests do not certify those live scenarios or establish the absence of all bugs. SteamKit/protobuf publish trimming warnings remain; their root assemblies are explicitly preserved by the project. No release was published and no installed application/account data was changed by this repair.
+Live QR approval, live password/Guard authentication and transport/session behavior against Steam still require a dedicated test account. Synthetic tests do not certify those live scenarios or establish the absence of all bugs. SteamKit/protobuf publish trimming warnings remain; their root assemblies are explicitly preserved by the project. No installed application/account data is changed by verification. Live Steam sign-in is not certified by synthetic tests.
 
-The candidate is version 3.10.1 with the Beta default channel. The published Stable 3.10.0 is unchanged.
+## Reliability and privacy follow-up
+
+The approved promotion candidate is 3.11.0 with a Stable default channel. Login attempts share a cancelable one-second pacing gate; repeated transport failures back off from three to sixty seconds. Steam throttle responses enforce a fifteen-minute shared cooldown. Saved-login connection attempts have a thirty-second watchdog. Known expired tokens require explicit sign-in; opaque legacy tokens are left for Steam to validate. This is not local token signature verification or a claim of ASF feature parity.
+
+Temporary disconnection preserves requested games and freezes elapsed time until the game list is successfully re-sent after connection/occupation checks. Explicit Stop and session conflict still cancel play intent. A small SteamKit packet handler tracks the protocol's own-library lock field in addition to the native playing-state callback.
+
+Privacy remains a device-wide visual blur on the account detail Steam login. Mouse hover and keyboard focus reveal it. The plaintext remains in application state/DOM; this is not a security boundary. Storage read failure defaults to masking; storage write failure keeps the prior choice and shows an error.
+
+Regression coverage includes token expiry, retry classification/backoff, login-gate cancellation, session suspension/resumption and Stop while suspended; renderer coverage includes privacy persistence after reload, hover/focus reveal and denied storage. Final release CI and signature/feed verification are required before deleting Beta releases.
